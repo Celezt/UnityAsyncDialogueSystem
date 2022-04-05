@@ -8,15 +8,30 @@ using UnityEditor;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    using Utilities;
+
     public class DialogueGraphView : GraphView
     {
-        public const string STYLE_PATH = "Packages/com.celezt.asyncdialogue/Editor/Resources/Styles/";
+        private DialogueEditorWindow _editorWindow;
+        private NodeSearchWindow _searchWindow;
 
-        public DialogueGraphView()
+        public DialogueGraphView(DialogueEditorWindow editorWindow)
         {
+            _editorWindow = editorWindow;
+
             AddManipulators();
             AddGridBackground();
+            AddSearchWindow();
             AddStyles();
+        }
+
+        public T CreateNode<T>(Vector2 position) where T : Node, INode, new()
+        {
+            T node = new T();
+            node.Initialize(position);
+            node.Draw();
+
+            return node;
         }
 
         public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
@@ -35,17 +50,19 @@ namespace Celezt.DialogueSystem.Editor
             return compatiblePorts;
         }
 
+        public Vector2 GetLocalMousePosition(Vector2 mousePosition) => contentViewContainer.WorldToLocal(mousePosition);
+
         private void AddManipulators()
         {
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new RectangleSelector());
-            this.AddManipulator(CreateNodeContextualMenu<DialogueNode>("Dialogue Node"));
+            this.AddManipulator(CreateNodeContextualMenu<ParagraphNode>("Paragraph Node"));
         }
 
         private IManipulator CreateNodeContextualMenu<T>(string actionTitle) where T : Node, INode, new() => new ContextualMenuManipulator(
-            menuEvent => menuEvent.menu.AppendAction("Create " + actionTitle, actionEvent => AddElement(CreateNode<T>(actionEvent.eventInfo.localMousePosition))));
+            menuEvent => menuEvent.menu.AppendAction("Create " + actionTitle, actionEvent => AddElement(CreateNode<T>(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)))));
 
         private void AddGridBackground()
         {     
@@ -54,22 +71,23 @@ namespace Celezt.DialogueSystem.Editor
             Insert(0, gridBackground);
         }
 
-        private T CreateNode<T>(Vector2 position) where T : Node, INode, new()
+        private void AddSearchWindow()
         {
-            T node = new T();
-            node.Initialize(position);
-            node.Draw();
+            if (_searchWindow is null)
+            {
+                _searchWindow = ScriptableObject.CreateInstance<NodeSearchWindow>();
+                _searchWindow.Initialize(this, _editorWindow);
+            }
 
-            return node;
+            nodeCreationRequest = context => SearchWindow.Open(new SearchWindowContext(context.screenMousePosition), _searchWindow);
         }
 
         private void AddStyles()
         {
-            CreateStyle("DialogueGraphViewStyles");
-            CreateStyle("DialogueNodeStyles");
+            this.AddStyleSheets(
+                "DialogueGraphViewStyles",
+                "DialogueNodeStyles"
+            );
         }
-
-        private void CreateStyle(string styleName) => 
-            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(STYLE_PATH + styleName + ".uss"));
     }
 }

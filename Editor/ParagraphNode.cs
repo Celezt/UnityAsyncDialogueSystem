@@ -8,17 +8,17 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
 
-    public class DialogueNode : Node, INode
+    public class ParagraphNode : Node, INode
     {
-        public string DialogueName { get; set; }
+        public string ParagraphName { get; set; }
         public List<string> Choices { get; set; }
         public string Text { get; set; }
 
         public void Initialize(Vector2 position)
         {
-            DialogueName = "Dialogue Name";
+            ParagraphName = "Paragraph Name";
             Choices = new List<string>() { "New Choice" };
-            Text = "Dialogue text.";
+            Text = "Text.";
 
             SetPosition(new Rect(position, Vector2.zero));
 
@@ -31,15 +31,15 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Title container
             //
-            TextField dialogueNameTextField = DialogueElementUtility.CreateTextField(DialogueName);
+            TextField dialogueNameTextField = DialogueElementUtility.CreateTextField(ParagraphName);
             dialogueNameTextField.AddToClassList("ds-node__text-field");
             dialogueNameTextField.AddToClassList("ds-node__filename-text-field");
             dialogueNameTextField.AddToClassList("ds-node__text-field__hidden");
+            titleContainer.Insert(0, dialogueNameTextField);
 
             //
             //  Main Container
             //
-            titleContainer.Insert(0, dialogueNameTextField);
             Button addChoiceButton = DialogueElementUtility.CreateButton("Add Choice", () =>
             {
                 Port choicePort = CreateChoicePort("New Choice");

@@ -7,6 +7,8 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    using Utilities;
+
     public class DialogueEditorWindow : EditorWindow
     {
         [MenuItem("Window/Dialogue/Dialogue Graph")]
@@ -23,15 +25,14 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddGraphView()
         {
-            DialogueGraphView graphView = new DialogueGraphView();
+            DialogueGraphView graphView = new DialogueGraphView(this);
             graphView.StretchToParentSize();
             rootVisualElement.Add(graphView);
         }
 
         private void AddStyles()
         {
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(DialogueGraphView.STYLE_PATH + "DialogueVariables.uss");
-            rootVisualElement.styleSheets.Add(styleSheet);
+            rootVisualElement.AddStyleSheets("DialogueVariables");
         }
     }
 }
