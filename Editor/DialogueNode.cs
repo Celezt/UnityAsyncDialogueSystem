@@ -6,6 +6,8 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    using Utilities;
+
     public class DialogueNode : Node, INode
     {
         public string DialogueName { get; set; }
@@ -26,27 +28,24 @@ namespace Celezt.DialogueSystem.Editor
 
         public void Draw()
         {
-            TextField dialogueNameTextField = new TextField()
-            {
-                value = DialogueName
-            };
             //
             //  Title container
             //
+            TextField dialogueNameTextField = DialogueElementUtility.CreateTextField(DialogueName);
             dialogueNameTextField.AddToClassList("ds-node__text-field");
             dialogueNameTextField.AddToClassList("ds-node__filename-text-field");
             dialogueNameTextField.AddToClassList("ds-node__text-field__hidden");
 
-            titleContainer.Insert(0, dialogueNameTextField);
-            
-
             //
             //  Main Container
             //
-            Button addChoiceButton = new Button()
+            titleContainer.Insert(0, dialogueNameTextField);
+            Button addChoiceButton = DialogueElementUtility.CreateButton("Add Choice", () =>
             {
-                text = "Add Choice"
-            };
+                Port choicePort = CreateChoicePort("New Choice");
+                Choices.Add("New Choice");
+                outputContainer.Add(choicePort);
+            });
 
             addChoiceButton.AddToClassList("ds-node__button");
 
@@ -55,8 +54,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Input Container
             //
-            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
-            inputPort.portName = "Parents";
+            Port inputPort = this.CreatePort("Connections", direction: Direction.Input, capacity: Port.Capacity.Multi);
             inputContainer.Add(inputPort);
 
             //
@@ -64,28 +62,8 @@ namespace Celezt.DialogueSystem.Editor
             //
             foreach (string choice in Choices)
             {
-                Port choicePort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
-                choicePort.portName = "";
-
-                Button deleteChoiceButton = new Button()
-                {
-                    text = "X"
-                };
-
-                deleteChoiceButton.AddToClassList("ds-node__button");
-
-                TextField choiceTextField = new TextField()
-                {
-                    value = Text
-                };
-
-                choiceTextField.AddToClassList("ds-node__text-field");
-                choiceTextField.AddToClassList("ds-node__choice-text-field");
-                choiceTextField.AddToClassList("ds-node__text-field__hidden");
-
-                choicePort.Add(choiceTextField);
-                choicePort.Add(deleteChoiceButton);
-                outputContainer.Add(choicePort); 
+                Port choicePort = CreateChoicePort(choice);
+                outputContainer.Add(choicePort);
             }
 
             //
@@ -95,15 +73,8 @@ namespace Celezt.DialogueSystem.Editor
 
             customDataContainer.AddToClassList("ds-node__custom-data-container");
 
-            Foldout textFoldout = new Foldout()
-            {
-                text = "Sequence"
-            };
-
-            TextField textTextField = new TextField()
-            {
-                value = Text
-            };
+            Foldout textFoldout = DialogueElementUtility.CreateFoldout("Sequence");
+            TextField textTextField = DialogueElementUtility.CreateTextArea(Text);
 
             textTextField.AddToClassList("ds-node__text-field");
             textTextField.AddToClassList("ds-node__quote-text-field");
@@ -113,6 +84,25 @@ namespace Celezt.DialogueSystem.Editor
             extensionContainer.Add(customDataContainer);
 
             RefreshExpandedState();
+        }
+
+        private Port CreateChoicePort(string choice)
+        {
+            Port choicePort = this.CreatePort();
+
+            Button deleteChoiceButton = DialogueElementUtility.CreateButton("X");
+
+            deleteChoiceButton.AddToClassList("ds-node__button");
+
+            TextField choiceTextField = DialogueElementUtility.CreateTextField(choice);
+
+            choiceTextField.AddToClassList("ds-node__text-field");
+            choiceTextField.AddToClassList("ds-node__choice-text-field");
+            choiceTextField.AddToClassList("ds-node__text-field__hidden");
+
+            choicePort.Add(choiceTextField);
+            choicePort.Add(deleteChoiceButton);
+            return choicePort;
         }
     }
 }
