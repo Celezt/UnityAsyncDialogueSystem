@@ -8,15 +8,15 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
 
-    public class ParagraphNode : DSNode
+    public class DialogueNode : DSNode
     {
-        public string ParagraphName { get; set; }
+        public string DialogueName { get; set; }
         public List<string> Choices { get; set; }
         public string Text { get; set; }
 
         public override void Initialize(Vector2 position)
         {
-            ParagraphName = "Paragraph Name";
+            DialogueName = "Dialogue Name";
             Choices = new List<string>() { "New Choice" };
             Text = "Text.";
 
@@ -31,7 +31,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Title container
             //
-            TextField dialogueNameTextField = DSElementUtility.CreateTextField(ParagraphName);
+            TextField dialogueNameTextField = DSElementUtility.CreateTextField(DialogueName);
             dialogueNameTextField.AddToClassList("ds-node__text-field");
             dialogueNameTextField.AddToClassList("ds-node__filename-text-field");
             dialogueNameTextField.AddToClassList("ds-node__text-field__hidden");

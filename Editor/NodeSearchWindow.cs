@@ -28,10 +28,10 @@ namespace Celezt.DialogueSystem.Editor
             {
                 new SearchTreeGroupEntry(new GUIContent("Create Node")),
                 new SearchTreeGroupEntry(new GUIContent("Dialogue"), 1),
-                new SearchTreeEntry(new GUIContent("Paragraph", _indentationIcon))
+                new SearchTreeEntry(new GUIContent("Dialogue", _indentationIcon))
                 {
                     level = 2,
-                    userData = typeof(ParagraphNode)
+                    userData = typeof(DialogueNode)
                 }
             };
 
@@ -40,9 +40,9 @@ namespace Celezt.DialogueSystem.Editor
 
         public bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context)
         {
-            if ((Type)SearchTreeEntry.userData == typeof(ParagraphNode))
+            if ((Type)SearchTreeEntry.userData == typeof(DialogueNode))
             {
-                _graphView.AddElement(_graphView.CreateNode<ParagraphNode>(_graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position)));
+                _graphView.AddElement(_graphView.CreateNode<DialogueNode>(_graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position)));
                 return true;
             }
 

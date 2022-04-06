@@ -16,8 +16,6 @@ namespace Celezt.DialogueSystem.Editor
         private DSEditorWindow _editorWindow;
         private NodeSearchWindow _searchWindow;
 
-        private SerializableDictionary<string, NodeErrorData> _nodes = new SerializableDictionary<string, NodeErrorData>();
-
         public DSGraphView(DSEditorWindow editorWindow)
         {
             _editorWindow = editorWindow;
@@ -61,7 +59,7 @@ namespace Celezt.DialogueSystem.Editor
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new RectangleSelector());
-            this.AddManipulator(CreateNodeContextualMenu<ParagraphNode>("Paragraph Node"));
+            this.AddManipulator(CreateNodeContextualMenu<DialogueNode>("Dialogue Node"));
         }
 
         private IManipulator CreateNodeContextualMenu<T>(string actionTitle) where T : DSNode, new() => new ContextualMenuManipulator(
@@ -91,11 +89,6 @@ namespace Celezt.DialogueSystem.Editor
                 "DSGraphViewStyles",
                 "DSNodeStyles"
             );
-        }
-
-        private void AddNode(Node node)
-        {
-
         }
     }
 }
