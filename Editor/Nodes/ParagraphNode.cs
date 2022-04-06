@@ -8,13 +8,13 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
 
-    public class ParagraphNode : Node, INode
+    public class ParagraphNode : DSNode
     {
         public string ParagraphName { get; set; }
         public List<string> Choices { get; set; }
         public string Text { get; set; }
 
-        public void Initialize(Vector2 position)
+        public override void Initialize(Vector2 position)
         {
             ParagraphName = "Paragraph Name";
             Choices = new List<string>() { "New Choice" };
@@ -26,12 +26,12 @@ namespace Celezt.DialogueSystem.Editor
             extensionContainer.AddToClassList("ds-node__extension-container");
         }
 
-        public void Draw()
+        public override void Draw()
         {
             //
             //  Title container
             //
-            TextField dialogueNameTextField = DialogueElementUtility.CreateTextField(ParagraphName);
+            TextField dialogueNameTextField = DSElementUtility.CreateTextField(ParagraphName);
             dialogueNameTextField.AddToClassList("ds-node__text-field");
             dialogueNameTextField.AddToClassList("ds-node__filename-text-field");
             dialogueNameTextField.AddToClassList("ds-node__text-field__hidden");
@@ -40,7 +40,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Main Container
             //
-            Button addChoiceButton = DialogueElementUtility.CreateButton("Add Choice", () =>
+            Button addChoiceButton = DSElementUtility.CreateButton("Add Choice", () =>
             {
                 Port choicePort = CreateChoicePort("New Choice");
                 Choices.Add("New Choice");
@@ -73,8 +73,8 @@ namespace Celezt.DialogueSystem.Editor
 
             customDataContainer.AddToClassList("ds-node__custom-data-container");
 
-            Foldout textFoldout = DialogueElementUtility.CreateFoldout("Sequence");
-            TextField textTextField = DialogueElementUtility.CreateTextArea(Text);
+            Foldout textFoldout = DSElementUtility.CreateFoldout("Sequence");
+            TextField textTextField = DSElementUtility.CreateTextArea(Text);
 
             textTextField.AddToClassList("ds-node__text-field");
             textTextField.AddToClassList("ds-node__quote-text-field");
@@ -90,11 +90,11 @@ namespace Celezt.DialogueSystem.Editor
         {
             Port choicePort = this.CreatePort();
 
-            Button deleteChoiceButton = DialogueElementUtility.CreateButton("X");
+            Button deleteChoiceButton = DSElementUtility.CreateButton("X");
 
             deleteChoiceButton.AddToClassList("ds-node__button");
 
-            TextField choiceTextField = DialogueElementUtility.CreateTextField(choice);
+            TextField choiceTextField = DSElementUtility.CreateTextField(choice);
 
             choiceTextField.AddToClassList("ds-node__text-field");
             choiceTextField.AddToClassList("ds-node__choice-text-field");

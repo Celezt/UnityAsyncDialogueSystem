@@ -9,12 +9,12 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
 
-    public class DialogueEditorWindow : EditorWindow
+    public class DSEditorWindow : EditorWindow
     {
         [MenuItem("Window/Dialogue/Dialogue Graph")]
         public static void Open()
         {
-            GetWindow<DialogueEditorWindow>("Dialogue Graph");
+            GetWindow<DSEditorWindow>("Dialogue Graph");
         }
 
         private void OnEnable()
@@ -25,14 +25,14 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddGraphView()
         {
-            DialogueGraphView graphView = new DialogueGraphView(this);
+            DSGraphView graphView = new DSGraphView(this);
             graphView.StretchToParentSize();
             rootVisualElement.Add(graphView);
         }
 
         private void AddStyles()
         {
-            rootVisualElement.AddStyleSheets("DialogueVariables");
+            rootVisualElement.AddStyleSheets("DSVariables");
         }
     }
 }

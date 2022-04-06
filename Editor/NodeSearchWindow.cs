@@ -8,11 +8,11 @@ namespace Celezt.DialogueSystem.Editor
 {
     public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider
     {
-        private DialogueGraphView _graphView;
-        private DialogueEditorWindow _editorWindow;
+        private DSGraphView _graphView;
+        private DSEditorWindow _editorWindow;
         private Texture2D _indentationIcon;
 
-        public void Initialize(DialogueGraphView graphView, DialogueEditorWindow editorWindow)
+        public void Initialize(DSGraphView graphView, DSEditorWindow editorWindow)
         {
             _graphView = graphView;
             _editorWindow = editorWindow;

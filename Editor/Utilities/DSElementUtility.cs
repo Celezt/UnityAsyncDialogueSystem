@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor.Utilities
 {
-    public static class DialogueElementUtility
+    public static class DSElementUtility
     {
         public static Button CreateButton(string text, Action onClick = null)
         {

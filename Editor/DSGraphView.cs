@@ -9,13 +9,16 @@ using UnityEditor;
 namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
+    using DialogueSystem.Utilities;
 
-    public class DialogueGraphView : GraphView
+    public class DSGraphView : GraphView
     {
-        private DialogueEditorWindow _editorWindow;
+        private DSEditorWindow _editorWindow;
         private NodeSearchWindow _searchWindow;
 
-        public DialogueGraphView(DialogueEditorWindow editorWindow)
+        private SerializableDictionary<string, NodeErrorData> _nodes = new SerializableDictionary<string, NodeErrorData>();
+
+        public DSGraphView(DSEditorWindow editorWindow)
         {
             _editorWindow = editorWindow;
 
@@ -25,7 +28,7 @@ namespace Celezt.DialogueSystem.Editor
             AddStyles();
         }
 
-        public T CreateNode<T>(Vector2 position) where T : Node, INode, new()
+        public T CreateNode<T>(Vector2 position) where T : DSNode, new()
         {
             T node = new T();
             node.Initialize(position);
@@ -61,7 +64,7 @@ namespace Celezt.DialogueSystem.Editor
             this.AddManipulator(CreateNodeContextualMenu<ParagraphNode>("Paragraph Node"));
         }
 
-        private IManipulator CreateNodeContextualMenu<T>(string actionTitle) where T : Node, INode, new() => new ContextualMenuManipulator(
+        private IManipulator CreateNodeContextualMenu<T>(string actionTitle) where T : DSNode, new() => new ContextualMenuManipulator(
             menuEvent => menuEvent.menu.AppendAction("Create " + actionTitle, actionEvent => AddElement(CreateNode<T>(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)))));
 
         private void AddGridBackground()
@@ -85,9 +88,14 @@ namespace Celezt.DialogueSystem.Editor
         private void AddStyles()
         {
             this.AddStyleSheets(
-                "DialogueGraphViewStyles",
-                "DialogueNodeStyles"
+                "DSGraphViewStyles",
+                "DSNodeStyles"
             );
+        }
+
+        private void AddNode(Node node)
+        {
+
         }
     }
 }

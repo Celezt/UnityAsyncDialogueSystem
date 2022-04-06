@@ -1,3 +1,16 @@
 {
-	"name": "celezt.asyncdialogue.editor"
+    "name": "celezt.asyncdialogue.editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:2140a12b1d3182f4f8bf89127892ff6e"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
