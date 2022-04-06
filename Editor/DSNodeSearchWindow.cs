@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider
+    public class DSNodeSearchWindow : ScriptableObject, ISearchWindowProvider
     {
         private DSGraphView _graphView;
         private DSEditorWindow _editorWindow;

@@ -14,7 +14,7 @@ namespace Celezt.DialogueSystem.Editor
     public class DSGraphView : GraphView
     {
         private DSEditorWindow _editorWindow;
-        private NodeSearchWindow _searchWindow;
+        private DSNodeSearchWindow _searchWindow;
 
         public DSGraphView(DSEditorWindow editorWindow)
         {
@@ -24,6 +24,22 @@ namespace Celezt.DialogueSystem.Editor
             AddGridBackground();
             AddSearchWindow();
             AddStyles();
+        }
+
+        public GraphElement CreateGroup(Vector2 position)
+        {
+            Group group = new Group()
+            {
+                title = "New Group",
+            };
+
+            group.SetPosition(new Rect(position, Vector2.zero));
+
+            foreach (GraphElement selectedElement in selection)
+                if (selectedElement is DSNode node)
+                    group.AddElement(node);
+
+            return group;
         }
 
         public T CreateNode<T>(Vector2 position) where T : DSNode, new()
@@ -59,8 +75,11 @@ namespace Celezt.DialogueSystem.Editor
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new RectangleSelector());
-            this.AddManipulator(CreateNodeContextualMenu<DialogueNode>("Dialogue Node"));
+            this.AddManipulator(CreateGroupContextualMenu());
         }
+
+        private IManipulator CreateGroupContextualMenu() => new ContextualMenuManipulator(
+            menuEvent => menuEvent.menu.AppendAction("Create Group", actionEvent => AddElement(CreateGroup(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)))));
 
         private IManipulator CreateNodeContextualMenu<T>(string actionTitle) where T : DSNode, new() => new ContextualMenuManipulator(
             menuEvent => menuEvent.menu.AppendAction("Create " + actionTitle, actionEvent => AddElement(CreateNode<T>(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)))));
@@ -76,7 +95,7 @@ namespace Celezt.DialogueSystem.Editor
         {
             if (_searchWindow is null)
             {
-                _searchWindow = ScriptableObject.CreateInstance<NodeSearchWindow>();
+                _searchWindow = ScriptableObject.CreateInstance<DSNodeSearchWindow>();
                 _searchWindow.Initialize(this, _editorWindow);
             }
 

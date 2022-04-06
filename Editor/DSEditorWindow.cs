@@ -7,6 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    using UnityEditor.UIElements;
     using Utilities;
 
     public class DSEditorWindow : EditorWindow
@@ -20,6 +21,7 @@ namespace Celezt.DialogueSystem.Editor
         private void OnEnable()
         {
             AddGraphView();
+            AddToolbar();
             AddStyles();
         }
 
@@ -30,9 +32,20 @@ namespace Celezt.DialogueSystem.Editor
             rootVisualElement.Add(graphView);
         }
 
+        private void AddToolbar()
+        {
+            Toolbar toolbar = new Toolbar();
+            ToolbarButton saveButton = new ToolbarButton()
+            {
+                text = "Save Asset",
+            };
+            toolbar.Add(saveButton);
+            rootVisualElement.Add(toolbar);
+        }
+
         private void AddStyles()
         {
-            rootVisualElement.AddStyleSheets("DSVariables");
+            rootVisualElement.AddStyleSheets("DSVariablesStyles");
         }
     }
 }
