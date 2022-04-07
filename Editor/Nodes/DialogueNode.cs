@@ -6,17 +6,17 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    using System;
     using Utilities;
 
     public class DialogueNode : DSNode
     {
-        public string DialogueName { get; set; }
+        public string ActorID { get; set; } = "actor_id";
         public List<string> Choices { get; set; }
         public string Text { get; set; }
-
+        
         public override void Initialize(Vector2 position)
         {
-            DialogueName = "Dialogue Name";
             Choices = new List<string>() { "New Choice" };
             Text = "Text.";
 
@@ -31,11 +31,11 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Title container
             //
-            TextField dialogueNameTextField = DSElementUtility.CreateTextField(DialogueName);
-            dialogueNameTextField.AddToClassList("ds-node__text-field");
-            dialogueNameTextField.AddToClassList("ds-node__filename-text-field");
-            dialogueNameTextField.AddToClassList("ds-node__text-field__hidden");
-            titleContainer.Insert(0, dialogueNameTextField);
+            TextField actorIDTextField = DSElementUtility.CreateTextField(ActorID);
+            actorIDTextField.AddToClassList("ds-node__text-field");
+            actorIDTextField.AddToClassList("ds-node__filename-text-field");
+            actorIDTextField.AddToClassList("ds-node__text-field__hidden");
+            titleContainer.Insert(0, actorIDTextField);
 
             //
             //  Main Container

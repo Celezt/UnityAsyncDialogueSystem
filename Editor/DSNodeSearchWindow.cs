@@ -27,7 +27,7 @@ namespace Celezt.DialogueSystem.Editor
             List<SearchTreeEntry> searchTreeEntries = new List<SearchTreeEntry>()
             {
                 new SearchTreeGroupEntry(new GUIContent("Create Node")),
-                new SearchTreeGroupEntry(new GUIContent("Dialogue"), 1),
+                new SearchTreeGroupEntry(new GUIContent("Behaviour"), 1),
                 new SearchTreeEntry(new GUIContent("Dialogue", _indentationIcon))
                 {
                     level = 2,
