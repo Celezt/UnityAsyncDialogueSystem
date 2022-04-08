@@ -14,13 +14,16 @@ namespace Celezt.DialogueSystem.Editor
         public string ActorID { get; set; } = "actor_id";
         public List<string> Choices { get; set; }
         public string Text { get; set; }
+
+        private GraphView _graphView;
         
-        public override void Initialize(Vector2 position)
+        public override void Initialize(GraphView graphView, Vector2 position)
         {
             Choices = new List<string>() { "New Choice" };
             Text = "Text.";
 
             SetPosition(new Rect(position, Vector2.zero));
+            _graphView = graphView;
 
             mainContainer.AddToClassList("ds-node__main-container");
             extensionContainer.AddToClassList("ds-node__extension-container");
@@ -86,15 +89,26 @@ namespace Celezt.DialogueSystem.Editor
             RefreshExpandedState();
         }
 
-        private Port CreateChoicePort(string choice)
+        private Port CreateChoicePort(string choiceData)
         {
             Port choicePort = this.CreatePort();
+            choicePort.userData = choiceData;
 
-            Button deleteChoiceButton = DSElementUtility.CreateButton("X");
+            Button deleteChoiceButton = DSElementUtility.CreateButton("X", () =>
+            {
+                if (Choices.Count == 1)
+                    return;
+
+                if (choicePort.connected)
+                    _graphView.DeleteElements(choicePort.connections);
+
+                Choices.Remove(choiceData);
+                _graphView.RemoveElement(choicePort);
+            });
 
             deleteChoiceButton.AddToClassList("ds-node__button");
 
-            TextField choiceTextField = DSElementUtility.CreateTextField(choice);
+            TextField choiceTextField = DSElementUtility.CreateTextField(choiceData);
 
             choiceTextField.AddToClassList("ds-node__text-field");
             choiceTextField.AddToClassList("ds-node__choice-text-field");

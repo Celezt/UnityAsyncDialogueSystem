@@ -45,7 +45,7 @@ namespace Celezt.DialogueSystem.Editor
         public T CreateNode<T>(Vector2 position) where T : DSNode, new()
         {
             T node = new T();
-            node.Initialize(position);
+            node.Initialize(this, position);
             node.Draw();
 
             return node;

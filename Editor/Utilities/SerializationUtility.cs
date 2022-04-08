@@ -8,7 +8,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
 {
     public static class SerializationUtility
     {
-        public const string FILE_TYPE = ".dialoguegraph";
+        public const string FILE_EXTENSION = ".dialoguegraph";
 
         public static ReadOnlySpan<char> Serialize(GraphSerializeData serializeData) => 
             JsonConvert.SerializeObject(serializeData, Formatting.Indented);
