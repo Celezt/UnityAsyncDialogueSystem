@@ -12,16 +12,19 @@ namespace Celezt.DialogueSystem.Editor
     public class DialogueNode : DSNode
     {
         public string ActorID { get; set; } = "actor_id";
-        public List<string> Choices { get; set; }
-        public string Text { get; set; }
+        public List<Choice> Choices { get; set; } = new List<Choice>() { new Choice { Text = "New Choice" } };
+        public string Text { get; set; } = "Dialogue text.";
 
         private GraphView _graphView;
+
+        public struct Choice
+        {
+            public string ID;
+            public string Text;
+        }
         
         public override void Initialize(GraphView graphView, Vector2 position)
         {
-            Choices = new List<string>() { "New Choice" };
-            Text = "Text.";
-
             SetPosition(new Rect(position, Vector2.zero));
             _graphView = graphView;
 
@@ -45,8 +48,8 @@ namespace Celezt.DialogueSystem.Editor
             //
             Button addChoiceButton = DSElementUtility.CreateButton("Add Choice", () =>
             {
-                Port choicePort = CreateChoicePort("New Choice");
-                Choices.Add("New Choice");
+                Port choicePort = CreateChoicePort(new Choice { Text = "New Choice" });
+                Choices.Add(new Choice { Text = "New Choice" });
                 outputContainer.Add(choicePort);
             });
 
@@ -63,7 +66,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Output Container
             //
-            foreach (string choice in Choices)
+            foreach (Choice choice in Choices)
             {
                 Port choicePort = CreateChoicePort(choice);
                 outputContainer.Add(choicePort);
@@ -89,7 +92,7 @@ namespace Celezt.DialogueSystem.Editor
             RefreshExpandedState();
         }
 
-        private Port CreateChoicePort(string choiceData)
+        private Port CreateChoicePort(Choice choiceData)
         {
             Port choicePort = this.CreatePort();
             choicePort.userData = choiceData;
@@ -108,7 +111,10 @@ namespace Celezt.DialogueSystem.Editor
 
             deleteChoiceButton.AddToClassList("ds-node__button");
 
-            TextField choiceTextField = DSElementUtility.CreateTextField(choiceData);
+            TextField choiceTextField = DSElementUtility.CreateTextField(choiceData.Text, callback =>
+            {
+                choiceData.Text = callback.newValue;
+            });
 
             choiceTextField.AddToClassList("ds-node__text-field");
             choiceTextField.AddToClassList("ds-node__choice-text-field");

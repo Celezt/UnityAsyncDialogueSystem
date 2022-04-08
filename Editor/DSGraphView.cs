@@ -23,6 +23,7 @@ namespace Celezt.DialogueSystem.Editor
             AddManipulators();
             AddGridBackground();
             AddSearchWindow();
+            OnGraphViewChanged();
             AddStyles();
         }
 
@@ -108,6 +109,37 @@ namespace Celezt.DialogueSystem.Editor
                 "DSGraphViewStyles",
                 "DSNodeStyles"
             );
+        }
+
+        private void OnGraphViewChanged() 
+        {
+            graphViewChanged = changes =>
+            {
+                if (changes.edgesToCreate is { })
+                {
+                    foreach (Edge edge in changes.edgesToCreate)
+                    {
+                        DSNode nextNode = (DSNode)edge.input.node;
+                        DialogueNode.Choice choice = (DialogueNode.Choice)edge.output.userData;
+                        choice.ID = nextNode.ID;
+                        edge.output.userData = choice;
+                    }
+                }
+
+                if (changes.elementsToRemove is { })
+                {
+                    foreach (GraphElement element in changes.elementsToRemove)
+                    {
+                        if (element is Edge edge)
+                        {
+                            DialogueNode.Choice choice = (DialogueNode.Choice)edge.output.userData;
+                            choice.ID = null;
+                        }                    
+                    }
+                }
+
+                return changes;
+            };
         }
     }
 }
