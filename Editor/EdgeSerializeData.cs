@@ -8,7 +8,7 @@ namespace Celezt.DialogueSystem.Editor
     [Serializable]
     public struct EdgeSerializeData
     {
-        public PortSerializeData m_OutputPort;
-        public PortSerializeData m_InputPort;
+        public PortSerializeData OutputPort;
+        public PortSerializeData InputPort;
     }
 }

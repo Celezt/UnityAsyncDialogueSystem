@@ -8,7 +8,7 @@ namespace Celezt.DialogueSystem.Editor
     [Serializable]
     public struct GraphSerializeData
     {
-        public NodeSerializeData[] m_Nodes;
-        public EdgeSerializeData[] m_Edges;
+        public NodeSerializeData[] Nodes;
+        public EdgeSerializeData[] Edges;
     }
 }

@@ -8,6 +8,6 @@ namespace Celezt.DialogueSystem.Editor
     [Serializable]
     public struct NodeSerializeData
     {
-        public string m_Id { get; set; }
+        public string ID { get; set; }
     }
 }

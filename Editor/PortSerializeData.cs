@@ -8,7 +8,7 @@ namespace Celezt.DialogueSystem.Editor
     [Serializable]
     public struct PortSerializeData
     {
-        public NodeSerializeData m_Node;
-        public int m_Port;
+        public NodeSerializeData Node;
+        public int Port;
     }
 }
