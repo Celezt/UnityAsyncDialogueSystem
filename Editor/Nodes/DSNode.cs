@@ -11,7 +11,6 @@ namespace Celezt.DialogueSystem.Editor
         public string ID => Guid.NewGuid().ToString();
 
         protected GraphView GraphView { get; private set; }
-        protected event Action<Edge, EdgeState> EdgeChanged = delegate { };
 
         [Flags]
         public enum EdgeState
@@ -28,6 +27,8 @@ namespace Celezt.DialogueSystem.Editor
             GraphView = graphView;
         }
 
-        internal void OnEdgeChanged(Edge edge, EdgeState state) => EdgeChanged.Invoke(edge, state);
+        protected virtual void OnEdgeChanged(Edge edge, EdgeState state) { }
+
+        internal void InvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
     }
 }

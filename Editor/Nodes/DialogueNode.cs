@@ -23,29 +23,6 @@ namespace Celezt.DialogueSystem.Editor
             mainContainer.AddToClassList("ds-node__main-container");
             extensionContainer.AddToClassList("ds-node__extension-container");
 
-            EdgeChanged += (edge, state) =>
-            {
-                switch (state)
-                {
-                    case EdgeState.Created | EdgeState.Output:
-                        {
-                            Debug.Log("Created, Output");
-                            DSNode nextNode = (DSNode)edge.input.node;
-                            Choice choice = (Choice)edge.output.userData;
-                            choice.ID = nextNode.ID;
-                            edge.output.userData = choice;
-                            break;
-                        }
-                    case EdgeState.Removed | EdgeState.Output:
-                        {
-                            Debug.Log("Removed, Output");
-                            Choice choice = (Choice)edge.output.userData;
-                            choice.ID = null;
-                            break;
-                        }
-                }
-            };
-
             //
             //  Title container
             //
@@ -119,6 +96,27 @@ namespace Celezt.DialogueSystem.Editor
             extensionContainer.Add(customDataContainer);
 
             RefreshExpandedState();
+        }
+
+        protected override void OnEdgeChanged(Edge edge, EdgeState state)
+        {
+            switch (state)
+            {
+                case EdgeState.Created | EdgeState.Output:
+                    {
+                        DSNode nextNode = (DSNode)edge.input.node;
+                        Choice choice = (Choice)edge.output.userData;
+                        choice.ID = nextNode.ID;
+                        edge.output.userData = choice;
+                        break;
+                    }
+                case EdgeState.Removed | EdgeState.Output:
+                    {
+                        Choice choice = (Choice)edge.output.userData;
+                        choice.ID = null;
+                        break;
+                    }
+            }
         }
 
         private Port CreateChoicePort(Choice choiceData)

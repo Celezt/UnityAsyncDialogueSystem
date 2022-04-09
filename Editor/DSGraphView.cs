@@ -116,9 +116,9 @@ namespace Celezt.DialogueSystem.Editor
                     foreach (Edge edge in changes.edgesToCreate)
                     {
                         if (edge.input.node is DSNode inNode)
-                            inNode.OnEdgeChanged(edge, DSNode.EdgeState.Created | DSNode.EdgeState.Input);
+                            inNode.InvokeEdgeChange(edge, DSNode.EdgeState.Created | DSNode.EdgeState.Input);
                         if (edge.output.node is DSNode outNode)
-                            outNode.OnEdgeChanged(edge, DSNode.EdgeState.Created | DSNode.EdgeState.Output);
+                            outNode.InvokeEdgeChange(edge, DSNode.EdgeState.Created | DSNode.EdgeState.Output);
                     }
                 }
 
@@ -129,9 +129,9 @@ namespace Celezt.DialogueSystem.Editor
                         if (element is Edge edge)
                         {
                             if (edge.input.node is DSNode inNode)
-                                inNode.OnEdgeChanged(edge, DSNode.EdgeState.Removed | DSNode.EdgeState.Input);
+                                inNode.InvokeEdgeChange(edge, DSNode.EdgeState.Removed | DSNode.EdgeState.Input);
                             if (edge.output.node is DSNode outNode)
-                                outNode.OnEdgeChanged(edge, DSNode.EdgeState.Removed | DSNode.EdgeState.Output);
+                                outNode.InvokeEdgeChange(edge, DSNode.EdgeState.Removed | DSNode.EdgeState.Output);
                         }                    
                     }
                 }
