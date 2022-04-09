@@ -15,7 +15,14 @@ namespace Celezt.DialogueSystem.Editor
         [MenuItem("Window/Dialogue/Dialogue Graph")]
         public static void Open()
         {
-            GetWindow<DialogueGraphEditorWindow>("Dialogue Graph");
+            GetWindow<DialogueGraphEditorWindow>().Initialize();
+        }
+
+        public DialogueGraphEditorWindow Initialize()
+        {
+            titleContent.text = "Dialogue Graph";
+
+            return this;
         }
 
         private void OnEnable()
