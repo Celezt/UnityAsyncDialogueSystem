@@ -45,7 +45,7 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddStyles()
         {
-            rootVisualElement.AddStyleSheets("DSVariablesStyles");
+            rootVisualElement.AddStyleSheet("DSVariablesStyles");
         }
     }
 }

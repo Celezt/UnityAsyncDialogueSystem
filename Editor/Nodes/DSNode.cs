@@ -9,7 +9,25 @@ namespace Celezt.DialogueSystem.Editor
     public abstract class DSNode : Node
     {
         public string ID => Guid.NewGuid().ToString();
-        public abstract void Initialize(GraphView graphView, Vector2 position);
-        public abstract void Draw();
+
+        protected GraphView GraphView { get; private set; }
+        protected event Action<Edge, EdgeState> EdgeChanged = delegate { };
+
+        [Flags]
+        public enum EdgeState
+        {
+            Created = 1 << 1,
+            Removed = 1 << 2,
+            Input = 1 << 3,
+            Output = 1 << 4,
+        }
+
+        protected DSNode(GraphView graphView, Vector2 position)
+        {
+            SetPosition(new Rect(position, Vector2.zero));
+            GraphView = graphView;
+        }
+
+        internal void OnEdgeChanged(Edge edge, EdgeState state) => EdgeChanged.Invoke(edge, state);
     }
 }

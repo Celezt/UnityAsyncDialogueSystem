@@ -43,11 +43,9 @@ namespace Celezt.DialogueSystem.Editor
             return group;
         }
 
-        public T CreateNode<T>(Vector2 position) where T : DSNode, new()
+        public T CreateNode<T>(Vector2 position) where T : DSNode
         {
-            T node = new T();
-            node.Initialize(this, position);
-            node.Draw();
+            T node = (T)Activator.CreateInstance(typeof(T), this, position);
 
             return node;
         }
@@ -105,24 +103,22 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddStyles()
         {
-            this.AddStyleSheets(
-                "DSGraphViewStyles",
-                "DSNodeStyles"
-            );
+            this.AddStyleSheet("DSGraphViewStyles");
+            this.AddStyleSheet("DSNodeStyles");
         }
 
         private void OnGraphViewChanged() 
-        {
+        {         
             graphViewChanged = changes =>
             {
                 if (changes.edgesToCreate is { })
                 {
                     foreach (Edge edge in changes.edgesToCreate)
                     {
-                        DSNode nextNode = (DSNode)edge.input.node;
-                        DialogueNode.Choice choice = (DialogueNode.Choice)edge.output.userData;
-                        choice.ID = nextNode.ID;
-                        edge.output.userData = choice;
+                        if (edge.input.node is DSNode inNode)
+                            inNode.OnEdgeChanged(edge, DSNode.EdgeState.Created | DSNode.EdgeState.Input);
+                        if (edge.output.node is DSNode outNode)
+                            outNode.OnEdgeChanged(edge, DSNode.EdgeState.Created | DSNode.EdgeState.Output);
                     }
                 }
 
@@ -132,8 +128,10 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         if (element is Edge edge)
                         {
-                            DialogueNode.Choice choice = (DialogueNode.Choice)edge.output.userData;
-                            choice.ID = null;
+                            if (edge.input.node is DSNode inNode)
+                                inNode.OnEdgeChanged(edge, DSNode.EdgeState.Removed | DSNode.EdgeState.Input);
+                            if (edge.output.node is DSNode outNode)
+                                outNode.OnEdgeChanged(edge, DSNode.EdgeState.Removed | DSNode.EdgeState.Output);
                         }                    
                     }
                 }

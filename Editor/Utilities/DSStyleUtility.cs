@@ -11,11 +11,9 @@ namespace Celezt.DialogueSystem.Editor.Utilities
     {
         public const string STYLE_PATH = "Packages/com.celezt.asyncdialogue/Editor/Resources/Styles/";
 
-        public static VisualElement AddStyleSheets(this VisualElement element, params string[] styleSheetNames)
+        public static VisualElement AddStyleSheet(this VisualElement element, string styleSheetName)
         {
-            foreach (string styleSheetName in styleSheetNames)
-                element.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(STYLE_PATH + styleSheetName + ".uss"));
-
+            element.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(STYLE_PATH + styleSheetName + ".uss"));
             return element;
         }
     }

@@ -6,38 +6,53 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    using System;
-    using Utilities;
-
     public class DialogueNode : DSNode
     {
         public string ActorID { get; set; } = "actor_id";
         public List<Choice> Choices { get; set; } = new List<Choice>() { new Choice { Text = "New Choice" } };
         public string Text { get; set; } = "Dialogue text.";
 
-        private GraphView _graphView;
-
         public struct Choice
         {
             public string ID;
             public string Text;
         }
-        
-        public override void Initialize(GraphView graphView, Vector2 position)
-        {
-            SetPosition(new Rect(position, Vector2.zero));
-            _graphView = graphView;
 
+        public DialogueNode(GraphView graphView, Vector2 position) : base(graphView, position)
+        {
             mainContainer.AddToClassList("ds-node__main-container");
             extensionContainer.AddToClassList("ds-node__extension-container");
-        }
 
-        public override void Draw()
-        {
+            EdgeChanged += (edge, state) =>
+            {
+                switch (state)
+                {
+                    case EdgeState.Created | EdgeState.Output:
+                        {
+                            Debug.Log("Created, Output");
+                            DSNode nextNode = (DSNode)edge.input.node;
+                            Choice choice = (Choice)edge.output.userData;
+                            choice.ID = nextNode.ID;
+                            edge.output.userData = choice;
+                            break;
+                        }
+                    case EdgeState.Removed | EdgeState.Output:
+                        {
+                            Debug.Log("Removed, Output");
+                            Choice choice = (Choice)edge.output.userData;
+                            choice.ID = null;
+                            break;
+                        }
+                }
+            };
+
             //
             //  Title container
             //
-            TextField actorIDTextField = DSElementUtility.CreateTextField(ActorID);
+            TextField actorIDTextField = new TextField()
+            {
+                value = ActorID,
+            };
             actorIDTextField.AddToClassList("ds-node__text-field");
             actorIDTextField.AddToClassList("ds-node__filename-text-field");
             actorIDTextField.AddToClassList("ds-node__text-field__hidden");
@@ -46,12 +61,15 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Main Container
             //
-            Button addChoiceButton = DSElementUtility.CreateButton("Add Choice", () =>
+            Button addChoiceButton = new Button(() =>
             {
                 Port choicePort = CreateChoicePort(new Choice { Text = "New Choice" });
                 Choices.Add(new Choice { Text = "New Choice" });
                 outputContainer.Add(choicePort);
-            });
+            })
+            {
+                text = "Add Choice",
+            };
 
             addChoiceButton.AddToClassList("ds-node__button");
 
@@ -60,7 +78,9 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Input Container
             //
-            Port inputPort = this.CreatePort("Connections", direction: Direction.Input, capacity: Port.Capacity.Multi);
+
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
+            inputPort.portName = "Connections";
             inputContainer.Add(inputPort);
 
             //
@@ -79,8 +99,17 @@ namespace Celezt.DialogueSystem.Editor
 
             customDataContainer.AddToClassList("ds-node__custom-data-container");
 
-            Foldout textFoldout = DSElementUtility.CreateFoldout("Sequence");
-            TextField textTextField = DSElementUtility.CreateTextArea(Text);
+            Foldout textFoldout = new Foldout()
+            {
+                text = "Sequence",
+                value = true,
+            };
+
+            TextField textTextField = new TextField()
+            {
+                value = Text,
+            };
+            textTextField.multiline = true;
 
             textTextField.AddToClassList("ds-node__text-field");
             textTextField.AddToClassList("ds-node__quote-text-field");
@@ -94,28 +123,37 @@ namespace Celezt.DialogueSystem.Editor
 
         private Port CreateChoicePort(Choice choiceData)
         {
-            Port choicePort = this.CreatePort();
+            Port choicePort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
+            choicePort.portName = "";
             choicePort.userData = choiceData;
 
-            Button deleteChoiceButton = DSElementUtility.CreateButton("X", () =>
+            Button deleteChoiceButton = new Button(() =>
             {
                 if (Choices.Count == 1)
                     return;
 
                 if (choicePort.connected)
-                    _graphView.DeleteElements(choicePort.connections);
+                    GraphView.DeleteElements(choicePort.connections);
 
                 Choices.Remove(choiceData);
-                _graphView.RemoveElement(choicePort);
-            });
+                GraphView.RemoveElement(choicePort);
+            })
+            {
+                text = "X"
+            };
 
             deleteChoiceButton.AddToClassList("ds-node__button");
 
-            TextField choiceTextField = DSElementUtility.CreateTextField(choiceData.Text, callback =>
+            TextField choiceTextField = new TextField()
+            {
+                value = choiceData.Text,
+                multiline = true,
+            };
+            choiceTextField.RegisterValueChangedCallback(callback =>
             {
                 choiceData.Text = callback.newValue;
-            });
-
+            });      
+            
             choiceTextField.AddToClassList("ds-node__text-field");
             choiceTextField.AddToClassList("ds-node__choice-text-field");
             choiceTextField.AddToClassList("ds-node__text-field__hidden");
