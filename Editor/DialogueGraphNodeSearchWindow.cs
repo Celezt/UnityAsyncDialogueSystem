@@ -6,13 +6,13 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public class DSNodeSearchWindow : ScriptableObject, ISearchWindowProvider
+    public class DialogueGraphNodeSearchWindow : ScriptableObject, ISearchWindowProvider
     {
-        private DSGraphView _graphView;
-        private DSEditorWindow _editorWindow;
+        private DialogueGraphView _graphView;
+        private DialogueGraphEditorWindow _editorWindow;
         private Texture2D _indentationIcon;
 
-        public void Initialize(DSGraphView graphView, DSEditorWindow editorWindow)
+        public void Initialize(DialogueGraphView graphView, DialogueGraphEditorWindow editorWindow)
         {
             _graphView = graphView;
             _editorWindow = editorWindow;

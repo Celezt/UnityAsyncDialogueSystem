@@ -10,12 +10,12 @@ namespace Celezt.DialogueSystem.Editor
     using UnityEditor.UIElements;
     using Utilities;
 
-    public class DSEditorWindow : EditorWindow
+    public class DialogueGraphEditorWindow : EditorWindow
     {
         [MenuItem("Window/Dialogue/Dialogue Graph")]
         public static void Open()
         {
-            GetWindow<DSEditorWindow>("Dialogue Graph");
+            GetWindow<DialogueGraphEditorWindow>("Dialogue Graph");
         }
 
         private void OnEnable()
@@ -27,7 +27,7 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddGraphView()
         {
-            DSGraphView graphView = new DSGraphView(this);
+            DialogueGraphView graphView = new DialogueGraphView(this);
             graphView.StretchToParentSize();
             rootVisualElement.Add(graphView);
         }

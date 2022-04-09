@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
@@ -14,7 +15,7 @@ namespace Celezt.DialogueSystem.Editor
 
         public struct Choice
         {
-            public string ID;
+            public Guid ID;
             public string Text;
         }
 
@@ -113,7 +114,7 @@ namespace Celezt.DialogueSystem.Editor
                 case EdgeState.Removed | EdgeState.Output:
                     {
                         Choice choice = (Choice)edge.output.userData;
-                        choice.ID = null;
+                        choice.ID = Guid.Empty;
                         break;
                     }
             }

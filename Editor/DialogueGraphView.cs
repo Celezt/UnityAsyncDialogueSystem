@@ -11,12 +11,12 @@ namespace Celezt.DialogueSystem.Editor
     using Utilities;
     using DialogueSystem.Utilities;
 
-    public class DSGraphView : GraphView
+    public class DialogueGraphView : GraphView
     {
-        private DSEditorWindow _editorWindow;
-        private DSNodeSearchWindow _searchWindow;
+        private DialogueGraphEditorWindow _editorWindow;
+        private DialogueGraphNodeSearchWindow _searchWindow;
 
-        public DSGraphView(DSEditorWindow editorWindow)
+        public DialogueGraphView(DialogueGraphEditorWindow editorWindow)
         {
             _editorWindow = editorWindow;
 
@@ -94,7 +94,7 @@ namespace Celezt.DialogueSystem.Editor
         {
             if (_searchWindow is null)
             {
-                _searchWindow = ScriptableObject.CreateInstance<DSNodeSearchWindow>();
+                _searchWindow = ScriptableObject.CreateInstance<DialogueGraphNodeSearchWindow>();
                 _searchWindow.Initialize(this, _editorWindow);
             }
 

@@ -8,7 +8,7 @@ namespace Celezt.DialogueSystem.Editor
 {
     public abstract class DSNode : Node
     {
-        public string ID => Guid.NewGuid().ToString();
+        public Guid ID => Guid.NewGuid();
 
         protected GraphView GraphView { get; private set; }
 
