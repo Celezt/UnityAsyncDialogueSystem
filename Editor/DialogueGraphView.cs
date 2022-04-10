@@ -10,16 +10,26 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
     using DialogueSystem.Utilities;
+    using System.Reflection;
 
     public class DialogueGraphView : GraphView
     {
+        internal Dictionary<Type, NodeTypeData> NodeTypes = new Dictionary<Type, NodeTypeData>();
+
         private DialogueGraphEditorWindow _editorWindow;
         private DialogueGraphNodeSearchWindow _searchWindow;
+
+        internal struct NodeTypeData
+        {
+            internal string MenuName;
+        }
+
 
         public DialogueGraphView(DialogueGraphEditorWindow editorWindow)
         {
             _editorWindow = editorWindow;
 
+            ReflectNodes();
             AddManipulators();
             AddGridBackground();
             AddSearchWindow();
@@ -41,6 +51,17 @@ namespace Celezt.DialogueSystem.Editor
                     group.AddElement(node);
 
             return group;
+        }
+
+        public DSNode CreateNode(Type type, Vector2 position)
+        {
+            if (!typeof(DSNode).IsAssignableFrom(type))
+            {
+                Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DSNode)}");
+                return null;
+            }
+
+            return (DSNode)Activator.CreateInstance(type, this, position);
         }
 
         public T CreateNode<T>(Vector2 position) where T : DSNode
@@ -67,6 +88,24 @@ namespace Celezt.DialogueSystem.Editor
         }
 
         public Vector2 GetLocalMousePosition(Vector2 mousePosition) => contentViewContainer.WorldToLocal(mousePosition);
+
+        /// <summary>
+        /// Reflect all dialogue graph nodes.
+        /// </summary>
+        private void ReflectNodes()
+        {
+            foreach (Type type in ReflectionUtility.GetTypesWithAttribute<CreateNodeAttribute>(AppDomain.CurrentDomain))
+            {
+                if (!typeof(DSNode).IsAssignableFrom(type))
+                {
+                    Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DSNode)}");
+                    continue;
+                }
+
+                CreateNodeAttribute createNodeAttribute = type.GetCustomAttribute<CreateNodeAttribute>();
+                NodeTypes.Add(type, new NodeTypeData { MenuName = createNodeAttribute.MenuName });
+            }
+        }
 
         private void AddManipulators()
         {

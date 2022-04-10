@@ -7,6 +7,8 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
+
+    [CreateNode("Behaviour/Dialogue Node")]
     public class DialogueNode : DSNode
     {
         public string ActorID { get; set; } = "actor_id";
