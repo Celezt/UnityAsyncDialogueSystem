@@ -16,7 +16,7 @@ namespace Celezt.DialogueSystem.Editor
         {
             public Type Type;
             public string Entry;
-            public List<SearchNode> Nodes;
+            public List<SearchNode> Children;
 
             public bool Equals(SearchNode other) => Entry == other.Entry;
         }
@@ -39,35 +39,43 @@ namespace Celezt.DialogueSystem.Editor
             };
 
             List<SearchNode> searchNodes = new List<SearchNode>();
-            foreach (var node in _graphView.NodeTypes)
+            foreach (var nodeType in _graphView.NodeTypes)
             {
                 List<SearchNode> currentSearchNodes = searchNodes;
-                Queue<string> entries = new Queue<string>(node.Value.MenuName.Split('/'));
+                Queue<string> entries = new Queue<string>(nodeType.Value.MenuName.Split('/'));
 
                 while (entries.Count > 0)
                 {
                     SearchNode newNode = new SearchNode
                     {
-                        Type = node.Key,
+                        Type = nodeType.Key,
                         Entry = entries.Dequeue()
                     };
 
                     if (!currentSearchNodes.Contains(newNode))
                     {
-                        newNode.Nodes = new List<SearchNode>();
-                        currentSearchNodes.Add(newNode);
-                        currentSearchNodes = newNode.Nodes;
+                        if (entries.Count > 0)
+                        {
+                            newNode.Children = new List<SearchNode>();
+                            currentSearchNodes.Add(newNode);
+                            currentSearchNodes = newNode.Children;
+                        }
+                        else
+                        {
+                            currentSearchNodes.Add(newNode);
+                            break;
+                        }
                     }
                     else
                     {
-                        currentSearchNodes = currentSearchNodes.Find(x => x.Equals(newNode)).Nodes;
+                        currentSearchNodes = currentSearchNodes.Find(x => x.Equals(newNode)).Children;
                     }
                 }
             }
 
             void AddToTree(SearchNode searchNode, int depth = 1)
             {
-                if (searchNode.Nodes.Count == 0)    // If tree entry.
+                if (searchNode.Children == null)    // If tree entry.
                 {
                     searchTreeEntries.Add(new SearchTreeEntry(new GUIContent(searchNode.Entry, _indentationIcon))
                     {
@@ -78,7 +86,7 @@ namespace Celezt.DialogueSystem.Editor
                 else
                 {
                     searchTreeEntries.Add(new SearchTreeGroupEntry(new GUIContent(searchNode.Entry), depth));
-                    foreach (SearchNode entry in searchNode.Nodes)  // Recursive.
+                    foreach (SearchNode entry in searchNode.Children)  // Recursive.
                         AddToTree(entry, ++depth);
                 }
             }
