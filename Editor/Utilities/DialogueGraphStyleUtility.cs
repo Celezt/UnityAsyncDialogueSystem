@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor.Utilities
 {
-    public static class DSStyleUtility
+    public static class DialogueGraphStyleUtility
     {
         public const string STYLE_PATH = "Packages/com.celezt.asyncdialogue/Editor/Resources/Styles/";
 

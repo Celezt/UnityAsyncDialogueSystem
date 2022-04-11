@@ -29,6 +29,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                     nodeSerializeData.Add(new NodeSerializeData
                     {
                         ID = dgNode.ID.ToString(),
+                        Type = dgNode.GetType().FullName,
                     });
                 }
             });
@@ -43,12 +44,12 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                         {
                             InputPort =
                             {
-                                Node = new NodeSerializeData{ ID = inNode.ID.ToString()},
+                                NodeID = inNode.ID.ToString(),
                                 PortNumber = inNode.inputContainer.IndexOf(edge.input)
                             },
                             OutputPort =
                             {
-                                Node = new NodeSerializeData{ ID = outNode.ID.ToString()},
+                                NodeID = outNode.ID.ToString(),
                                 PortNumber = outNode.outputContainer.IndexOf(edge.output)
                             }
                         });

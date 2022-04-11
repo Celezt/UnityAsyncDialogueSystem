@@ -19,7 +19,7 @@ namespace Celezt.DialogueSystem.Editor
         [Serializable]
         public struct Choice
         {
-            public GUID ID;
+            public string ID;
             public string Text;
         }
 
@@ -119,14 +119,14 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         DialogueGraphNode nextNode = (DialogueGraphNode)edge.input.node;
                         Choice choice = (Choice)edge.output.userData;
-                        choice.ID = nextNode.ID;
+                        choice.ID = nextNode.ID.ToString();
                         edge.output.userData = choice;
                         break;
                     }
                 case EdgeState.Removed | EdgeState.Output:
                     {
                         Choice choice = (Choice)edge.output.userData;
-                        choice.ID = new GUID();
+                        choice.ID = "";
                         break;
                     }
             }
@@ -134,7 +134,7 @@ namespace Celezt.DialogueSystem.Editor
 
         protected override object CustomSaveData()
         {
-            return new SaveData { ActorID = ActorID, Choices = Choices, Text = Text };
+            return new SaveData{ ActorID = ActorID, Choices = Choices, Text = Text};
         }
 
         private Port CreateChoicePort(Choice choiceData)
