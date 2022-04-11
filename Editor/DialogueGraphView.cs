@@ -35,6 +35,8 @@ namespace Celezt.DialogueSystem.Editor
             AddSearchWindow();
             OnGraphViewChanged();
             AddStyles();
+
+            _editorWindow.OnSaveChanges += () => Save();
         }
 
         public GraphElement CreateGroup(Vector2 position)
@@ -47,24 +49,24 @@ namespace Celezt.DialogueSystem.Editor
             group.SetPosition(new Rect(position, Vector2.zero));
 
             foreach (GraphElement selectedElement in selection)
-                if (selectedElement is DSNode node)
+                if (selectedElement is DialogueGraphNode node)
                     group.AddElement(node);
 
             return group;
         }
 
-        public DSNode CreateNode(Type type, Vector2 position)
+        public DialogueGraphNode CreateNode(Type type, Vector2 position)
         {
-            if (!typeof(DSNode).IsAssignableFrom(type))
+            if (!typeof(DialogueGraphNode).IsAssignableFrom(type))
             {
-                Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DSNode)}");
+                Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DialogueGraphNode)}");
                 return null;
             }
 
-            return (DSNode)Activator.CreateInstance(type, this, position);
+            return (DialogueGraphNode)Activator.CreateInstance(type, this, position);
         }
 
-        public T CreateNode<T>(Vector2 position) where T : DSNode
+        public T CreateNode<T>(Vector2 position) where T : DialogueGraphNode
         {
             T node = (T)Activator.CreateInstance(typeof(T), this, position);
 
@@ -96,9 +98,9 @@ namespace Celezt.DialogueSystem.Editor
         {
             foreach (Type type in ReflectionUtility.GetTypesWithAttribute<CreateNodeAttribute>(AppDomain.CurrentDomain))
             {
-                if (!typeof(DSNode).IsAssignableFrom(type))
+                if (!typeof(DialogueGraphNode).IsAssignableFrom(type))
                 {
-                    Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DSNode)}");
+                    Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DialogueGraphNode)}");
                     continue;
                 }
 
@@ -119,7 +121,7 @@ namespace Celezt.DialogueSystem.Editor
         private IManipulator CreateGroupContextualMenu() => new ContextualMenuManipulator(
             menuEvent => menuEvent.menu.AppendAction("Create Group", actionEvent => AddElement(CreateGroup(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)))));
 
-        private IManipulator CreateNodeContextualMenu<T>(string actionTitle) where T : DSNode, new() => new ContextualMenuManipulator(
+        private IManipulator CreateNodeContextualMenu<T>(string actionTitle) where T : DialogueGraphNode, new() => new ContextualMenuManipulator(
             menuEvent => menuEvent.menu.AppendAction("Create " + actionTitle, actionEvent => AddElement(CreateNode<T>(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)))));
 
         private void AddGridBackground()
@@ -154,10 +156,10 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     foreach (Edge edge in changes.edgesToCreate)
                     {
-                        if (edge.input.node is DSNode inNode)
-                            inNode.InvokeEdgeChange(edge, DSNode.EdgeState.Created | DSNode.EdgeState.Input);
-                        if (edge.output.node is DSNode outNode)
-                            outNode.InvokeEdgeChange(edge, DSNode.EdgeState.Created | DSNode.EdgeState.Output);
+                        if (edge.input.node is DialogueGraphNode inNode)
+                            inNode.InvokeEdgeChange(edge, DialogueGraphNode.EdgeState.Created | DialogueGraphNode.EdgeState.Input);
+                        if (edge.output.node is DialogueGraphNode outNode)
+                            outNode.InvokeEdgeChange(edge, DialogueGraphNode.EdgeState.Created | DialogueGraphNode.EdgeState.Output);
                     }
                 }
 
@@ -167,16 +169,22 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         if (element is Edge edge)
                         {
-                            if (edge.input.node is DSNode inNode)
-                                inNode.InvokeEdgeChange(edge, DSNode.EdgeState.Removed | DSNode.EdgeState.Input);
-                            if (edge.output.node is DSNode outNode)
-                                outNode.InvokeEdgeChange(edge, DSNode.EdgeState.Removed | DSNode.EdgeState.Output);
+                            if (edge.input.node is DialogueGraphNode inNode)
+                                inNode.InvokeEdgeChange(edge, DialogueGraphNode.EdgeState.Removed | DialogueGraphNode.EdgeState.Input);
+                            if (edge.output.node is DialogueGraphNode outNode)
+                                outNode.InvokeEdgeChange(edge, DialogueGraphNode.EdgeState.Removed | DialogueGraphNode.EdgeState.Output);
                         }                    
                     }
                 }
 
                 return changes;
             };
+        }
+
+        private void Save()
+        {
+            ReadOnlySpan<char> serializedJSON = SerializationUtility.Serialize(0, _editorWindow.SelectedGuid, nodes, edges);
+            Debug.Log(serializedJSON.ToString());
         }
     }
 }

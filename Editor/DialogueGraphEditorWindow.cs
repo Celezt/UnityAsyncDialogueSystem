@@ -4,25 +4,46 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    using UnityEditor.UIElements;
     using Utilities;
 
     public class DialogueGraphEditorWindow : EditorWindow
     {
-        [MenuItem("Window/Dialogue/Dialogue Graph")]
-        public static void Open()
+        private const string GRAPH_NAME = "Dialogue Graph";
+
+        internal GUID SelectedGuid { get; set; }
+        internal bool HasUnsavedChanges
         {
-            GetWindow<DialogueGraphEditorWindow>().Initialize();
+            get => hasUnsavedChanges;
+            set => hasUnsavedChanges = value;
         }
 
-        public DialogueGraphEditorWindow Initialize()
-        {
-            titleContent.text = "Dialogue Graph";
+        internal event Action OnSaveChanges = delegate { };
 
+        private string SaveChangeMessage => 
+            "Do you want to save the changes you made in the Dialogue Graph?\n\n" +
+            AssetDatabase.GUIDToAssetPath(SelectedGuid.ToString()) +
+            "\n\nYour changes will be lost if you don't save them.";
+
+        public DialogueGraphEditorWindow Initialize(GUID assetGuid)
+        {
+            if (SelectedGuid == assetGuid)
+                return this;
+
+            SelectedGuid = assetGuid;
+            titleContent.text = GRAPH_NAME;
+            saveChangesMessage = SaveChangeMessage;
+            
             return this;
+        }
+
+        public override void SaveChanges()
+        {
+            Save();
+            base.SaveChanges();
         }
 
         private void OnEnable()
@@ -42,17 +63,47 @@ namespace Celezt.DialogueSystem.Editor
         private void AddToolbar()
         {
             Toolbar toolbar = new Toolbar();
-            ToolbarButton saveButton = new ToolbarButton()
+            toolbar.Add(new ToolbarButton(() => Save())
             {
                 text = "Save Asset",
-            };
-            toolbar.Add(saveButton);
+            });
+            toolbar.Add(new ToolbarSpacer());
+            toolbar.Add(new ToolbarButton(() => SaveAs())
+            {
+                text = "Save As..."
+            });
+
             rootVisualElement.Add(toolbar);
         }
 
         private void AddStyles()
         {
             rootVisualElement.AddStyleSheet("DSVariablesStyles");
+        }
+
+        private bool Save()
+        {
+            HasUnsavedChanges = true;
+            if (hasUnsavedChanges)
+            {
+                OnSaveChanges.Invoke();
+                hasUnsavedChanges = false;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool SaveAs()
+        {
+            if (hasUnsavedChanges)
+            {
+                OnSaveChanges.Invoke();
+                hasUnsavedChanges = false;
+                return true;
+            }
+
+            return false;
         }
     }
 }

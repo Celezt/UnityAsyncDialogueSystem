@@ -1,14 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public abstract class DSNode : Node
+    public abstract class DialogueGraphNode : Node
     {
-        public Guid ID => Guid.NewGuid();
+        public GUID ID => GUID.Generate();
 
         protected GraphView GraphView { get; private set; }
 
@@ -21,7 +22,7 @@ namespace Celezt.DialogueSystem.Editor
             Output = 1 << 4,
         }
 
-        protected DSNode(GraphView graphView, Vector2 position)
+        protected DialogueGraphNode(GraphView graphView, Vector2 position)
         {
             SetPosition(new Rect(position, Vector2.zero));
             GraphView = graphView;

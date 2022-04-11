@@ -42,7 +42,7 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             var window = EditorWindow.CreateWindow<DialogueGraphEditorWindow>(typeof(SceneView));
-            window.Initialize();
+            window.Initialize(AssetDatabase.GUIDFromAssetPath(path));
             window.Focus();
             return true;
         }

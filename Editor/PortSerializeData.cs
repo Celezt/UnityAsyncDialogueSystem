@@ -9,6 +9,6 @@ namespace Celezt.DialogueSystem.Editor
     public struct PortSerializeData
     {
         public NodeSerializeData Node;
-        public int Port;
+        public int PortNumber;
     }
 }

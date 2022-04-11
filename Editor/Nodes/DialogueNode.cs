@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,7 +10,7 @@ namespace Celezt.DialogueSystem.Editor
 {
 
     [CreateNode("Behaviour/Dialogue Node")]
-    public class DialogueNode : DSNode
+    public class DialogueNode : DialogueGraphNode
     {
         public string ActorID { get; set; } = "actor_id";
         public List<Choice> Choices { get; set; } = new List<Choice>() { new Choice { Text = "New Choice" } };
@@ -17,7 +18,7 @@ namespace Celezt.DialogueSystem.Editor
 
         public struct Choice
         {
-            public Guid ID;
+            public GUID ID;
             public string Text;
         }
 
@@ -107,7 +108,7 @@ namespace Celezt.DialogueSystem.Editor
             {
                 case EdgeState.Created | EdgeState.Output:
                     {
-                        DSNode nextNode = (DSNode)edge.input.node;
+                        DialogueGraphNode nextNode = (DialogueGraphNode)edge.input.node;
                         Choice choice = (Choice)edge.output.userData;
                         choice.ID = nextNode.ID;
                         edge.output.userData = choice;
@@ -116,7 +117,7 @@ namespace Celezt.DialogueSystem.Editor
                 case EdgeState.Removed | EdgeState.Output:
                     {
                         Choice choice = (Choice)edge.output.userData;
-                        choice.ID = Guid.Empty;
+                        choice.ID = new GUID();
                         break;
                     }
             }
