@@ -14,6 +14,6 @@ namespace Celezt.DialogueSystem.Editor
         [JsonRequired] public List<NodeSerializeData> Nodes;
         [JsonRequired] public List<EdgeSerializeData> Edges;
         [JsonRequired] public List<SerializedVector2Int> Positions;
-        [JsonRequired] public List<dynamic> SpecialProperties;
+        [JsonRequired] public List<dynamic> CustomSaveData;
     }
 }

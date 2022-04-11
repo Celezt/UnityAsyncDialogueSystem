@@ -18,12 +18,14 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             List<NodeSerializeData> nodeSerializeData = new List<NodeSerializeData>();
             List<EdgeSerializeData> edgeSerializeData = new List<EdgeSerializeData>();
             List<SerializedVector2Int> positionData = new List<SerializedVector2Int>();
+            List<object> customSerializeData = new List<object>();
             
             nodes.ForEach(node =>
             {            
                 if (node is DialogueGraphNode { } dgNode)
                 {
                     positionData.Add(Vector2Int.RoundToInt(dgNode.GetPosition().position));
+                    customSerializeData.Add(dgNode.GetCustomSaveData());
                     nodeSerializeData.Add(new NodeSerializeData
                     {
                         ID = dgNode.ID.ToString(),
@@ -61,7 +63,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 Nodes = nodeSerializeData,
                 Edges = edgeSerializeData,
                 Positions = positionData,
-                SpecialProperties = new List<dynamic>(),
+                CustomSaveData = customSerializeData,
             };
 
 

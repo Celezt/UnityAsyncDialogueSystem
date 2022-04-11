@@ -30,8 +30,23 @@ namespace Celezt.DialogueSystem.Editor
             GraphView = graphView;
         }
 
+        /// <summary>
+        /// If the state of any edges connected to this node is about to changed.
+        /// </summary>
+        /// <param name="edge">The changing edge.</param>
+        /// <param name="state">The direction and life state.</param>
         protected virtual void OnEdgeChanged(Edge edge, EdgeState state) { }
+        /// <summary>
+        /// Custom data to save connected to this node.
+        /// </summary>
+        protected virtual object CustomSaveData() { return null; }
+        /// <summary>
+        /// Custom data loaded from file.
+        /// </summary>
+        /// <param name="loadedData">Loaded data</param>
+        protected virtual void CustomLoadData(object loadedData) { }
 
         internal void InvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
+        internal object GetCustomSaveData() => CustomSaveData();
     }
 }

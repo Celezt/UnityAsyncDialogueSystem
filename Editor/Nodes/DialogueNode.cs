@@ -16,9 +16,18 @@ namespace Celezt.DialogueSystem.Editor
         public List<Choice> Choices { get; set; } = new List<Choice>() { new Choice { Text = "New Choice" } };
         public string Text { get; set; } = "Dialogue text.";
 
+        [Serializable]
         public struct Choice
         {
             public GUID ID;
+            public string Text;
+        }
+
+        [Serializable]
+        public struct SaveData
+        {
+            public string ActorID;
+            public List<Choice> Choices;
             public string Text;
         }
 
@@ -121,6 +130,11 @@ namespace Celezt.DialogueSystem.Editor
                         break;
                     }
             }
+        }
+
+        protected override object CustomSaveData()
+        {
+            return new SaveData { ActorID = ActorID, Choices = Choices, Text = Text };
         }
 
         private Port CreateChoicePort(Choice choiceData)
