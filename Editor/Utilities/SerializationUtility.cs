@@ -17,13 +17,13 @@ namespace Celezt.DialogueSystem.Editor.Utilities
         {
             List<NodeSerializeData> nodeSerializeData = new List<NodeSerializeData>();
             List<EdgeSerializeData> edgeSerializeData = new List<EdgeSerializeData>();
-            List<SerializedVector2> positionData = new List<SerializedVector2>();
+            List<SerializedVector2Int> positionData = new List<SerializedVector2Int>();
             
             nodes.ForEach(node =>
-            {
+            {            
                 if (node is DialogueGraphNode { } dgNode)
                 {
-                    positionData.Add(dgNode.GetPosition().position);
+                    positionData.Add(Vector2Int.RoundToInt(dgNode.GetPosition().position));
                     nodeSerializeData.Add(new NodeSerializeData
                     {
                         ID = dgNode.ID.ToString(),

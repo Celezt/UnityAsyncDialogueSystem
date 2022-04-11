@@ -9,7 +9,9 @@ namespace Celezt.DialogueSystem.Editor
 {
     public abstract class DialogueGraphNode : Node
     {
-        public GUID ID => GUID.Generate();
+        public GUID ID => _id;
+
+        private readonly GUID _id = GUID.Generate();
 
         protected GraphView GraphView { get; private set; }
 
