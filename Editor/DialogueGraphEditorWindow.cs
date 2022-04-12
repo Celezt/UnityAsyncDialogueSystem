@@ -59,8 +59,19 @@ namespace Celezt.DialogueSystem.Editor
 
         public DialogueGraphEditorWindow Initialize(GUID assetGuid)
         {
+            UnityEngine.Object asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(AssetDatabase.GUIDToAssetPath(assetGuid));
+
+            if (asset == null)
+                return this;
+
+            if (!EditorUtility.IsPersistent(asset))
+                return this;
+
             if (SelectedGuid == assetGuid)
                 return this;
+
+            Texture2D icon = icon = Resources.Load<Texture2D>("Icons/dg_graph_icon_gray_dark");
+            titleContent.image = icon;
 
             SelectedGuid = assetGuid;
 
