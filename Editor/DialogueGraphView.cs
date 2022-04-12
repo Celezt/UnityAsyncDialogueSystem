@@ -36,9 +36,6 @@ namespace Celezt.DialogueSystem.Editor
             AddSearchWindow();
             OnGraphViewChanged();
             AddStyles();
-
-            _editorWindow.OnSaveChanges += () => Save();
-            _editorWindow.OnSaveAsChanges += () => SaveAs();
         }
 
         public GraphElement CreateGroup(Vector2 position)
@@ -181,57 +178,6 @@ namespace Celezt.DialogueSystem.Editor
 
                 return changes;
             };
-        }
-
-        private void Save()
-        {
-            GUID guid = _editorWindow.SelectedGuid;
-            ReadOnlySpan<char> serializedJSON = SerializationUtility.Serialize(DG_VERSION, guid, nodes, edges);
-
-            ReadOnlySpan<char> FilePath = AssetDatabase.GUIDToAssetPath(guid);
-
-            if (FilePath.IsEmpty)
-                return;
-
-            if (DialogueGraphCreator.Overwrite(FilePath, serializedJSON))
-            {
-
-            }
-        }
-
-        private void SaveAs()
-        {
-            GUID guid = _editorWindow.SelectedGuid;
-            ReadOnlySpan<char> serializedJSON = SerializationUtility.Serialize(DG_VERSION, guid, nodes, edges);
-
-            ReadOnlySpan<char> oldFilePath = AssetDatabase.GUIDToAssetPath(guid);
-
-            if (oldFilePath.IsEmpty)
-                return;
-
-            ReadOnlySpan<char> newFilePath = EditorUtility.SaveFilePanelInProject(
-                "Save Graph As...",
-                Path.GetFileNameWithoutExtension(oldFilePath).ToString(),
-                DialogueGraphCreator.FILE_EXTENSION.Substring(1),   // Remove dot.
-                "",
-                Path.GetDirectoryName(oldFilePath).ToString()
-            ).Replace(Application.dataPath, "Assets");  // Simplify path.
-
-            if (newFilePath.IsEmpty || newFilePath.IsWhiteSpace())
-                return;
-
-            if (!MemoryExtensions.Equals(newFilePath, oldFilePath, StringComparison.Ordinal))
-            {
-                if (DialogueGraphCreator.Create(newFilePath, serializedJSON))
-                {
-                    AssetDatabase.ImportAsset(newFilePath.ToString());
-                    DialogueGraphImporterEditor.ShowGraphEditorWindow(newFilePath.ToString());
-                }
-            }
-            else
-            {
-                Save();
-            }
         }
     }
 }
