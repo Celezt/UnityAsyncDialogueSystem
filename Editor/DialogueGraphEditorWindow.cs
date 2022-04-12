@@ -70,7 +70,8 @@ namespace Celezt.DialogueSystem.Editor
             if (SelectedGuid == assetGuid)
                 return this;
 
-            Texture2D icon = icon = Resources.Load<Texture2D>("Icons/dg_graph_icon_gray_dark");
+            string theme = EditorGUIUtility.isProSkin ? "_dark" : "_light";
+            Texture2D icon = Resources.Load<Texture2D>("Icons/dg_graph_icon_gray" + theme);
             titleContent.image = icon;
 
             SelectedGuid = assetGuid;
