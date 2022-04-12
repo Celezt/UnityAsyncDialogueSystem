@@ -7,12 +7,23 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    using UnityEditor.Experimental.GraphView;
+    using UnityEngine.UIElements;
     using Utilities;
 
     public class DialogueGraphCreator
     {
         [MenuItem("Assets/Create/Dialogue Graph", priority = 90)]
-        public static void CreateEmptySelected() => CreateNewSelected("{\n\n}");
+        public static void CreateEmptySelected()
+        {
+            string[] selectedGUIDs = Selection.assetGUIDs;
+
+            if (selectedGUIDs.Length == 0) // Nothing is selected.
+                return;
+
+            if (GUID.TryParse(selectedGUIDs[0], out GUID guid))
+                CreateNewSelected(SerializationUtility.Serialize(DialogueGraphView.DG_VERSION, guid));
+        }
 
         public static void CreateNewSelected(ReadOnlySpan<char> content)
         {
@@ -51,20 +62,20 @@ namespace Celezt.DialogueSystem.Editor
         /// <returns>If already exist.</returns>
         public static bool CreateOrOverwrite(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
         {
-            string fullPath;
+            ReadOnlySpan<char> fullPath;
             if (Path.HasExtension(path))
             {
                 ReadOnlySpan<char> extension = Path.GetExtension(path);
-                if (extension == SerializationUtility.FILE_EXTENSION)
-                    fullPath = path.ToString();
+                if (MemoryExtensions.Equals(extension, SerializationUtility.FILE_EXTENSION, StringComparison.Ordinal))
+                    fullPath = path;
                 else
                     throw new ArgumentException($"\"{extension.ToString()}\" wrong extension");
             }
             else
                 fullPath = path.ToString() + SerializationUtility.FILE_EXTENSION;
 
-            bool exist = File.Exists(fullPath);
-            File.WriteAllText(fullPath, content.ToString());
+            bool exist = File.Exists(fullPath.ToString());
+            File.WriteAllText(fullPath.ToString(), content.ToString());
 
             AssetDatabase.Refresh();
 

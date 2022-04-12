@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem.Editor
 
     public class DialogueGraphEditorWindow : EditorWindow
     {
-        private const string GRAPH_NAME = "Dialogue Graph";
+        internal const string GRAPH_NAME = "Dialogue Graph";
 
         internal GUID SelectedGuid { get; set; }
         internal bool HasUnsavedChanges

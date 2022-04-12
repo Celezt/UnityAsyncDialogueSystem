@@ -14,6 +14,7 @@ namespace Celezt.DialogueSystem.Editor
 
     public class DialogueGraphView : GraphView
     {
+        internal const int DG_VERSION = 1;
         internal Dictionary<Type, NodeTypeData> NodeTypes = new Dictionary<Type, NodeTypeData>();
 
         private DialogueGraphEditorWindow _editorWindow;
@@ -183,7 +184,12 @@ namespace Celezt.DialogueSystem.Editor
 
         private void Save()
         {
-            ReadOnlySpan<char> serializedJSON = SerializationUtility.Serialize(0, _editorWindow.SelectedGuid, nodes, edges);
+            GUID guid = _editorWindow.SelectedGuid;
+            if (guid.Empty())
+                return;
+
+            ReadOnlySpan<char> serializedJSON = SerializationUtility.Serialize(DG_VERSION, guid, nodes, edges);
+            DialogueGraphCreator.CreateOrOverwrite(AssetDatabase.GUIDToAssetPath(guid), serializedJSON);
             Debug.Log(serializedJSON.ToString());
         }
     }

@@ -71,6 +71,22 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
         }
 
+        public static ReadOnlySpan<char> Serialize(int version, GUID objectID)
+        {
+            GraphSerializeData graphSerializeData = new GraphSerializeData
+            {
+                DGVersion = version,
+                ObjectID = objectID.ToString(),
+                Nodes = new List<NodeSerializeData>(),
+                Edges = new List<EdgeSerializeData>(),
+                Positions = new List<SerializedVector2Int>(),
+                CustomSaveData = new List<dynamic>(),
+            };
+
+
+            return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
+        }
+
         public static void WriteToFile(ReadOnlySpan<char> serializedData)
         {
 
