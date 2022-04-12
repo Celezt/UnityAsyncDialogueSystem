@@ -11,8 +11,6 @@ namespace Celezt.DialogueSystem.Editor.Utilities
 {
     public static class SerializationUtility
     {
-        public const string FILE_EXTENSION = ".dialoguegraph";
-
         public static ReadOnlySpan<char> Serialize(int version, GUID objectID, UQueryState<Node> nodes, UQueryState<Edge> edges)
         {
             List<NodeSerializeData> nodeSerializeData = new List<NodeSerializeData>();
@@ -85,11 +83,6 @@ namespace Celezt.DialogueSystem.Editor.Utilities
 
 
             return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
-        }
-
-        public static void WriteToFile(ReadOnlySpan<char> serializedData)
-        {
-
         }
     }
 }

@@ -26,30 +26,33 @@ namespace Celezt.DialogueSystem.Editor
 
         internal static bool ShowGraphEditorWindow(string path)
         {
-            ReadOnlySpan<char> guid = AssetDatabase.AssetPathToGUID(path);
+            GUID guid = AssetDatabase.GUIDFromAssetPath(path);
             ReadOnlySpan<char> extension = Path.GetExtension(path);
 
             if (extension.IsEmpty || extension.IsWhiteSpace())
                 return false;
 
-            if (!MemoryExtensions.Equals(extension, SerializationUtility.FILE_EXTENSION.AsSpan(), StringComparison.Ordinal))
+            if (!MemoryExtensions.Equals(extension, DialogueGraphCreator.FILE_EXTENSION.AsSpan(), StringComparison.Ordinal))
                 return false;
 
             foreach (var w in Resources.FindObjectsOfTypeAll<DialogueGraphEditorWindow>())
             {
-                w.Focus();
-                return true;
+                if (w.SelectedGuid == guid)
+                {
+                    w.Focus();
+                    return true;
+                }
             }
 
-            var window = EditorWindow.CreateWindow<DialogueGraphEditorWindow>(typeof(SceneView));
-            window.Initialize(AssetDatabase.GUIDFromAssetPath(path));
+            var window = EditorWindow.CreateWindow<DialogueGraphEditorWindow>(typeof(DialogueGraphEditorWindow), typeof(SceneView));
+            window.Initialize(guid);
             window.Focus();
             return true;
         }
 
         // Open asset when double clicking an asset in the Project Browser.
         [OnOpenAsset(0)]
-        public static bool OnOpenAsset(int instanceID, int line)
+        internal static bool OnOpenAsset(int instanceID, int line)
         {
             var path = AssetDatabase.GetAssetPath(instanceID);
             return ShowGraphEditorWindow(path);

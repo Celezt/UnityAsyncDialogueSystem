@@ -22,6 +22,7 @@ namespace Celezt.DialogueSystem.Editor
         }
 
         internal event Action OnSaveChanges = delegate { };
+        internal event Action OnSaveAsChanges = delegate { };
 
         private string SaveChangeMessage => 
             "Do you want to save the changes you made in the Dialogue Graph?\n\n" +
@@ -86,6 +87,9 @@ namespace Celezt.DialogueSystem.Editor
             HasUnsavedChanges = true;
             if (hasUnsavedChanges)
             {
+                if (SelectedGuid.Empty())
+                    return false;
+
                 OnSaveChanges.Invoke();
                 hasUnsavedChanges = false;
                 return true;
@@ -96,9 +100,13 @@ namespace Celezt.DialogueSystem.Editor
 
         private bool SaveAs()
         {
+            hasUnsavedChanges = true;
             if (hasUnsavedChanges)
             {
-                OnSaveChanges.Invoke();
+                if (SelectedGuid.Empty())
+                    return false;
+
+                OnSaveAsChanges.Invoke();
                 hasUnsavedChanges = false;
                 return true;
             }

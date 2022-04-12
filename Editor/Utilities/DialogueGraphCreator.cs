@@ -13,6 +13,8 @@ namespace Celezt.DialogueSystem.Editor
 
     public class DialogueGraphCreator
     {
+        public const string FILE_EXTENSION = ".dialoguegraph";
+
         [MenuItem("Assets/Create/Dialogue Graph", priority = 90)]
         public static void CreateEmptySelected()
         {
@@ -34,12 +36,12 @@ namespace Celezt.DialogueSystem.Editor
 
             string path = AssetDatabase.GUIDToAssetPath(selectedGUIDs[0]);
 
-            if (File.Exists($"{path}/New Dialogue Graph{SerializationUtility.FILE_EXTENSION}"))
+            if (File.Exists($"{path}/New Dialogue Graph{FILE_EXTENSION}"))
             {
                 int index = 1;
                 do
                 {
-                    string fullName = $"{path}/New Dialogue Graph {index}{SerializationUtility.FILE_EXTENSION}";
+                    string fullName = $"{path}/New Dialogue Graph {index}{FILE_EXTENSION}";
                     if (!File.Exists(fullName))
                     {
                         File.WriteAllText(fullName, content.ToString());
@@ -49,37 +51,91 @@ namespace Celezt.DialogueSystem.Editor
                 } while (++index < int.MaxValue);
             }
             else
-                File.WriteAllText($"{path}/New Dialogue Graph{SerializationUtility.FILE_EXTENSION}", content.ToString());
+                File.WriteAllText($"{path}/New Dialogue Graph{FILE_EXTENSION}", content.ToString());
 
             AssetDatabase.Refresh();
         }
 
         /// <summary>
-        /// Create new or overwrite already existing file.
+        /// Create new file.
         /// </summary>
-        /// <param name="path"></param>
-        /// <param name="content"></param>
-        /// <returns>If already exist.</returns>
-        public static bool CreateOrOverwrite(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
+        /// <returns>If non-existent</returns>
+        public static bool Create(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
         {
-            ReadOnlySpan<char> fullPath;
+            if (!TryGetValidPath(ref path))
+                return false;
+
+            if (File.Exists(path.ToString()))
+                return false;
+
+            return WriteToDisk(path, content);
+        }
+
+        /// <summary>
+        /// Overwrite already existing file.
+        /// </summary>
+        /// <returns>If it already exist.</returns>
+        public static bool Overwrite(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
+        {
+            if (!TryGetValidPath(ref path))
+                return false;
+             
+            if (!File.Exists(path.ToString()))
+                return false;
+
+            return WriteToDisk(path, content);
+        }
+
+        private static bool TryGetValidPath(ref ReadOnlySpan<char> path)
+        {
             if (Path.HasExtension(path))
             {
                 ReadOnlySpan<char> extension = Path.GetExtension(path);
-                if (MemoryExtensions.Equals(extension, SerializationUtility.FILE_EXTENSION, StringComparison.Ordinal))
-                    fullPath = path;
-                else
-                    throw new ArgumentException($"\"{extension.ToString()}\" wrong extension");
+                if (!MemoryExtensions.Equals(extension, FILE_EXTENSION, StringComparison.Ordinal))
+                    return false;
             }
-            else
-                fullPath = path.ToString() + SerializationUtility.FILE_EXTENSION;
+            else 
+                path = path.ToString() + FILE_EXTENSION;
 
-            bool exist = File.Exists(fullPath.ToString());
-            File.WriteAllText(fullPath.ToString(), content.ToString());
+            return true;
+        }
 
-            AssetDatabase.Refresh();
+        private static bool WriteToDisk(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
+        {
+            while (true)
+            {
+                try
+                {
+                    File.WriteAllText(path.ToString(), content.ToString());
+                }
+                catch (Exception e)
+                {
+                    if (e.GetBaseException() is UnauthorizedAccessException &&
+                        (File.GetAttributes(path.ToString()) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                    {
+                        if (EditorUtility.DisplayDialog("File is Read-Only", path.ToString(), "Make Writable", "Cancel Save"))
+                        {
+                            // Make file writable.
+                            FileInfo fileInfo = new FileInfo(path.ToString());
+                            fileInfo.IsReadOnly = true;
+                            continue;   // Retry.
+                        }
+                        else
+                            return false;   // Cancel save.
+                    }
 
-            return exist;
+                    Debug.LogException(e);
+
+                    if (EditorUtility.DisplayDialog("Exception While Saving", e.ToString(), "Retry", "Cancel"))
+                        continue;   // Retry;
+                    else
+                        return false; // Cancel save.
+
+                }
+                break;
+            }
+
+            return true;
         }
     }
 }

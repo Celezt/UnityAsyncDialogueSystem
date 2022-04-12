@@ -5,12 +5,12 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEditor;
+using System.Reflection;
+using System.IO;
 
 namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
-    using DialogueSystem.Utilities;
-    using System.Reflection;
 
     public class DialogueGraphView : GraphView
     {
@@ -38,6 +38,7 @@ namespace Celezt.DialogueSystem.Editor
             AddStyles();
 
             _editorWindow.OnSaveChanges += () => Save();
+            _editorWindow.OnSaveAsChanges += () => SaveAs();
         }
 
         public GraphElement CreateGroup(Vector2 position)
@@ -185,12 +186,52 @@ namespace Celezt.DialogueSystem.Editor
         private void Save()
         {
             GUID guid = _editorWindow.SelectedGuid;
-            if (guid.Empty())
+            ReadOnlySpan<char> serializedJSON = SerializationUtility.Serialize(DG_VERSION, guid, nodes, edges);
+
+            ReadOnlySpan<char> FilePath = AssetDatabase.GUIDToAssetPath(guid);
+
+            if (FilePath.IsEmpty)
                 return;
 
+            if (DialogueGraphCreator.Overwrite(FilePath, serializedJSON))
+            {
+
+            }
+        }
+
+        private void SaveAs()
+        {
+            GUID guid = _editorWindow.SelectedGuid;
             ReadOnlySpan<char> serializedJSON = SerializationUtility.Serialize(DG_VERSION, guid, nodes, edges);
-            DialogueGraphCreator.CreateOrOverwrite(AssetDatabase.GUIDToAssetPath(guid), serializedJSON);
-            Debug.Log(serializedJSON.ToString());
+
+            ReadOnlySpan<char> oldFilePath = AssetDatabase.GUIDToAssetPath(guid);
+
+            if (oldFilePath.IsEmpty)
+                return;
+
+            ReadOnlySpan<char> newFilePath = EditorUtility.SaveFilePanelInProject(
+                "Save Graph As...",
+                Path.GetFileNameWithoutExtension(oldFilePath).ToString(),
+                DialogueGraphCreator.FILE_EXTENSION.Substring(1),   // Remove dot.
+                "",
+                Path.GetDirectoryName(oldFilePath).ToString()
+            ).Replace(Application.dataPath, "Assets");  // Simplify path.
+
+            if (newFilePath.IsEmpty || newFilePath.IsWhiteSpace())
+                return;
+
+            if (!MemoryExtensions.Equals(newFilePath, oldFilePath, StringComparison.Ordinal))
+            {
+                if (DialogueGraphCreator.Create(newFilePath, serializedJSON))
+                {
+                    AssetDatabase.ImportAsset(newFilePath.ToString());
+                    DialogueGraphImporterEditor.ShowGraphEditorWindow(newFilePath.ToString());
+                }
+            }
+            else
+            {
+                Save();
+            }
         }
     }
 }
