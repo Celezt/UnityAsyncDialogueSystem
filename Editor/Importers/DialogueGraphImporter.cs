@@ -9,9 +9,11 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
 
-     [ScriptedImporter(1, DialogueGraphCreator.FILE_EXTENSION)]
+     [ScriptedImporter(1, FILE_EXTENSION)]
     public class DialogueGraphImporter : ScriptedImporter
     {
+        public const string FILE_EXTENSION = ".dialoguegraph";
+
         private const string DIALOGUE_GRAPH_ICON_PATH = "Packages/com.celezt.asyncdialogue/Editor/Resources/Icons/dg_graph_icon.png";
         public override void OnImportAsset(AssetImportContext ctx)
         {

@@ -15,9 +15,6 @@ namespace Celezt.DialogueSystem.Editor
     {
         internal const int DG_VERSION = 1;
 
-        [SerializeField] GUID _selectedGuid;
-        [SerializeField] string _lastSerializedContent;
-
         internal GUID SelectedGuid
         {
             get => _selectedGuid;
@@ -38,8 +35,21 @@ namespace Celezt.DialogueSystem.Editor
                 return !MemoryExtensions.Equals(currentSerializedJson, _lastSerializedContent, StringComparison.Ordinal);
             }
         }
-        
+
+        internal bool HasAssetFileChanged => !ReadAssetFile().Equals(_lastSerializedContent, StringComparison.Ordinal);
+
         internal bool AssetFileExist => File.Exists(AssetDatabase.GUIDToAssetPath(SelectedGuid));
+
+        private string SaveChangeMessage =>
+            "Do you want to save the changes you made in the Dialogue Graph?\n\n" +
+            AssetDatabase.GUIDToAssetPath(SelectedGuid.ToString()) +
+            "\n\nYour changes will be lost if you don't save them.";
+
+        [SerializeField] GUID _selectedGuid;
+        [SerializeField] string _lastSerializedContent;
+        [SerializeField] bool _checkAssetStatus;
+
+        [NonSerialized] bool _isProTheme;
 
         /// <summary>
         /// If graph is about to be saved.
@@ -49,11 +59,6 @@ namespace Celezt.DialogueSystem.Editor
         /// If graph is about to be saved as a new asset.
         /// </summary>
         internal event Action OnSaveAsChanges = delegate { };
-
-        private string SaveChangeMessage => 
-            "Do you want to save the changes you made in the Dialogue Graph?\n\n" +
-            AssetDatabase.GUIDToAssetPath(SelectedGuid.ToString()) +
-            "\n\nYour changes will be lost if you don't save them.";
 
         private DialogueGraphView _graphView;
 
@@ -76,7 +81,11 @@ namespace Celezt.DialogueSystem.Editor
 
             SelectedGuid = assetGuid;
 
+            AddGraphView();
+            AddToolbar();
+            AddStyles();
             UpdateTitle();
+
             Repaint();
             
             return this;
@@ -85,7 +94,7 @@ namespace Celezt.DialogueSystem.Editor
         public override void SaveChanges()
         {
             Debug.Log("SaveChanges");
-            Save();
+            SaveAsset();
             base.SaveChanges();
         }
 
@@ -111,11 +120,75 @@ namespace Celezt.DialogueSystem.Editor
             titleContent.text = title.ToString();
         }
 
+        public void AssetWasDeleted()
+        {
+            _checkAssetStatus = true;
+            UpdateTitle();
+        }
+
+        public void CheckForChanges()
+        {
+            if (!_checkAssetStatus)
+            {
+                _checkAssetStatus = true;
+                UpdateTitle();
+            }
+        }
+
+        private void Update()
+        {
+            bool updateTitle = false;
+
+            if (_checkAssetStatus)                          // Check if any change has been made to the asset.
+            {
+                _checkAssetStatus = false;
+                if (!AssetFileExist)
+                    DisplayDeleteDialogue();
+                else if (HasAssetFileChanged)
+                {
+                    bool graphChanged = HasChangesSinceLastSerialization;
+
+                    if (EditorUtility.DisplayDialog(
+                        "Graph has changed in file",
+                        AssetDatabase.GUIDToAssetPath(SelectedGuid) + "\n\n" +
+                        (graphChanged ? "Do you want to reload it and lose the changes made in the graph?" : "Do you want to reload it?"),
+                        graphChanged ? "Discard Changes and Reload" : "Reload",
+                        "Don't Reload"))
+                    {
+                        rootVisualElement.Remove(_graphView);
+                        _graphView = null;
+                    }
+                }
+
+                updateTitle = true;
+            }
+
+            if (EditorGUIUtility.isProSkin != _isProTheme)  // Swap icon if using pro theme.
+            {
+                updateTitle = true;
+                _isProTheme = EditorGUIUtility.isProSkin;
+            }
+
+            if (_graphView == null && !SelectedGuid.Empty())    // Trigger reload if no graph exist but still selected.
+            {
+                GUID guid = SelectedGuid;
+                SelectedGuid = new GUID();
+                Initialize(guid);
+            }
+
+            if (_graphView == null)     // Close window if no graphView is present.
+            {
+                Close();
+                return;
+            }
+
+            if (updateTitle)
+                UpdateTitle();
+        }   
+
         private void OnEnable()
         {
-            AddGraphView();
-            AddToolbar();
-            AddStyles();
+            this.SetAntiAliasing(4);
         }
 
         private void AddGraphView()
@@ -128,22 +201,22 @@ namespace Celezt.DialogueSystem.Editor
         private void AddToolbar()
         {
             Toolbar toolbar = new Toolbar();
-            toolbar.Add(new ToolbarButton(() => Save())
+            toolbar.Add(new ToolbarButton(() => SaveAsset())
             {
                 text = "Save Asset",
             });
             toolbar.Add(new ToolbarSpacer());
-            toolbar.Add(new ToolbarButton(() => SaveAs())
+            toolbar.Add(new ToolbarButton(() => SaveAssetAs())
             {
                 text = "Save As..."
             });
 
-            rootVisualElement.Add(toolbar);
+            _graphView.Add(toolbar);
         }
 
         private void AddStyles()
         {
-            rootVisualElement.AddStyleSheet("DSVariablesStyles");
+            _graphView.AddStyleSheet("DSVariablesStyles");
         }
 
         private bool SaveOnQuit()
@@ -160,7 +233,7 @@ namespace Celezt.DialogueSystem.Editor
 
                 return option switch
                 {
-                    0 => Save(),
+                    0 => SaveAsset(),
                     1 => false,
                     _ => true,
                 };
@@ -183,7 +256,7 @@ namespace Celezt.DialogueSystem.Editor
                             "Save As...", "Cancel", "Discard Graph and Close Window");
                 if (option == 0)
                 {
-                    ReadOnlySpan<char> savePath = SaveAsImplementation();
+                    ReadOnlySpan<char> savePath = SaveAssetAsImplementation();
                     if (!savePath.IsEmpty)
                     {
                         save = true;
@@ -206,7 +279,13 @@ namespace Celezt.DialogueSystem.Editor
             return (save || close);
         }
 
-        private bool Save()
+        private ReadOnlySpan<char> ReadAssetFile()
+        {
+           ReadOnlySpan<char> filePath = AssetDatabase.GUIDToAssetPath(_selectedGuid);
+            return DialogueGraphCreator.ReadAll(filePath);
+        }
+
+        private bool SaveAsset()
         {
             if (SelectedGuid.Empty())
                 return false;
@@ -225,13 +304,13 @@ namespace Celezt.DialogueSystem.Editor
             return true;
         }
 
-        private void SaveAs()
+        private void SaveAssetAs()
         {
             OnSaveAsChanges.Invoke();
-            SaveAsImplementation();
+            SaveAssetAsImplementation();
         }
 
-        private ReadOnlySpan<char> SaveAsImplementation()
+        private ReadOnlySpan<char> SaveAssetAsImplementation()
         {
             ReadOnlySpan<char> saveFilePath = ReadOnlySpan<char>.Empty;
 
@@ -245,7 +324,7 @@ namespace Celezt.DialogueSystem.Editor
                 ReadOnlySpan<char> newFilePath = EditorUtility.SaveFilePanelInProject(
                     "Save Graph As...",
                     Path.GetFileNameWithoutExtension(oldFilePath).ToString(),
-                    DialogueGraphCreator.FILE_EXTENSION.Substring(1),   // Remove dot.
+                    DialogueGraphImporter.FILE_EXTENSION.Substring(1),   // Remove dot.
                     "",
                     Path.GetDirectoryName(oldFilePath).ToString()
                 ).Replace(Application.dataPath, "Assets");  // Simplify path.
@@ -266,7 +345,7 @@ namespace Celezt.DialogueSystem.Editor
                 }
                 else
                 {
-                    Save();
+                    SaveAsset();
 
                     saveFilePath = oldFilePath;
                 }

@@ -3,18 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.VersionControl;
 using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    using UnityEditor.Experimental.GraphView;
-    using UnityEngine.UIElements;
     using Utilities;
 
     public class DialogueGraphCreator
     {
-        public const string FILE_EXTENSION = ".dialoguegraph";
-
         [MenuItem("Assets/Create/Dialogue Graph", priority = 90)]
         public static void CreateEmptySelected()
         {
@@ -36,12 +33,12 @@ namespace Celezt.DialogueSystem.Editor
 
             string path = AssetDatabase.GUIDToAssetPath(selectedGUIDs[0]);
 
-            if (File.Exists($"{path}/New Dialogue Graph{FILE_EXTENSION}"))
+            if (File.Exists($"{path}/New Dialogue Graph{DialogueGraphImporter.FILE_EXTENSION}"))
             {
                 int index = 1;
                 do
                 {
-                    string fullName = $"{path}/New Dialogue Graph {index}{FILE_EXTENSION}";
+                    string fullName = $"{path}/New Dialogue Graph {index}{DialogueGraphImporter.FILE_EXTENSION}";
                     if (!File.Exists(fullName))
                     {
                         File.WriteAllText(fullName, content.ToString());
@@ -51,7 +48,7 @@ namespace Celezt.DialogueSystem.Editor
                 } while (++index < int.MaxValue);
             }
             else
-                File.WriteAllText($"{path}/New Dialogue Graph{FILE_EXTENSION}", content.ToString());
+                File.WriteAllText($"{path}/New Dialogue Graph{DialogueGraphImporter.FILE_EXTENSION}", content.ToString());
 
             AssetDatabase.Refresh();
         }
@@ -86,22 +83,54 @@ namespace Celezt.DialogueSystem.Editor
             return WriteToDisk(path, content);
         }
 
+        public static ReadOnlySpan<char> ReadAll(ReadOnlySpan<char> path)
+        {
+            ReadOnlySpan<char> result = ReadOnlySpan<char>.Empty;
+            try
+            {
+                result = File.ReadAllText(path.ToString());
+            }
+            catch
+            {
+                result = ReadOnlySpan<char>.Empty;
+            }
+
+            return result;
+        }
+
         private static bool TryGetValidPath(ref ReadOnlySpan<char> path)
         {
             if (Path.HasExtension(path))
             {
                 ReadOnlySpan<char> extension = Path.GetExtension(path);
-                if (!MemoryExtensions.Equals(extension, FILE_EXTENSION, StringComparison.Ordinal))
+                if (!MemoryExtensions.Equals(extension, DialogueGraphImporter.FILE_EXTENSION, StringComparison.Ordinal))
                     return false;
             }
             else 
-                path = path.ToString() + FILE_EXTENSION;
+                path = path.ToString() + DialogueGraphImporter.FILE_EXTENSION;
 
             return true;
         }
 
         private static bool WriteToDisk(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
         {
+            // Checks if asset is valid.
+            if (Provider.enabled && Provider.isActive)
+            {
+                Asset asset = Provider.GetAssetByPath(path.ToString());
+                if (asset != null)
+                {
+                    if (!Provider.IsOpenForEdit(asset))
+                    {
+                        Task task = Provider.Checkout(asset, CheckoutMode.Asset);
+                        task.Wait();
+
+                        if (!task.success)
+                            Debug.Log(task.text + " " + task.resultCode);
+                    }
+                }
+            }
+
             while (true)
             {
                 try

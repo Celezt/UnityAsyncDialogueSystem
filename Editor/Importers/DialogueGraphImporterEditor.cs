@@ -32,7 +32,7 @@ namespace Celezt.DialogueSystem.Editor
             if (extension.IsEmpty || extension.IsWhiteSpace())
                 return false;
 
-            if (!MemoryExtensions.Equals(extension, DialogueGraphCreator.FILE_EXTENSION.AsSpan(), StringComparison.Ordinal))
+            if (!MemoryExtensions.Equals(extension, DialogueGraphImporter.FILE_EXTENSION.AsSpan(), StringComparison.Ordinal))
                 return false;
 
             foreach (var w in Resources.FindObjectsOfTypeAll<DialogueGraphEditorWindow>())
