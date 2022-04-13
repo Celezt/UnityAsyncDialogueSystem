@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Plastic.Newtonsoft.Json;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -9,12 +10,12 @@ using UnityEngine.UIElements;
 namespace Celezt.DialogueSystem.Editor
 {
 
-    [CreateNode("Behaviour/Dialogue Node")]
-    public class DialogueNode : DialogueGraphNode
+    [CreateNode("Behaviour/Dialogue Node"), JsonObject(MemberSerialization.OptIn)]
+    public class DialogueNode : CustomGraphNode
     {
-        public string ActorID { get; set; } = "actor_id";
-        public List<Choice> Choices { get; set; } = new List<Choice>() { new Choice { Text = "New Choice" } };
-        public string Text { get; set; } = "Dialogue text.";
+        [JsonProperty] private string _actorID = "actor_id";
+        [JsonProperty] private string _text = "Dialogue text.";
+        [JsonProperty] private List<Choice> _choices = new List<Choice>();
 
         [Serializable]
         public struct Choice
@@ -23,15 +24,7 @@ namespace Celezt.DialogueSystem.Editor
             public string Text;
         }
 
-        [Serializable]
-        public struct SaveData
-        {
-            public string ActorID;
-            public List<Choice> Choices;
-            public string Text;
-        }
-
-        public DialogueNode(GraphView graphView, Vector2 position) : base(graphView, position)
+        protected override void Start()
         {
             mainContainer.AddToClassList("ds-node__main-container");
             extensionContainer.AddToClassList("ds-node__extension-container");
@@ -41,7 +34,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             TextField actorIDTextField = new TextField()
             {
-                value = ActorID,
+                value = _actorID,
             };
             actorIDTextField.AddToClassList("ds-node__text-field");
             actorIDTextField.AddToClassList("ds-node__filename-text-field");
@@ -54,7 +47,7 @@ namespace Celezt.DialogueSystem.Editor
             Button addChoiceButton = new Button(() =>
             {
                 Port choicePort = CreateChoicePort(new Choice { Text = "New Choice" });
-                Choices.Add(new Choice { Text = "New Choice" });
+                _choices.Add(new Choice { Text = "New Choice" });
                 outputContainer.Add(choicePort);
             })
             {
@@ -74,15 +67,6 @@ namespace Celezt.DialogueSystem.Editor
             inputContainer.Add(inputPort);
 
             //
-            // Output Container
-            //
-            foreach (Choice choice in Choices)
-            {
-                Port choicePort = CreateChoicePort(choice);
-                outputContainer.Add(choicePort);
-            }
-
-            //
             //  Extensions Container
             //
             VisualElement customDataContainer = new VisualElement();
@@ -97,7 +81,7 @@ namespace Celezt.DialogueSystem.Editor
 
             TextField textTextField = new TextField()
             {
-                value = Text,
+                value = _text,
             };
             textTextField.multiline = true;
 
@@ -117,9 +101,9 @@ namespace Celezt.DialogueSystem.Editor
             {
                 case EdgeState.Created | EdgeState.Output:
                     {
-                        DialogueGraphNode nextNode = (DialogueGraphNode)edge.input.node;
+                        CustomGraphNode nextNode = (CustomGraphNode)edge.input.node;
                         Choice choice = (Choice)edge.output.userData;
-                        choice.ID = nextNode.ID.ToString();
+                        choice.ID = nextNode.Guid.ToString();
                         edge.output.userData = choice;
                         break;
                     }
@@ -132,9 +116,32 @@ namespace Celezt.DialogueSystem.Editor
             }
         }
 
-        protected override object CustomSaveData()
+        protected override object OnSaveData() => this;
+
+        protected override void OnLoadData(object loadedData)
         {
-            return new SaveData{ ActorID = ActorID, Choices = Choices, Text = Text};
+            DialogueNode node = JsonConvert.DeserializeObject<DialogueNode>(loadedData.ToString());
+            _actorID = node._actorID;
+            _text = node._text;
+            _choices = node._choices;
+
+            foreach (var choice in _choices)
+            {
+                Port choicePort = CreateChoicePort(choice);
+                outputContainer.Add(choicePort);
+            }
+        }
+
+        protected override void AfterLoad()
+        {
+            if (_choices.Count == 0)
+            {
+                Choice choice = new Choice { Text = "New Choice" };
+                _choices.Add(choice);
+
+                Port choicePort = CreateChoicePort(choice);
+                outputContainer.Add(choicePort);
+            }
         }
 
         private Port CreateChoicePort(Choice choiceData)
@@ -145,13 +152,13 @@ namespace Celezt.DialogueSystem.Editor
 
             Button deleteChoiceButton = new Button(() =>
             {
-                if (Choices.Count == 1)
+                if (_choices.Count == 1)
                     return;
 
                 if (choicePort.connected)
                     GraphView.DeleteElements(choicePort.connections);
 
-                Choices.Remove(choiceData);
+                _choices.Remove(choiceData);
                 GraphView.RemoveElement(choicePort);
             })
             {

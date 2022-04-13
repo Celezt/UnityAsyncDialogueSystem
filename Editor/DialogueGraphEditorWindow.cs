@@ -81,11 +81,36 @@ namespace Celezt.DialogueSystem.Editor
 
             SelectedGuid = assetGuid;
 
-            AddGraphView();
-            AddToolbar();
-            AddStyles();
-            UpdateTitle();
+            // Add graph view.
+            {
+                _graphView = new DialogueGraphView(this);
+                _graphView.StretchToParentSize();
+                rootVisualElement.Add(_graphView);
+            }
 
+            // Add tool bar.
+            {
+                Toolbar toolbar = new Toolbar();
+                toolbar.Add(new ToolbarButton(() => SaveAsset())
+                {
+                    text = "Save Asset",
+                });
+                toolbar.Add(new ToolbarSpacer());
+                toolbar.Add(new ToolbarButton(() => SaveAssetAs())
+                {
+                    text = "Save As..."
+                });
+
+                _graphView.Add(toolbar);
+            }
+
+            // Add style sheet.
+            _graphView.AddStyleSheet("DSVariablesStyles");
+
+            _lastSerializedContent = ReadAssetFile().ToString();
+            _graphView.Deserialize(_lastSerializedContent);       
+
+            UpdateTitle();
             Repaint();
             
             return this;
@@ -189,34 +214,6 @@ namespace Celezt.DialogueSystem.Editor
         private void OnEnable()
         {
             this.SetAntiAliasing(4);
-        }
-
-        private void AddGraphView()
-        {
-            _graphView = new DialogueGraphView(this);
-            _graphView.StretchToParentSize();
-            rootVisualElement.Add(_graphView);
-        }
-
-        private void AddToolbar()
-        {
-            Toolbar toolbar = new Toolbar();
-            toolbar.Add(new ToolbarButton(() => SaveAsset())
-            {
-                text = "Save Asset",
-            });
-            toolbar.Add(new ToolbarSpacer());
-            toolbar.Add(new ToolbarButton(() => SaveAssetAs())
-            {
-                text = "Save As..."
-            });
-
-            _graphView.Add(toolbar);
-        }
-
-        private void AddStyles()
-        {
-            _graphView.AddStyleSheet("DSVariablesStyles");
         }
 
         private bool SaveOnQuit()

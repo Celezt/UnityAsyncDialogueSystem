@@ -20,13 +20,13 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             
             nodes.ForEach(node =>
             {            
-                if (node is DialogueGraphNode { } dgNode)
+                if (node is CustomGraphNode { } dgNode)
                 {
                     positionData.Add(Vector2Int.RoundToInt(dgNode.GetPosition().position));
-                    customSerializeData.Add(dgNode.GetCustomSaveData());
+                    customSerializeData.Add(dgNode.InternalGetSaveData());
                     nodeSerializeData.Add(new NodeSerializeData
                     {
-                        ID = dgNode.ID.ToString(),
+                        ID = dgNode.Guid.ToString(),
                         Type = dgNode.GetType().FullName,
                     });
                 }
@@ -34,20 +34,20 @@ namespace Celezt.DialogueSystem.Editor.Utilities
 
             edges.ForEach(edge =>
             {
-                if (edge.input.node is DialogueGraphNode inNode)
+                if (edge.input.node is CustomGraphNode inNode)
                 {
-                    if (edge.output.node is DialogueGraphNode outNode)
+                    if (edge.output.node is CustomGraphNode outNode)
                     {
                         edgeSerializeData.Add(new EdgeSerializeData
                         {
                             InputPort =
                             {
-                                NodeID = inNode.ID.ToString(),
+                                NodeID = inNode.Guid.ToString(),
                                 PortNumber = inNode.inputContainer.IndexOf(edge.input)
                             },
                             OutputPort =
                             {
-                                NodeID = outNode.ID.ToString(),
+                                NodeID = outNode.Guid.ToString(),
                                 PortNumber = outNode.outputContainer.IndexOf(edge.output)
                             }
                         });
@@ -83,6 +83,60 @@ namespace Celezt.DialogueSystem.Editor.Utilities
 
 
             return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
+        }
+
+        public static GraphSerializeData Deserialize(ReadOnlySpan<char> content)
+        {
+            return JsonConvert.DeserializeObject<GraphSerializeData>(content.ToString());
+        }
+
+        internal static void Deserialize(this DialogueGraphView graphView, ReadOnlySpan<char> content)
+        {
+            GraphSerializeData deserializedData = Deserialize(content);
+
+            // Load all nodes.
+            int length = deserializedData.Nodes.Count;
+            for (int i = 0; i < length; i++)
+            {
+                NodeSerializeData nodeData = deserializedData.Nodes[i];
+                SerializedVector2Int positionData = deserializedData.Positions[i];
+                object customData = deserializedData.CustomSaveData[i];
+
+                if (!GUID.TryParse(nodeData.ID, out GUID guid))
+                    throw new Exception(nodeData.ID + " is invalid GUID");
+
+                CustomGraphNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, guid);
+                graphNode.InternalSetLoadData(customData);
+                graphNode.InternalAfterLoad();
+                graphView.AddElement(graphNode);
+            }
+
+            for (int i = 0; i < deserializedData.Edges.Count; i++)
+            {
+                EdgeSerializeData edgeData = deserializedData.Edges[i];
+                PortSerializeData outputData = edgeData.OutputPort;
+                PortSerializeData inputData = edgeData.InputPort;
+
+                if (!GUID.TryParse(outputData.NodeID, out GUID outguid))
+                    throw new Exception(outputData.NodeID + " is invalid GUID");
+
+                if (!GUID.TryParse(inputData.NodeID, out GUID inguid))
+                    throw new Exception(inputData.NodeID + " is invalid GUID");
+
+                CustomGraphNode outNode = graphView.NodeDictionary[outguid];
+                CustomGraphNode inNode = graphView.NodeDictionary[inguid];
+
+                if (outNode.outputContainer.childCount < outputData.PortNumber)
+                    throw new Exception("Trying to access output port that does not exist for " + outNode.GetType());
+
+                if (inNode.inputContainer.childCount < inputData.PortNumber)
+                    throw new Exception("Trying to access input port that does not exist for " + inNode.GetType());
+
+                Edge edge = ((Port)outNode.outputContainer[outputData.PortNumber]).ConnectTo((Port)inNode.inputContainer[inputData.PortNumber]);
+
+                graphView.AddElement(edge);
+                outNode.RefreshPorts();
+            }
         }
     }
 }

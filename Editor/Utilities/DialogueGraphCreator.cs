@@ -86,6 +86,10 @@ namespace Celezt.DialogueSystem.Editor
         public static ReadOnlySpan<char> ReadAll(ReadOnlySpan<char> path)
         {
             ReadOnlySpan<char> result = ReadOnlySpan<char>.Empty;
+
+            if (!IsValidPath(path))
+                return result;
+
             try
             {
                 result = File.ReadAllText(path.ToString());
@@ -96,6 +100,18 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             return result;
+        }
+
+        private static bool IsValidPath(ReadOnlySpan<char> path)
+        {
+            if (Path.HasExtension(path))
+            {
+                ReadOnlySpan<char> extension = Path.GetExtension(path);
+                if (MemoryExtensions.Equals(extension, DialogueGraphImporter.FILE_EXTENSION, StringComparison.Ordinal))
+                    return true;
+            }
+
+            return false;
         }
 
         private static bool TryGetValidPath(ref ReadOnlySpan<char> path)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
@@ -101,7 +102,7 @@ namespace Celezt.DialogueSystem.Editor
         {
             if (_graphView.NodeTypes.ContainsKey((Type)searchTreeEntry.userData))
             {
-                _graphView.AddElement(_graphView.CreateNode((Type)searchTreeEntry.userData, _graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position)));
+                _graphView.AddElement(_graphView.CreateNode((Type)searchTreeEntry.userData, _graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position), GUID.Generate()));
                 return true;
 
             }

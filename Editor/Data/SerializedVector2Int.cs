@@ -18,6 +18,7 @@ namespace Celezt.DialogueSystem.Editor
         }
 
         public static implicit operator Vector2Int(SerializedVector2Int v) => new Vector2Int(v.x, v.y);
+        public static implicit operator Vector2(SerializedVector2Int v) => new Vector2(v.x, v.y);
         public static implicit operator SerializedVector2Int(Vector2Int v) => new SerializedVector2Int(x: v.x, y: v.y);
     }
 }
