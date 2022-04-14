@@ -10,6 +10,7 @@ using System.IO;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    using Unity.Plastic.Newtonsoft.Json.Linq;
     using Utilities;
 
     public class DialogueGraphView : GraphView
@@ -39,6 +40,9 @@ namespace Celezt.DialogueSystem.Editor
             AddSearchWindow();
             OnGraphViewChanged();
             AddStyles();
+
+            canPasteSerializedData += AllowPaste;
+            unserializeAndPaste += OnPaste;
         }
 
         public GraphElement CreateGroup(Vector2 position)
@@ -57,7 +61,14 @@ namespace Celezt.DialogueSystem.Editor
             return group;
         }
 
-        public CustomGraphNode CreateNode(Type type, Vector2 position, GUID guid)
+        public CustomGraphNode CopyNode(CustomGraphNode toCopy, Vector2 position)
+        {
+            var node = CreateNode(toCopy.GetType(), position, GUID.Generate(), SerializationUtility.ToJObject(toCopy.InternalGetSaveData()));
+
+            return node;
+        }
+
+        public CustomGraphNode CreateNode(Type type, Vector2 position, GUID guid, JObject loadedData = null)
         {
             if (!typeof(CustomGraphNode).IsAssignableFrom(type))
             {
@@ -68,16 +79,22 @@ namespace Celezt.DialogueSystem.Editor
             var node = (CustomGraphNode)Activator.CreateInstance(type);
             node.SetPosition(new Rect(position, Vector2.zero));
             node.InternalStart(this, guid);
+            if (loadedData != null)
+                node.InternalSetLoadData(loadedData);
+            node.InternalAfterLoad();
             NodeDictionary.Add(guid, node);
 
             return node;
         }
 
-        public T CreateNode<T>(Vector2 position, GUID guid) where T : CustomGraphNode, new()
+        public T CreateNode<T>(Vector2 position, GUID guid, JObject loadedData = null) where T : CustomGraphNode, new()
         {
             T node = new T();
             node.SetPosition(new Rect(position, Vector2.zero));
             node.InternalStart(this, guid);
+            if (loadedData != null)
+                node.InternalSetLoadData(loadedData);
+            node.InternalAfterLoad();
             NodeDictionary.Add(guid, node);
 
             return node;
@@ -92,6 +109,9 @@ namespace Celezt.DialogueSystem.Editor
                     return;
 
                 if (startPort.direction == port.direction)  // Ignore if same direction (input/output).
+                    return;
+
+                if (startPort.portType != port.portType)    // Ignore if not same port type.
                     return;
 
                 compatiblePorts.Add(port);
@@ -148,7 +168,7 @@ namespace Celezt.DialogueSystem.Editor
                 _searchWindow = ScriptableObject.CreateInstance<DialogueGraphNodeSearchWindow>();
                 _searchWindow.Initialize(this, _editorWindow);
             }
-
+            
             nodeCreationRequest = context => SearchWindow.Open(new SearchWindowContext(context.screenMousePosition), _searchWindow);
         }
 
@@ -198,6 +218,30 @@ namespace Celezt.DialogueSystem.Editor
 
                 return changes;
             };
+        }
+
+        private void OnPaste(string operationName, string data)
+        {
+            if (selection.Count > 0)
+            {
+                foreach (ISelectable selectable in selection)
+                {
+                    Vector2 centerPosition = _editorWindow.position.center;
+                    Vector2 worldMouePosition = _editorWindow.rootVisualElement.ChangeCoordinatesTo(_editorWindow.rootVisualElement.parent, centerPosition - _editorWindow.position.position);
+                    Vector2 localMousePosition = contentViewContainer.WorldToLocal(worldMouePosition);
+
+                    if (selectable is CustomGraphNode node)
+                    {
+                        var newNode = CopyNode(node, node.GetPosition().position + new Vector2(100, 50));
+                        AddElement(newNode);
+                    }
+                }
+            }
+        }
+
+        private bool AllowPaste(string data)
+        {
+            return true;
         }
     }
 }

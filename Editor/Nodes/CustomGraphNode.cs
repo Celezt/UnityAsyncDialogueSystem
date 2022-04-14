@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -27,11 +28,11 @@ namespace Celezt.DialogueSystem.Editor
         /// <summary>
         /// Called when created.
         /// </summary>
-        protected abstract void Start();
+        protected virtual void Start() { }
         /// <summary>
-        /// Called after loading data from file.
+        /// Called after loading data from file. Will always be called.
         /// </summary>
-        protected abstract void AfterLoad();
+        protected virtual void AfterLoad() { }
         /// <summary>
         /// Called if the state of any edges connected to this node is about to changed.
         /// </summary>
@@ -47,16 +48,16 @@ namespace Celezt.DialogueSystem.Editor
         /// </summary>
         protected virtual object OnSaveData() { return null; }
         /// <summary>
-        /// Called when data is loaded from file.
+        /// Called when data is loaded from file. Not called if save returns null.
         /// </summary>
         /// <param name="loadedData">Loaded data</param>
-        protected virtual void OnLoadData(object loadedData) { }
+        protected virtual void OnLoadData(JObject loadedData) { }
 
         internal object InternalGetSaveData() => OnSaveData();
         internal void InternalAfterLoad() => AfterLoad();
         internal void InternalInvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
         internal void InternalInvokeDestroy() => OnDestroy();
-        internal void InternalSetLoadData(object loadedData) => OnLoadData(loadedData);
+        internal void InternalSetLoadData(JObject loadedData) => OnLoadData(loadedData);
         internal void InternalStart(GraphView graphView, GUID guid)
         {
             GraphView = graphView;

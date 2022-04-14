@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Plastic.Newtonsoft.Json;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -11,7 +12,22 @@ namespace Celezt.DialogueSystem.Editor.Utilities
 {
     public static class SerializationUtility
     {
-        public static ReadOnlySpan<char> Serialize(int version, GUID objectID, UQueryState<Node> nodes, UQueryState<Edge> edges)
+        public static JObject ToJObject(object convert)
+        {
+            return JObject.FromObject(convert);
+        }
+
+        public static ReadOnlySpan<char> Serialize(object serialize)
+        {
+            return JsonConvert.SerializeObject(serialize);
+        }
+
+        public static object Deserialize(ReadOnlySpan<char> deserialize, Type type)
+        {
+            return JsonConvert.DeserializeObject(deserialize.ToString(), type);
+        }
+
+        public static ReadOnlySpan<char> SerializeGraph(int version, GUID objectID, UQueryState<Node> nodes, UQueryState<Edge> edges)
         {
             List<NodeSerializeData> nodeSerializeData = new List<NodeSerializeData>();
             List<EdgeSerializeData> edgeSerializeData = new List<EdgeSerializeData>();
@@ -69,7 +85,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
         }
 
-        public static ReadOnlySpan<char> Serialize(int version, GUID objectID)
+        public static ReadOnlySpan<char> SerializeGraph(int version, GUID objectID)
         {
             GraphSerializeData graphSerializeData = new GraphSerializeData
             {
@@ -85,14 +101,14 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
         }
 
-        public static GraphSerializeData Deserialize(ReadOnlySpan<char> content)
+        public static GraphSerializeData DeserializeGraph(ReadOnlySpan<char> content)
         {
             return JsonConvert.DeserializeObject<GraphSerializeData>(content.ToString());
         }
 
-        internal static void Deserialize(this DialogueGraphView graphView, ReadOnlySpan<char> content)
+        internal static void DeserializeGraph(this DialogueGraphView graphView, ReadOnlySpan<char> content)
         {
-            GraphSerializeData deserializedData = Deserialize(content);
+            GraphSerializeData deserializedData = DeserializeGraph(content);
 
             // Load all nodes.
             int length = deserializedData.Nodes.Count;
@@ -105,9 +121,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 if (!GUID.TryParse(nodeData.ID, out GUID guid))
                     throw new Exception(nodeData.ID + " is invalid GUID");
 
-                CustomGraphNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, guid);
-                graphNode.InternalSetLoadData(customData);
-                graphNode.InternalAfterLoad();
+                CustomGraphNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, guid, (JObject)customData);
                 graphView.AddElement(graphNode);
             }
 

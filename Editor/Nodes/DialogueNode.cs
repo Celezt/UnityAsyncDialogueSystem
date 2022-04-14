@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Plastic.Newtonsoft.Json;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -24,7 +25,24 @@ namespace Celezt.DialogueSystem.Editor
             public string Text;
         }
 
-        protected override void Start()
+        protected override object OnSaveData() => this;
+
+        protected override void OnLoadData(JObject loadedData)
+        {
+            DialogueNode node = loadedData.ToObject<DialogueNode>();
+
+            _actorID = node._actorID;
+            _text = node._text;
+            _choices = node._choices;
+
+            foreach (var choice in _choices)
+            {
+                Port choicePort = CreateChoicePort(choice);
+                outputContainer.Add(choicePort);
+            }
+        }
+
+        protected override void AfterLoad()
         {
             mainContainer.AddToClassList("ds-node__main-container");
             extensionContainer.AddToClassList("ds-node__extension-container");
@@ -36,6 +54,11 @@ namespace Celezt.DialogueSystem.Editor
             {
                 value = _actorID,
             };
+            actorIDTextField.RegisterValueChangedCallback(callback =>
+            {
+                TextField target = callback.target as TextField;
+                _actorID = target.value;
+            });
             actorIDTextField.AddToClassList("ds-node__text-field");
             actorIDTextField.AddToClassList("ds-node__filename-text-field");
             actorIDTextField.AddToClassList("ds-node__text-field__hidden");
@@ -82,8 +105,13 @@ namespace Celezt.DialogueSystem.Editor
             TextField textTextField = new TextField()
             {
                 value = _text,
+                multiline = true,
             };
-            textTextField.multiline = true;
+            textTextField.RegisterValueChangedCallback(callback =>
+            {
+                TextField target = callback.target as TextField;
+                _text = target.value;
+            });
 
             textTextField.AddToClassList("ds-node__text-field");
             textTextField.AddToClassList("ds-node__quote-text-field");
@@ -91,6 +119,15 @@ namespace Celezt.DialogueSystem.Editor
             textFoldout.Add(textTextField);
             customDataContainer.Add(textFoldout);
             extensionContainer.Add(customDataContainer);
+
+            if (_choices.Count == 0)
+            {
+                Choice choice = new Choice { Text = "New Choice" };
+                _choices.Add(choice);
+
+                Port choicePort = CreateChoicePort(choice);
+                outputContainer.Add(choicePort);
+            }
 
             RefreshExpandedState();
         }
@@ -113,34 +150,6 @@ namespace Celezt.DialogueSystem.Editor
                         choice.ID = "";
                         break;
                     }
-            }
-        }
-
-        protected override object OnSaveData() => this;
-
-        protected override void OnLoadData(object loadedData)
-        {
-            DialogueNode node = JsonConvert.DeserializeObject<DialogueNode>(loadedData.ToString());
-            _actorID = node._actorID;
-            _text = node._text;
-            _choices = node._choices;
-
-            foreach (var choice in _choices)
-            {
-                Port choicePort = CreateChoicePort(choice);
-                outputContainer.Add(choicePort);
-            }
-        }
-
-        protected override void AfterLoad()
-        {
-            if (_choices.Count == 0)
-            {
-                Choice choice = new Choice { Text = "New Choice" };
-                _choices.Add(choice);
-
-                Port choicePort = CreateChoicePort(choice);
-                outputContainer.Add(choicePort);
             }
         }
 
