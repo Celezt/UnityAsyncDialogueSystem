@@ -139,8 +139,9 @@ namespace Celezt.DialogueSystem.Editor
             outputPort.portName = "";
             outputPort.userData = choiceData;
 
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(bool));
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(Condition));
             inputPort.portName = "Condition";
+            inputPort.portColor = Condition.Color;
 
             Button deleteChoiceButton = new Button(() =>
             {
