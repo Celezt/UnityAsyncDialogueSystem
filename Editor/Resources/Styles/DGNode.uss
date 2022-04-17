@@ -115,3 +115,14 @@ TextField {
 .unity-toggle__text {
 	margin-left: 2px;
 }
+
+.dg-text-field__hidden > .unity-text-field__input {
+	background-color: transparent;
+	border-color: transparent;
+	min-width: 80px;
+}
+
+.dg-text-field__hidden > .unity-text-field__input:focus {
+	background-color: var(--ds-window-color-1);
+	border-color: var(--ds-window-color-6);
+}

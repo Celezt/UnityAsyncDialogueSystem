@@ -181,8 +181,8 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddStyles()
         {
-            this.AddStyleSheet("DSGraphViewStyles");
-            this.AddStyleSheet("DSNodeStyles");
+            this.AddStyleSheet("DGView");
+            this.AddStyleSheet("DGNode");
         }
 
         private void OnGraphViewChanged() 

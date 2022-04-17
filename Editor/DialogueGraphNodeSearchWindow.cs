@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -16,10 +17,10 @@ namespace Celezt.DialogueSystem.Editor
         private struct SearchNode : IEquatable<SearchNode>
         {
             public Type Type;
-            public string Entry;
+            public string Name;
             public List<SearchNode> Children;
 
-            public bool Equals(SearchNode other) => Entry == other.Entry;
+            public bool Equals(SearchNode other) => Name == other.Name;
         }
 
         public void Initialize(DialogueGraphView graphView, DialogueGraphEditorWindow editorWindow)
@@ -36,21 +37,21 @@ namespace Celezt.DialogueSystem.Editor
         {
             List<SearchTreeEntry> searchTreeEntries = new List<SearchTreeEntry>()
             {
-                new SearchTreeGroupEntry(new GUIContent("Create Node")),
+                new SearchTreeGroupEntry(new GUIContent("Create Node"))
             };
 
             List<SearchNode> searchNodes = new List<SearchNode>();
             foreach (var nodeType in _graphView.NodeTypes)
             {
                 List<SearchNode> currentSearchNodes = searchNodes;
-                Queue<string> entries = new Queue<string>(nodeType.Value.MenuName.Split('/'));
+                Queue<string> entries = new Queue<string>(nodeType.Value.MenuName.Split('/').Select(x => x.Trim()));
 
                 while (entries.Count > 0)
                 {
                     SearchNode newNode = new SearchNode
                     {
                         Type = nodeType.Key,
-                        Entry = entries.Dequeue()
+                        Name = entries.Dequeue()
                     };
 
                     if (!currentSearchNodes.Contains(newNode))
@@ -78,7 +79,7 @@ namespace Celezt.DialogueSystem.Editor
             {
                 if (searchNode.Children == null)    // If tree entry.
                 {
-                    searchTreeEntries.Add(new SearchTreeEntry(new GUIContent(searchNode.Entry, _indentationIcon))
+                    searchTreeEntries.Add(new SearchTreeEntry(new GUIContent(searchNode.Name, _indentationIcon))
                     {
                         level = depth,
                         userData = searchNode.Type,
@@ -86,9 +87,9 @@ namespace Celezt.DialogueSystem.Editor
                 }
                 else
                 {
-                    searchTreeEntries.Add(new SearchTreeGroupEntry(new GUIContent(searchNode.Entry), depth));
+                    searchTreeEntries.Add(new SearchTreeGroupEntry(new GUIContent(searchNode.Name), depth));
                     foreach (SearchNode entry in searchNode.Children)  // Recursive.
-                        AddToTree(entry, ++depth);
+                        AddToTree(entry, 1 + depth);
                 }
             }
 

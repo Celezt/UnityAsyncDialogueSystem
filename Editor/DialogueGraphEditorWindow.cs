@@ -105,7 +105,7 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             // Add style sheet.
-            _graphView.AddStyleSheet("DSVariablesStyles");
+            _graphView.AddStyleSheet("DGVariables");
 
             _lastSerializedContent = ReadAssetFile().ToString();
             _graphView.DeserializeGraph(_lastSerializedContent);       

@@ -1,5 +1,6 @@
 :root {
 	--ds-grid-background-color: rgba(30, 30, 30, 1);
+	--dg-color-default: #393939;	/* Grey */
 	--ds-window-color-1: #1D1D1E;	/* Grey */
 	--ds-window-color-2: #2B2D2F;
 	--ds-window-color-3: #212325;

@@ -19,7 +19,6 @@ namespace Celezt.DialogueSystem.Editor
             set => GraphView.EditorWindow.HasUnsavedChanges = value;
         }
 
-        private EditorWindow _editorWindow;
         private GUID _guid;
 
         [Flags]
