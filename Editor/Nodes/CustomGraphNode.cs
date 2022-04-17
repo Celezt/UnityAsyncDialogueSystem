@@ -34,11 +34,11 @@ namespace Celezt.DialogueSystem.Editor
         /// <summary>
         /// Called when created.
         /// </summary>
-        protected virtual void Start() { }
+        protected virtual void Awake() { }
         /// <summary>
         /// Called after loading data from file. Will always be called.
         /// </summary>
-        protected virtual void AfterLoad() { }
+        protected virtual void Start() { }
         /// <summary>
         /// Called if the state of any edges connected to this node is about be to changed.
         /// </summary>
@@ -52,24 +52,24 @@ namespace Celezt.DialogueSystem.Editor
         /// <summary>
         /// Data to save connected to this node.
         /// </summary>
-        protected virtual object OnSaveData() { return null; }
+        protected virtual object OnSerialization() { return null; }
         /// <summary>
         /// Called when data is loaded from file. Not called if save returns null.
         /// </summary>
         /// <param name="loadedData">Loaded data</param>
-        protected virtual void OnLoadData(JObject loadedData) { }
+        protected virtual void OnDeserialization(JObject loadedData) { }
 
-        internal object InternalGetSaveData() => OnSaveData();
-        internal void InternalAfterLoad() => AfterLoad();
+        internal object InternalGetSaveData() => OnSerialization();
+        internal void InternalAfterLoad() => Start();
         internal void InternalInvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
         internal void InternalInvokeDestroy() => OnDestroy();
-        internal void InternalSetLoadData(JObject loadedData) => OnLoadData(loadedData);
+        internal void InternalSetLoadData(JObject loadedData) => OnDeserialization(loadedData);
         internal void InternalStart(DialogueGraphView graphView, GUID guid)
         {
             GraphView = graphView;
             _guid = guid;
 
-            Start();
+            Awake();
         }
     }
 }

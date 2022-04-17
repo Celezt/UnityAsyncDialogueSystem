@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Behaviour/Dialogue Node"), JsonObject(MemberSerialization.OptIn)]
+    [CreateNode("Behaviour/Dialogue"), JsonObject(MemberSerialization.OptIn)]
     public class DialogueNode : CustomGraphNode
     {
         [JsonProperty] private string _actorID = "actor_id";
@@ -24,9 +24,9 @@ namespace Celezt.DialogueSystem.Editor
             public string Text;
         }
 
-        protected override object OnSaveData() => this;
+        protected override object OnSerialization() => this;
 
-        protected override void OnLoadData(JObject loadedData)
+        protected override void OnDeserialization(JObject loadedData)
         {
             DialogueNode node = loadedData.ToObject<DialogueNode>();
 
@@ -41,7 +41,7 @@ namespace Celezt.DialogueSystem.Editor
             }
         }
 
-        protected override void AfterLoad()
+        protected override void Start()
         {
             mainContainer.AddToClassList("ds-node__main-container");
             extensionContainer.AddToClassList("ds-node__extension-container");
