@@ -21,7 +21,7 @@ namespace Celezt.DialogueSystem.Editor
         protected override void Start()
         {
             //
-            // Output Container
+            // Input Container
             //
             Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
             inputPort.portName = "";
@@ -33,6 +33,7 @@ namespace Celezt.DialogueSystem.Editor
             inputTextField.RegisterValueChangedCallback(callback =>
             {
                 _id = (callback.target as TextField).value;
+                HasUnsavedChanges = true;
             });
 
             inputTextField.AddToClassList("dg-text-field__hidden");

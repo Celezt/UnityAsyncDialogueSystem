@@ -33,6 +33,7 @@ namespace Celezt.DialogueSystem.Editor
             outputTextField.RegisterValueChangedCallback(callback =>
             {
                 _id = (callback.target as TextField).value;
+                HasUnsavedChanges = true;
             });
 
             outputTextField.AddToClassList("dg-text-field__hidden");
