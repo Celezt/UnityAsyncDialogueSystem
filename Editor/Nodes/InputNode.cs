@@ -1,14 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Plastic.Newtonsoft.Json;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Connection/Input")]
+    [CreateNode("Connection/Input"), JsonObject(MemberSerialization.OptIn)]
     public class InputNode : CustomGraphNode
     {
+        [JsonProperty] private string _id = "ID";
+
         protected override void Awake()
         {
             title = "Input";
@@ -24,17 +28,25 @@ namespace Celezt.DialogueSystem.Editor
 
             TextField outputTextField = new TextField()
             {
-                value = "ID",
+                value = _id,
             };
             outputTextField.RegisterValueChangedCallback(callback =>
             {
-                
+                _id = (callback.target as TextField).value;
             });
 
             outputTextField.AddToClassList("dg-text-field__hidden");
 
             outputPort.Add(outputTextField);
             outputContainer.Add(outputPort);
+        }
+
+        protected override object OnSerialization() => this;
+
+        protected override void OnDeserialization(JObject loadedData)
+        {
+            var data = loadedData.ToObject<InputNode>();
+            _id = data._id;
         }
     }
 }
