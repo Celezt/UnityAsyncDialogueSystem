@@ -90,7 +90,7 @@ namespace Celezt.DialogueSystem.Editor
 
             Foldout textFoldout = new Foldout()
             {
-                text = "Tex",
+                text = "Text",
                 value = true,
             };
 
