@@ -31,7 +31,7 @@ namespace Celezt.DialogueSystem.Editor
         }
 
         /// <summary>
-        /// Called when created.
+        /// Called when created. Before load.
         /// </summary>
         protected virtual void Awake() { }
         /// <summary>

@@ -20,84 +20,77 @@ namespace Celezt.DialogueSystem.Editor
         [Serializable]
         public struct Choice
         {
-            public string ID;
             public string Text;
         }
 
-        protected override object OnSerialization() => this;
-
-        protected override void OnDeserialization(JObject loadedData)
+        protected override void Awake()
         {
-            DialogueNode node = loadedData.ToObject<DialogueNode>();
+            title = "Dialogue";
 
-            _actorID = node._actorID;
-            _text = node._text;
-            _choices = node._choices;
+            //
+            //  Input Container
+            //
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
+            inputPort.portName = "Connections";
+            inputContainer.Add(inputPort);
 
-            foreach (var choice in _choices)
-            {
-                Port choicePort = CreateChoicePort(choice);
-                outputContainer.Add(choicePort);
-            }
+            //
+            //  Output Container
+            //
+            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
+            output.portName = "Continue";
+            outputContainer.Add(output);
+            outputContainer.AddToClassList("dg-output__choice-container");
         }
 
         protected override void Start()
         {
-            mainContainer.AddToClassList("ds-node__main-container");
-            extensionContainer.AddToClassList("ds-node__extension-container");
+            mainContainer.AddToClassList("dg-main-container");
+            extensionContainer.AddToClassList("dg-extension-container");
 
             //
-            //  Title container
+            //  Main Container
             //
+            VisualElement actorContainer = new VisualElement();
+            actorContainer.AddToClassList("dg-padding-8-container");
+
             TextField actorIDTextField = new TextField()
             {
                 value = _actorID,
             };
             actorIDTextField.RegisterValueChangedCallback(callback =>
             {
-                TextField target = callback.target as TextField;
-                _actorID = target.value;
+                _actorID = (callback.target as TextField).value;
+                HasUnsavedChanges = true;
             });
-            actorIDTextField.AddToClassList("ds-node__text-field");
-            actorIDTextField.AddToClassList("ds-node__filename-text-field");
-            actorIDTextField.AddToClassList("ds-node__text-field__hidden");
-            titleContainer.Insert(0, actorIDTextField);
 
-            //
-            //  Main Container
-            //
+            actorIDTextField.AddToClassList("dg-text-field__hidden");
+            actorContainer.Add(actorIDTextField);
+            mainContainer.Insert(1, actorContainer);
+
+
             Button addChoiceButton = new Button(() =>
             {
-                Port choicePort = CreateChoicePort(new Choice { Text = "New Choice" });
+                AddNewChoicePort(new Choice { Text = "New Choice" });
                 _choices.Add(new Choice { Text = "New Choice" });
-                outputContainer.Add(choicePort);
             })
             {
                 text = "Add Choice",
             };
             
-            addChoiceButton.AddToClassList("ds-node__button");
-
-            mainContainer.Insert(1, addChoiceButton);
-
-            //
-            //  Input Container
-            //
-
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
-            inputPort.portName = "Connections";
-            inputContainer.Add(inputPort);
+            addChoiceButton.AddToClassList("dg-button");
+            mainContainer.Insert(2, addChoiceButton);
 
             //
             //  Extensions Container
             //
             VisualElement customDataContainer = new VisualElement();
 
-            customDataContainer.AddToClassList("ds-node__custom-data-container");
+            customDataContainer.AddToClassList("dg-custom-data-container");
 
             Foldout textFoldout = new Foldout()
             {
-                text = "Sequence",
+                text = "Tex",
                 value = true,
             };
 
@@ -112,86 +105,82 @@ namespace Celezt.DialogueSystem.Editor
                 _text = target.value;
             });
 
-            textTextField.AddToClassList("ds-node__text-field");
-            textTextField.AddToClassList("ds-node__quote-text-field");
+            textTextField.AddToClassList("dg-text-field");
+            textTextField.AddToClassList("dg-quote-text-field");
 
             textFoldout.Add(textTextField);
             customDataContainer.Add(textFoldout);
             extensionContainer.Add(customDataContainer);
 
-            if (_choices.Count == 0)
-            {
-                Choice choice = new Choice { Text = "New Choice" };
-                _choices.Add(choice);
-
-                Port choicePort = CreateChoicePort(choice);
-                outputContainer.Add(choicePort);
-            }
-
             RefreshExpandedState();
         }
 
-        protected override void OnEdgeChanged(Edge edge, EdgeState state)
+        protected override object OnSerialization() => this;
+
+        protected override void OnDeserialization(JObject loadedData)
         {
-            switch (state)
+            DialogueNode node = loadedData.ToObject<DialogueNode>();
+
+            _actorID = node._actorID;
+            _text = node._text;
+            _choices = node._choices;
+
+            foreach (var choice in _choices)
             {
-                case EdgeState.Created | EdgeState.Output:
-                    {
-                        CustomGraphNode nextNode = (CustomGraphNode)edge.input.node;
-                        Choice choice = (Choice)edge.output.userData;
-                        choice.ID = nextNode.Guid.ToString();
-                        edge.output.userData = choice;
-                        break;
-                    }
-                case EdgeState.Removed | EdgeState.Output:
-                    {
-                        Choice choice = (Choice)edge.output.userData;
-                        choice.ID = "";
-                        break;
-                    }
+                AddNewChoicePort(choice);
             }
         }
 
-        private Port CreateChoicePort(Choice choiceData)
+        private void AddNewChoicePort(Choice choiceData)
         {
-            Port choicePort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
-            choicePort.portName = "";
-            choicePort.userData = choiceData;
+            HasUnsavedChanges = true;
+
+            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
+            outputPort.portName = "";
+            outputPort.userData = choiceData;
+
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(bool));
+            inputPort.portName = "Condition";
 
             Button deleteChoiceButton = new Button(() =>
             {
                 if (_choices.Count == 1)
                     return;
 
-                if (choicePort.connected)
-                    GraphView.DeleteElements(choicePort.connections);
+                if (outputPort.connected)
+                    GraphView.DeleteElements(outputPort.connections);
+
+                if(inputPort.connected)
+                    GraphView.DeleteElements(inputPort.connections);
+
+                HasUnsavedChanges = true;
 
                 _choices.Remove(choiceData);
-                GraphView.RemoveElement(choicePort);
-            })
-            {
-                text = "X"
-            };
+                GraphView.RemoveElement(outputPort);
+                GraphView.RemoveElement(inputPort);
+            });
 
-            deleteChoiceButton.AddToClassList("ds-node__button");
+            deleteChoiceButton.AddToClassList("dg-button__delete");
 
             TextField choiceTextField = new TextField()
             {
                 value = choiceData.Text,
-                multiline = true,
             };
             choiceTextField.RegisterValueChangedCallback(callback =>
             {
                 choiceData.Text = callback.newValue;
-            });      
-            
-            choiceTextField.AddToClassList("ds-node__text-field");
-            choiceTextField.AddToClassList("ds-node__choice-text-field");
-            choiceTextField.AddToClassList("ds-node__text-field__hidden");
+                HasUnsavedChanges = true;
+            });
 
-            choicePort.Add(choiceTextField);
-            choicePort.Add(deleteChoiceButton);
-            return choicePort;
+
+            choiceTextField.AddToClassList("dg-text-field__choice");
+            choiceTextField.AddToClassList("dg-text-field__hidden");
+            outputPort.AddToClassList("dg-port__choice-container");
+
+            outputPort.Add(choiceTextField);
+            outputPort.Add(deleteChoiceButton);
+            outputContainer.Add(outputPort);
+            inputContainer.Add(inputPort);
         }
     }
 }

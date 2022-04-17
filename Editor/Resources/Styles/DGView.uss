@@ -1,6 +1,6 @@
 GridBackground {
-	--grid-background-color: var(--ds-grid-background-color);
-	--line-color: var(--ds-grid-background-color);
-	--thick-line-color: var(--ds-grid-background-color);
-	--spacing: var(--ds-grid-size);
+	--grid-background-color: var(--dg-color-grid__background);
+	--line-color: var(--dg-color-grid__background);
+	--thick-line-color: var(--dg-color-grid__background);
+	--spacing: var(--dg-grid-size);
 }

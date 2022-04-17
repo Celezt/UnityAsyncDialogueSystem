@@ -45,11 +45,11 @@ namespace Celezt.DialogueSystem.Editor
             AssetDatabase.GUIDToAssetPath(SelectedGuid.ToString()) +
             "\n\nYour changes will be lost if you don't save them.";
 
-        [SerializeField] GUID _selectedGuid;
-        [SerializeField] string _lastSerializedContent;
-        [SerializeField] bool _checkAssetStatus;
+        [SerializeField] private GUID _selectedGuid;
+        [SerializeField] private string _lastSerializedContent;
+        [SerializeField] private bool _checkAssetStatus;
 
-        [NonSerialized] bool _isProTheme;
+        [NonSerialized] private bool _isProTheme;
 
         /// <summary>
         /// If graph is about to be saved.
@@ -110,7 +110,6 @@ namespace Celezt.DialogueSystem.Editor
             _lastSerializedContent = ReadAssetFile().ToString();
             _graphView.DeserializeGraph(_lastSerializedContent);       
 
-            UpdateTitle();
             Repaint();
             
             return this;
@@ -137,7 +136,7 @@ namespace Celezt.DialogueSystem.Editor
                 hasUnsavedChanges = false;
                 saveChangesMessage = "";
             }
-
+            
             if (!AssetFileExist)
                 title = title.ToString() + "(deleted)";
 
