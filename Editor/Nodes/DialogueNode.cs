@@ -10,7 +10,6 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-
     [CreateNode("Behaviour/Dialogue Node"), JsonObject(MemberSerialization.OptIn)]
     public class DialogueNode : CustomGraphNode
     {
@@ -76,7 +75,7 @@ namespace Celezt.DialogueSystem.Editor
             {
                 text = "Add Choice",
             };
-
+            
             addChoiceButton.AddToClassList("ds-node__button");
 
             mainContainer.Insert(1, addChoiceButton);

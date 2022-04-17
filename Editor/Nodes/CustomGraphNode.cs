@@ -12,8 +12,14 @@ namespace Celezt.DialogueSystem.Editor
     {
         public GUID Guid => _guid;
 
-        protected GraphView GraphView { get; private set; }
+        protected DialogueGraphView GraphView { get; private set; }
+        protected bool HasUnsavedChanges
+        {
+            get => GraphView.EditorWindow.HasUnsavedChanges;
+            set => GraphView.EditorWindow.HasUnsavedChanges = value;
+        }
 
+        private EditorWindow _editorWindow;
         private GUID _guid;
 
         [Flags]
@@ -34,7 +40,7 @@ namespace Celezt.DialogueSystem.Editor
         /// </summary>
         protected virtual void AfterLoad() { }
         /// <summary>
-        /// Called if the state of any edges connected to this node is about to changed.
+        /// Called if the state of any edges connected to this node is about be to changed.
         /// </summary>
         /// <param name="edge">The changing edge.</param>
         /// <param name="state">The direction and life state.</param>
@@ -58,7 +64,7 @@ namespace Celezt.DialogueSystem.Editor
         internal void InternalInvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
         internal void InternalInvokeDestroy() => OnDestroy();
         internal void InternalSetLoadData(JObject loadedData) => OnLoadData(loadedData);
-        internal void InternalStart(GraphView graphView, GUID guid)
+        internal void InternalStart(DialogueGraphView graphView, GUID guid)
         {
             GraphView = graphView;
             _guid = guid;

@@ -16,6 +16,13 @@ namespace Celezt.DialogueSystem.Editor
     public class DialogueGraphView : GraphView
     {
         internal const int DG_VERSION = 1;
+
+        internal DialogueGraphEditorWindow EditorWindow
+        {
+            get => _editorWindow;
+            private set => _editorWindow = value;
+        }
+
         [NonSerialized]
         internal Dictionary<Type, NodeTypeData> NodeTypes = new Dictionary<Type, NodeTypeData>();
         [NonSerialized]
