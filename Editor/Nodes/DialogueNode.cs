@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Behaviour/Dialogue"), JsonObject(MemberSerialization.OptIn)]
+    [CreateNode("Behaviour/Dialogue")]
     public class DialogueNode : CustomGraphNode
     {
         [JsonProperty] private string _actorID = "actor_id";

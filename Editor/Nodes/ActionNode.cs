@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Behaviour/Action"), JsonObject(MemberSerialization.OptIn)]
+    [CreateNode("Behaviour/Action")]
     public class ActionNode : CustomGraphNode
     {
         [JsonProperty] private List<Choice> _choices = new List<Choice>();

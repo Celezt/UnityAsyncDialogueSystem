@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Connection/Output"), JsonObject(MemberSerialization.OptIn)]
+    [CreateNode("Connection/Output")]
     public class OutputNode : CustomGraphNode
     {
         [JsonProperty] private string _id = "ID";
