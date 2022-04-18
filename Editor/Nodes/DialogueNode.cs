@@ -147,8 +147,9 @@ namespace Celezt.DialogueSystem.Editor
         {
             HasUnsavedChanges = true;
 
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
+            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(DialogueType));
             outputPort.portName = "";
+            outputPort.portColor = DialogueType.Color;
             outputPort.userData = choiceData;
 
             Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));
