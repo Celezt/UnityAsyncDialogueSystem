@@ -5,12 +5,16 @@ using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
     public abstract class CustomGraphNode : Node
     {
         public GUID Guid => _guid;
+
+        public VisualElement inputVerticalContainer { get; private set; } = new VisualElement();
+        public VisualElement outputVerticalContainer { get; private set; } = new VisualElement();
 
         protected DialogueGraphView GraphView { get; private set; }
         protected bool HasUnsavedChanges
@@ -67,6 +71,9 @@ namespace Celezt.DialogueSystem.Editor
         {
             GraphView = graphView;
             _guid = guid;
+
+            mainContainer.Insert(0, inputVerticalContainer);
+            mainContainer.Add(outputVerticalContainer);
 
             Awake();
         }

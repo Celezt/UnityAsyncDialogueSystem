@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public struct Condition
+    public struct ConditionType
     {
         public static Color Color = new Color(0.6f, 0.8f, 0.5f);
     }

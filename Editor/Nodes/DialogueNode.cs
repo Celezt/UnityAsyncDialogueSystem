@@ -30,17 +30,29 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Input Container
             //
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(bool));
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(DialogueType));
             inputPort.portName = "Connections";
+            inputPort.portColor = DialogueType.Color;
             inputContainer.Add(inputPort);
 
             //
             //  Output Container
             //
-            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
+            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(DialogueType));
             output.portName = "Continue";
+            output.portColor = DialogueType.Color;
             outputContainer.Add(output);
             outputContainer.AddToClassList("dg-output__choice-container");
+
+            //
+            // Action Container
+            //
+            Port actionPort = this.InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Multi, typeof(ActionType));
+            actionPort.portName = "";
+            actionPort.portColor = ActionType.Color;
+
+            actionPort.AddToClassList("dg-port-vertical__output");
+            outputVerticalContainer.Add(actionPort);
         }
 
         protected override void Start()
@@ -66,7 +78,7 @@ namespace Celezt.DialogueSystem.Editor
 
             actorIDTextField.AddToClassList("dg-text-field__hidden");
             actorContainer.Add(actorIDTextField);
-            mainContainer.Insert(1, actorContainer);
+            mainContainer.Insert(2, actorContainer);
 
 
             Button addChoiceButton = new Button(() =>
@@ -79,7 +91,7 @@ namespace Celezt.DialogueSystem.Editor
             };
             
             addChoiceButton.AddToClassList("dg-button");
-            mainContainer.Insert(2, addChoiceButton);
+            mainContainer.Insert(3, addChoiceButton);
 
             //
             //  Extensions Container
@@ -139,15 +151,12 @@ namespace Celezt.DialogueSystem.Editor
             outputPort.portName = "";
             outputPort.userData = choiceData;
 
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(Condition));
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));
             inputPort.portName = "Condition";
-            inputPort.portColor = Condition.Color;
+            inputPort.portColor = ConditionType.Color;
 
             Button deleteChoiceButton = new Button(() =>
             {
-                if (_choices.Count == 1)
-                    return;
-
                 if (outputPort.connected)
                     GraphView.DeleteElements(outputPort.connections);
 

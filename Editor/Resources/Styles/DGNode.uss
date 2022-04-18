@@ -1,13 +1,18 @@
 
 /* Containers */
 
-.ds-node__extension-container¨{
+.dg-extension-container {
 	background-color: var(--dg-color-1);
-	padding: 8px;
+	padding: 2px;
 }
 
 .dg-main-container {
 	background-color: var(--dg-color-dark);
+	min-width: 215px;
+}
+
+.dg-connection-container {
+	min-width: 120px;
 }
 
 .dg-custom-data-container {
@@ -38,6 +43,16 @@
 
 }
 
+/* Ports */
+
+.dg-port-vertical__input {
+	left: 44.5%;
+}
+
+.dg-port-vertical__output {
+	right: 44.5%;
+}
+
 /* Text Fields */
 
 .dg-text-field > .unity-text-field__input {
@@ -51,18 +66,20 @@
 }
 
 .dg-text-field__choice > .unity-text-field__input {
-
 	font-size: 11px;
 	-unity-text-align: middle-right;
 	padding-right: 0px;
 	margin-left: 20px;
+}
 
+.dg-text-field__wide {
+	min-width: 120px;
 }
 
 .dg-text-field__hidden > .unity-text-field__input {
 	background-color: transparent;
 	border-color: transparent;
-	min-width: 80px;
+	min-width: 40px;
 }
 
 .dg-text-field__hidden > .unity-text-field__input:focus {

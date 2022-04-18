@@ -47,7 +47,7 @@ namespace Celezt.DialogueSystem.Editor
             AddSearchWindow();
             OnGraphViewChanged();
             AddStyles();
-
+            
             canPasteSerializedData += AllowPaste;
             unserializeAndPaste += OnPaste;
         }

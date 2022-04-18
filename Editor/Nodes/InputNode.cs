@@ -16,6 +16,8 @@ namespace Celezt.DialogueSystem.Editor
         protected override void Awake()
         {
             title = "Input";
+            mainContainer.AddToClassList("dg-main-container");
+            mainContainer.AddToClassList("dg-connection-container");
         }
 
         protected override void Start()
@@ -23,8 +25,9 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Output Container
             //
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
+            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(DialogueType));
             outputPort.portName = "";
+            outputPort.portColor = DialogueType.Color;
 
             TextField outputTextField = new TextField()
             {
@@ -37,6 +40,7 @@ namespace Celezt.DialogueSystem.Editor
             });
 
             outputTextField.AddToClassList("dg-text-field__hidden");
+            outputTextField.AddToClassList("dg-text-field__wide");
 
             outputPort.Add(outputTextField);
             outputContainer.Add(outputPort);

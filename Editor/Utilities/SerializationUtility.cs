@@ -59,12 +59,34 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                             InputPort =
                             {
                                 NodeID = inNode.Guid.ToString(),
-                                PortNumber = inNode.inputContainer.IndexOf(edge.input)
+                                PortNumber = new Func<int>(() => {
+                                    int inputNumber = inNode.inputContainer.IndexOf(edge.input);
+                                    int verticalInputNumber = inNode.inputVerticalContainer.IndexOf(edge.input);
+                                    if (inputNumber == -1)
+                                    {
+                                        if (verticalInputNumber == -1)
+                                            throw new IndexOutOfRangeException("Tried to access non-existing input port");
+
+                                        return (verticalInputNumber + 1) * -1; // Invert the value.
+                                    }
+                                    return inputNumber;
+                                })()
                             },
                             OutputPort =
                             {
                                 NodeID = outNode.Guid.ToString(),
-                                PortNumber = outNode.outputContainer.IndexOf(edge.output)
+                                PortNumber = new Func<int>(() => {
+                                    int outputNumber = outNode.outputContainer.IndexOf(edge.output);
+                                    int verticalOutputNumber = outNode.outputVerticalContainer.IndexOf(edge.output);
+                                    if (outputNumber == -1)
+                                    {
+                                        if (verticalOutputNumber == -1)
+                                            throw new IndexOutOfRangeException("Tried to access non-existing output port");
+
+                                        return (verticalOutputNumber + 1) * -1; // Invert the value.
+                                    }
+                                    return outputNumber;
+                                })()
                             }
                         });
                     }
@@ -146,7 +168,22 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 if (inNode.inputContainer.childCount < inputData.PortNumber)
                     throw new Exception("Trying to access input port that does not exist for " + inNode.GetType());
 
-                Edge edge = ((Port)outNode.outputContainer[outputData.PortNumber]).ConnectTo((Port)inNode.inputContainer[inputData.PortNumber]);
+                Port outPort;
+                Port inPort;
+
+                if (outputData.PortNumber < 0)  // Invert index and use vertical instead.
+                    outPort = ((Port)outNode.outputVerticalContainer[(outputData.PortNumber + 1) * -1]);
+                else
+                    outPort = ((Port)outNode.outputContainer[outputData.PortNumber]);
+
+
+                if (inputData.PortNumber < 0)   // Invert index and use vertical instead.
+                    inPort = ((Port)inNode.inputVerticalContainer[(inputData.PortNumber + 1) * -1]);
+                else
+                    inPort = ((Port)inNode.inputContainer[inputData.PortNumber]);
+
+
+                Edge edge = outPort.ConnectTo(inPort);
 
                 graphView.AddElement(edge);
                 outNode.RefreshPorts();
