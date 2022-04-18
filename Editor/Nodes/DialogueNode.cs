@@ -30,17 +30,17 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Input Container
             //
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(DialogueType));
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
             inputPort.portName = "Connections";
-            inputPort.portColor = DialogueType.Color;
+            inputPort.portColor = FlowType.Color;
             inputContainer.Add(inputPort);
 
             //
             //  Output Container
             //
-            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(DialogueType));
+            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
             output.portName = "Continue";
-            output.portColor = DialogueType.Color;
+            output.portColor = FlowType.Color;
             outputContainer.Add(output);
             outputContainer.AddToClassList("dg-output__choice-container");
 
@@ -147,9 +147,9 @@ namespace Celezt.DialogueSystem.Editor
         {
             HasUnsavedChanges = true;
 
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(DialogueType));
+            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
             outputPort.portName = "";
-            outputPort.portColor = DialogueType.Color;
+            outputPort.portColor = FlowType.Color;
             outputPort.userData = choiceData;
 
             Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));

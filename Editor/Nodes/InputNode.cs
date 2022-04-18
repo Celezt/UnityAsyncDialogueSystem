@@ -25,9 +25,9 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Output Container
             //
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(DialogueType));
+            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
             outputPort.portName = "";
-            outputPort.portColor = DialogueType.Color;
+            outputPort.portColor = FlowType.Color;
 
             TextField outputTextField = new TextField()
             {

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
@@ -187,6 +188,7 @@ namespace Celezt.DialogueSystem.Editor
 
         private void OnGraphViewChanged() 
         {         
+            
             graphViewChanged = changes =>
             {
                 if (changes.edgesToCreate is { })
@@ -199,7 +201,7 @@ namespace Celezt.DialogueSystem.Editor
                             outNode.InternalInvokeEdgeChange(edge, CustomGraphNode.EdgeState.Created | CustomGraphNode.EdgeState.Output);
                     }
                 }
-
+                
                 if (changes.elementsToRemove is { })
                 {
                     foreach (GraphElement element in changes.elementsToRemove)
@@ -224,6 +226,70 @@ namespace Celezt.DialogueSystem.Editor
                 }
 
                 return changes;
+            };
+
+            deleteSelection = (operationName, askUser) =>
+            {
+                List<Edge> edgesToDelete = new List<Edge>();
+                List<Node> nodesToDelete = new List<Node>();
+                List<Group> groupsToDelete = new List<Group>();
+                foreach (GraphElement element in selection)
+                {
+                    switch (element)
+                    {
+                        case Node node:
+                            {
+                                nodesToDelete.Add(node);
+                            }
+                            break;
+                        case Edge edge:
+                            {
+                                edgesToDelete.Add(edge);
+                            }
+                            break;
+                        case Group group:
+                            {
+                                groupsToDelete.Add(group);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                foreach (Node node in nodesToDelete)
+                {
+                    if (node.inputContainer.childCount > 0)
+                    {
+                        foreach (Port port in node.inputContainer.Children().OfType<Port>())
+                            DeleteElements(port.connections);
+                    }
+
+                    if (node.outputContainer.childCount > 0)
+                    {
+                        foreach (Port port in node.outputContainer.Children().OfType<Port>())
+                            DeleteElements(port.connections);
+                    }
+
+                    if (node is CustomGraphNode customNode)
+                    {
+                        if (customNode.inputVerticalContainer.childCount > 0)
+                        {
+                            foreach (Port port in customNode.inputVerticalContainer.Children().OfType<Port>())
+                                DeleteElements(port.connections);
+                        }
+
+                        if (customNode.outputVerticalContainer.childCount > 0)
+                        {
+                            foreach (Port port in customNode.outputVerticalContainer.Children().OfType<Port>())
+                                DeleteElements(port.connections);
+                        }
+                    }
+                }
+
+                DeleteElements(edgesToDelete);
+                DeleteElements(groupsToDelete);
+                DeleteElements(nodesToDelete);
             };
         }
 
