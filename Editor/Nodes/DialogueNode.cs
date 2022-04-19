@@ -8,8 +8,8 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Behaviour/Dialogue")]
-    public class DialogueNode : CustomGraphNode
+    [CreateNode("Behaviour/Dialogue", "Dialogue")]
+    public class DialogueNode : DGNode
     {
         [SerializeField] private string _actorID = "actor_id";
         [SerializeField] private string _text = "Dialogue text.";
@@ -23,8 +23,6 @@ namespace Celezt.DialogueSystem.Editor
 
         protected override void Awake()
         {
-            title = "Dialogue";
-
             //
             // Action Container
             //

@@ -7,8 +7,8 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Behaviour/Action")]
-    public class ActionNode : CustomGraphNode
+    [CreateNode("Behaviour/Action", "Action")]
+    public class ActionNode : DGNode
     {
         [SerializeField] private List<Choice> _choices = new List<Choice>();
 
@@ -20,8 +20,6 @@ namespace Celezt.DialogueSystem.Editor
 
         protected override void Awake()
         {
-            title = "Action";
-
             //
             // Action Container
             //

@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -10,8 +8,10 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [JsonObject(MemberSerialization.OptIn)]
-    public abstract class CustomGraphNode : Node
+    /// <summary>
+    /// Main DialogueGraphView node class.
+    /// </summary>
+    public abstract class DGNode : Node
     {
         public GUID Guid => _guid;
 

@@ -9,10 +9,12 @@ namespace Celezt.DialogueSystem.Editor
     public class CreateNodeAttribute : Attribute
     {
         internal string MenuName { get; private set; }
+        internal string NodeTitle { get; private set; }
 
-        public CreateNodeAttribute(string menuName)
+        public CreateNodeAttribute(string menuName, string nodeTitle = null)
         {
             MenuName = menuName;
+            NodeTitle = nodeTitle;
         }
     }
 }

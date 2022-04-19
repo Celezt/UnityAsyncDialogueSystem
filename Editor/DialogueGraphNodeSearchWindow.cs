@@ -41,7 +41,7 @@ namespace Celezt.DialogueSystem.Editor
             };
 
             List<SearchNode> searchNodes = new List<SearchNode>();
-            foreach (var nodeType in _graphView.NodeTypes)
+            foreach (var nodeType in _graphView.NodePropertiesDictionary)
             {
                 List<SearchNode> currentSearchNodes = searchNodes;
                 Queue<string> entries = new Queue<string>(nodeType.Value.MenuName.Split('/').Select(x => x.Trim()));
@@ -101,7 +101,7 @@ namespace Celezt.DialogueSystem.Editor
 
         public bool OnSelectEntry(SearchTreeEntry searchTreeEntry, SearchWindowContext context)
         {
-            if (_graphView.NodeTypes.ContainsKey((Type)searchTreeEntry.userData))
+            if (_graphView.NodePropertiesDictionary.ContainsKey((Type)searchTreeEntry.userData))
             {
                 _graphView.AddElement(_graphView.CreateNode((Type)searchTreeEntry.userData, _graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position), GUID.Generate()));
                 return true;

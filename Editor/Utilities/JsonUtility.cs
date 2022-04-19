@@ -38,7 +38,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             
             nodes.ForEach(node =>
             {            
-                if (node is CustomGraphNode { } dgNode)
+                if (node is DGNode { } dgNode)
                 {
                     positionData.Add(Vector2Int.RoundToInt(dgNode.GetPosition().position));
                     customSerializeData.Add(dgNode.GetFields());
@@ -52,9 +52,9 @@ namespace Celezt.DialogueSystem.Editor.Utilities
 
             edges.ForEach(edge =>
             {
-                if (edge.input.node is CustomGraphNode inNode)
+                if (edge.input.node is DGNode inNode)
                 {
-                    if (edge.output.node is CustomGraphNode outNode)
+                    if (edge.output.node is DGNode outNode)
                     {
                         edgeSerializeData.Add(new EdgeSerializeData
                         {
@@ -145,7 +145,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 if (!GUID.TryParse(nodeData.ID, out GUID guid))
                     throw new Exception(nodeData.ID + " is invalid GUID");
 
-                CustomGraphNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, guid, (JObject)customData);
+                DGNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, guid, (JObject)customData);
                 graphView.AddElement(graphNode);
             }
 
@@ -161,8 +161,8 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 if (!GUID.TryParse(inputData.NodeID, out GUID inguid))
                     throw new Exception(inputData.NodeID + " is invalid GUID");
 
-                CustomGraphNode outNode = graphView.NodeDictionary[outguid];
-                CustomGraphNode inNode = graphView.NodeDictionary[inguid];
+                DGNode outNode = graphView.NodeDictionary[outguid];
+                DGNode inNode = graphView.NodeDictionary[inguid];
 
                 if (outNode.outputContainer.childCount < outputData.PortNumber)
                     throw new Exception("Trying to access output port that does not exist for " + outNode.GetType());

@@ -7,15 +7,13 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Process/Blend")]
-    public class BlendNode : CustomGraphNode
+    [CreateNode("Process/Blend", "Blend")]
+    public class BlendNode : DGNode
     {
         [SerializeField] private float _timeOffset = 0;
 
         protected override void Awake()
         {
-            title = "Blend";
-
             //
             // Input Container
             //

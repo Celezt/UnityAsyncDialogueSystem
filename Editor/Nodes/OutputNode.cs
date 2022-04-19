@@ -6,14 +6,13 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CreateNode("Connection/Output")]
-    public class OutputNode : CustomGraphNode
+    [CreateNode("Connection/Output", "Output")]
+    public class OutputNode : DGNode
     {
         [SerializeField] private string _id = "ID";
 
         protected override void Awake()
         {
-            title = "Output";
             mainContainer.AddToClassList("dg-main-container");
             mainContainer.AddToClassList("dg-connection-container");
 

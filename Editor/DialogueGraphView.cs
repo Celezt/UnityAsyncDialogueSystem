@@ -25,19 +25,11 @@ namespace Celezt.DialogueSystem.Editor
             private set => _editorWindow = value;
         }
 
-        [NonSerialized]
-        internal Dictionary<Type, NodeTypeData> NodeTypes = new Dictionary<Type, NodeTypeData>();
-        [NonSerialized]
-        internal Dictionary<GUID, CustomGraphNode> NodeDictionary = new Dictionary<GUID, CustomGraphNode>();
+        internal Dictionary<Type, NodeProperties> NodePropertiesDictionary { get; private set; } = new Dictionary<Type, NodeProperties>();
+        internal Dictionary<GUID, DGNode> NodeDictionary { get; private set; } = new Dictionary<GUID, DGNode>();
 
         private DialogueGraphEditorWindow _editorWindow;
         private DialogueGraphNodeSearchWindow _searchWindow;
-
-
-        internal struct NodeTypeData
-        {
-            internal string MenuName;
-        }
 
         public DialogueGraphView(DialogueGraphEditorWindow editorWindow)
         {
@@ -64,29 +56,36 @@ namespace Celezt.DialogueSystem.Editor
             group.SetPosition(new Rect(position, Vector2.zero));
 
             foreach (GraphElement selectedElement in selection)
-                if (selectedElement is CustomGraphNode node)
+                if (selectedElement is DGNode node)
                     group.AddElement(node);
 
             return group;
         }
 
-        public CustomGraphNode CopyNode(CustomGraphNode toCopy, Vector2 position)
+        public DGNode CopyNode(DGNode toCopy, Vector2 position)
         {
             var node = CreateNode(toCopy.GetType(), position, GUID.Generate(), toCopy.GetFields());
 
             return node;
         }
 
-        public CustomGraphNode CreateNode(Type type, Vector2 position, GUID guid, JObject obj = null)
+        public DGNode CreateNode(Type type, Vector2 position, GUID guid, JObject obj = null)
         {
-            if (!typeof(CustomGraphNode).IsAssignableFrom(type))
+            if (!typeof(DGNode).IsAssignableFrom(type))
             {
-                Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(CustomGraphNode)}");
+                Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DGNode)}");
                 return null;
             }
 
-            var node = (CustomGraphNode)Activator.CreateInstance(type);
+            var node = (DGNode)Activator.CreateInstance(type);
             node.SetFields(obj);
+
+            if (NodePropertiesDictionary.TryGetValue(type, out NodeProperties properties))
+            {
+                if (!string.IsNullOrWhiteSpace(properties.NodeTitle))
+                    node.title = properties.NodeTitle;
+            }
+
             node.SetPosition(new Rect(position, Vector2.zero));
             node.InternalStart(this, guid);
             NodeDictionary.Add(guid, node);
@@ -122,14 +121,18 @@ namespace Celezt.DialogueSystem.Editor
         {
             foreach (Type type in ReflectionUtility.GetTypesWithAttribute<CreateNodeAttribute>(AppDomain.CurrentDomain))
             {
-                if (!typeof(CustomGraphNode).IsAssignableFrom(type))
+                if (!typeof(DGNode).IsAssignableFrom(type))
                 {
-                    Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(CustomGraphNode)}");
+                    Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DGNode)}");
                     continue;
                 }
 
                 CreateNodeAttribute createNodeAttribute = type.GetCustomAttribute<CreateNodeAttribute>();
-                NodeTypes.Add(type, new NodeTypeData { MenuName = createNodeAttribute.MenuName });
+                NodePropertiesDictionary.Add(type, new NodeProperties 
+                { 
+                    MenuName = createNodeAttribute.MenuName,
+                    NodeTitle = createNodeAttribute.NodeTitle,
+                });
             }
         }
 
@@ -178,10 +181,10 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     foreach (Edge edge in changes.edgesToCreate)
                     {
-                        if (edge.input.node is CustomGraphNode inNode)
-                            inNode.InternalInvokeEdgeChange(edge, CustomGraphNode.EdgeState.Created | CustomGraphNode.EdgeState.Input);
-                        if (edge.output.node is CustomGraphNode outNode)
-                            outNode.InternalInvokeEdgeChange(edge, CustomGraphNode.EdgeState.Created | CustomGraphNode.EdgeState.Output);
+                        if (edge.input.node is DGNode inNode)
+                            inNode.InternalInvokeEdgeChange(edge, DGNode.EdgeState.Created | DGNode.EdgeState.Input);
+                        if (edge.output.node is DGNode outNode)
+                            outNode.InternalInvokeEdgeChange(edge, DGNode.EdgeState.Created | DGNode.EdgeState.Output);
                     }
                 }
                 
@@ -191,15 +194,15 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         if (element is Edge edge)
                         {
-                            if (edge.input.node is CustomGraphNode inNode)
-                                inNode.InternalInvokeEdgeChange(edge, CustomGraphNode.EdgeState.Removed | CustomGraphNode.EdgeState.Input);
-                            if (edge.output.node is CustomGraphNode outNode)
-                                outNode.InternalInvokeEdgeChange(edge, CustomGraphNode.EdgeState.Removed | CustomGraphNode.EdgeState.Output);
+                            if (edge.input.node is DGNode inNode)
+                                inNode.InternalInvokeEdgeChange(edge, DGNode.EdgeState.Removed | DGNode.EdgeState.Input);
+                            if (edge.output.node is DGNode outNode)
+                                outNode.InternalInvokeEdgeChange(edge, DGNode.EdgeState.Removed | DGNode.EdgeState.Output);
                         }   
                         
                         if (element is Node node)
                         {
-                            if (node is CustomGraphNode customNode)
+                            if (node is DGNode customNode)
                             {
                                 customNode.InternalInvokeDestroy();
                                 NodeDictionary.Remove(customNode.Guid);
@@ -254,7 +257,7 @@ namespace Celezt.DialogueSystem.Editor
                             DeleteElements(port.connections);
                     }
 
-                    if (node is CustomGraphNode customNode)
+                    if (node is DGNode customNode)
                     {
                         if (customNode.inputVerticalContainer.childCount > 0)
                         {
@@ -286,7 +289,7 @@ namespace Celezt.DialogueSystem.Editor
                     Vector2 worldMouePosition = _editorWindow.rootVisualElement.ChangeCoordinatesTo(_editorWindow.rootVisualElement.parent, centerPosition - _editorWindow.position.position);
                     Vector2 localMousePosition = contentViewContainer.WorldToLocal(worldMouePosition);
 
-                    if (selectable is CustomGraphNode node)
+                    if (selectable is DGNode node)
                     {
                         var newNode = CopyNode(node, node.GetPosition().position + new Vector2(100, 50));
                         AddElement(newNode);
