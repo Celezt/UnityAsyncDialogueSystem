@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -13,9 +11,9 @@ namespace Celezt.DialogueSystem.Editor
     [CreateNode("Behaviour/Dialogue")]
     public class DialogueNode : CustomGraphNode
     {
-        [JsonProperty] private string _actorID = "actor_id";
-        [JsonProperty] private string _text = "Dialogue text.";
-        [JsonProperty] private List<Choice> _choices = new List<Choice>();
+        [SerializeField] private string _actorID = "actor_id";
+        [SerializeField] private string _text = "Dialogue text.";
+        [SerializeField] private List<Choice> _choices = new List<Choice>();
 
         [Serializable]
         public struct Choice
@@ -28,23 +26,6 @@ namespace Celezt.DialogueSystem.Editor
             title = "Dialogue";
 
             //
-            //  Input Container
-            //
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
-            inputPort.portName = "Connections";
-            inputPort.portColor = FlowType.Color;
-            inputContainer.Add(inputPort);
-
-            //
-            //  Output Container
-            //
-            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
-            output.portName = "Continue";
-            output.portColor = FlowType.Color;
-            outputContainer.Add(output);
-            outputContainer.AddToClassList("dg-output__choice-container");
-
-            //
             // Action Container
             //
             Port actionPort = this.InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Multi, typeof(ActionType));
@@ -53,10 +34,7 @@ namespace Celezt.DialogueSystem.Editor
 
             actionPort.AddToClassList("dg-port-vertical__output");
             outputVerticalContainer.Add(actionPort);
-        }
 
-        protected override void Start()
-        {
             mainContainer.AddToClassList("dg-main-container");
             extensionContainer.AddToClassList("dg-extension-container");
 
@@ -89,9 +67,26 @@ namespace Celezt.DialogueSystem.Editor
             {
                 text = "Add Choice",
             };
-            
+
             addChoiceButton.AddToClassList("dg-button");
             mainContainer.Insert(3, addChoiceButton);
+
+            //
+            //  Input Container
+            //
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
+            inputPort.portName = "Connections";
+            inputPort.portColor = FlowType.Color;
+            inputContainer.Add(inputPort);
+
+            //
+            //  Output Container
+            //
+            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
+            output.portName = "Continue";
+            output.portColor = FlowType.Color;
+            outputContainer.Add(output);
+            outputContainer.AddToClassList("dg-output__choice-container");
 
             //
             //  Extensions Container
@@ -125,22 +120,6 @@ namespace Celezt.DialogueSystem.Editor
             extensionContainer.Add(customDataContainer);
 
             RefreshExpandedState();
-        }
-
-        protected override object OnSerialization() => this;
-
-        protected override void OnDeserialization(JObject loadedData)
-        {
-            DialogueNode node = loadedData.ToObject<DialogueNode>();
-
-            _actorID = node._actorID;
-            _text = node._text;
-            _choices = node._choices;
-
-            foreach (var choice in _choices)
-            {
-                AddNewChoicePort(choice);
-            }
         }
 
         private void AddNewChoicePort(Choice choiceData)

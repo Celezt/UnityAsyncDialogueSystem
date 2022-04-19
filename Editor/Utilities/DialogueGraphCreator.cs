@@ -21,7 +21,7 @@ namespace Celezt.DialogueSystem.Editor
                 return;
 
             if (GUID.TryParse(selectedGUIDs[0], out GUID guid))
-                CreateNewSelected(SerializationUtility.SerializeGraph(DialogueGraphView.DG_VERSION, guid));
+                CreateNewSelected(JsonUtility.SerializeGraph(DialogueGraphView.DG_VERSION, guid));
         }
 
         public static void CreateNewSelected(ReadOnlySpan<char> content)

@@ -11,6 +11,7 @@ using System.IO;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    using Unity.Plastic.Newtonsoft.Json;
     using Unity.Plastic.Newtonsoft.Json.Linq;
     using Utilities;
 
@@ -71,12 +72,12 @@ namespace Celezt.DialogueSystem.Editor
 
         public CustomGraphNode CopyNode(CustomGraphNode toCopy, Vector2 position)
         {
-            var node = CreateNode(toCopy.GetType(), position, GUID.Generate(), SerializationUtility.ToJObject(toCopy.InternalGetSaveData()));
+            var node = CreateNode(toCopy.GetType(), position, GUID.Generate(), toCopy.GetFields());
 
             return node;
         }
 
-        public CustomGraphNode CreateNode(Type type, Vector2 position, GUID guid, JObject loadedData = null)
+        public CustomGraphNode CreateNode(Type type, Vector2 position, GUID guid, JObject obj = null)
         {
             if (!typeof(CustomGraphNode).IsAssignableFrom(type))
             {
@@ -85,24 +86,9 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             var node = (CustomGraphNode)Activator.CreateInstance(type);
+            node.SetFields(obj);
             node.SetPosition(new Rect(position, Vector2.zero));
             node.InternalStart(this, guid);
-            if (loadedData != null)
-                node.InternalSetLoadData(loadedData);
-            node.InternalAfterLoad();
-            NodeDictionary.Add(guid, node);
-
-            return node;
-        }
-
-        public T CreateNode<T>(Vector2 position, GUID guid, JObject loadedData = null) where T : CustomGraphNode, new()
-        {
-            T node = new T();
-            node.SetPosition(new Rect(position, Vector2.zero));
-            node.InternalStart(this, guid);
-            if (loadedData != null)
-                node.InternalSetLoadData(loadedData);
-            node.InternalAfterLoad();
             NodeDictionary.Add(guid, node);
 
             return node;
@@ -158,9 +144,6 @@ namespace Celezt.DialogueSystem.Editor
 
         private IManipulator CreateGroupContextualMenu() => new ContextualMenuManipulator(
             menuEvent => menuEvent.menu.AppendAction("Create Group", actionEvent => AddElement(CreateGroup(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)))));
-
-        private IManipulator CreateNodeContextualMenu<T>(string actionTitle) where T : CustomGraphNode, new() => new ContextualMenuManipulator(
-            menuEvent => menuEvent.menu.AppendAction("Create " + actionTitle, actionEvent => AddElement(CreateNode<T>(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition), GUID.Generate()))));
 
         private void AddGridBackground()
         {     

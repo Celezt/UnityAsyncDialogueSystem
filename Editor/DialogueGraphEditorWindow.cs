@@ -31,7 +31,7 @@ namespace Celezt.DialogueSystem.Editor
         {
             get
             {
-                ReadOnlySpan<char> currentSerializedJson = SerializationUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
+                ReadOnlySpan<char> currentSerializedJson = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
                 return !MemoryExtensions.Equals(currentSerializedJson, _lastSerializedContent, StringComparison.Ordinal);
             }
         }
@@ -292,7 +292,7 @@ namespace Celezt.DialogueSystem.Editor
             if (FilePath.IsEmpty || FilePath.IsWhiteSpace())
                 return false;
 
-            ReadOnlySpan<char> serializedJSON = SerializationUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
+            ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
             DialogueGraphCreator.Overwrite(FilePath, serializedJSON);
             hasUnsavedChanges = false;
 
@@ -329,7 +329,7 @@ namespace Celezt.DialogueSystem.Editor
 
                 if (!MemoryExtensions.Equals(newFilePath, oldFilePath, StringComparison.Ordinal))
                 {
-                    ReadOnlySpan<char> serializedJSON = SerializationUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
+                    ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
 
                     if (DialogueGraphCreator.Create(newFilePath, serializedJSON))
                     {

@@ -37,13 +37,10 @@ namespace Celezt.DialogueSystem.Editor
         }
 
         /// <summary>
-        /// Called when created. Before load.
+        /// Called when created.
         /// </summary>
         protected virtual void Awake() { }
-        /// <summary>
-        /// Called after loading data from file. Will always be called.
-        /// </summary>
-        protected virtual void Start() { }
+
         /// <summary>
         /// Called if the state of any edges connected to this node is about be to changed.
         /// </summary>
@@ -54,21 +51,9 @@ namespace Celezt.DialogueSystem.Editor
         /// Called when node is about to be destroyed.
         /// </summary>
         protected virtual void OnDestroy() { }
-        /// <summary>
-        /// Data to save connected to this node.
-        /// </summary>
-        protected virtual object OnSerialization() { return null; }
-        /// <summary>
-        /// Called when data is loaded from file. Not called if save returns null.
-        /// </summary>
-        /// <param name="loadedData">Loaded data</param>
-        protected virtual void OnDeserialization(JObject loadedData) { }
 
-        internal object InternalGetSaveData() => OnSerialization();
-        internal void InternalAfterLoad() => Start();
         internal void InternalInvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
         internal void InternalInvokeDestroy() => OnDestroy();
-        internal void InternalSetLoadData(JObject loadedData) => OnDeserialization(loadedData);
         internal void InternalStart(DialogueGraphView graphView, GUID guid)
         {
             GraphView = graphView;

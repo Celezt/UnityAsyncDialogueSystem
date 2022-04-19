@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Unity.Plastic.Newtonsoft.Json;
 using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor;
@@ -10,7 +12,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor.Utilities
 {
-    public static class SerializationUtility
+    public static class JsonUtility
     {
         public static JObject ToJObject(object convert)
         {
@@ -39,7 +41,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 if (node is CustomGraphNode { } dgNode)
                 {
                     positionData.Add(Vector2Int.RoundToInt(dgNode.GetPosition().position));
-                    customSerializeData.Add(dgNode.InternalGetSaveData());
+                    customSerializeData.Add(dgNode.GetFields());
                     nodeSerializeData.Add(new NodeSerializeData
                     {
                         ID = dgNode.Guid.ToString(),
@@ -187,6 +189,47 @@ namespace Celezt.DialogueSystem.Editor.Utilities
 
                 graphView.AddElement(edge);
                 outNode.RefreshPorts();
+            }
+        }
+
+        /// <summary>
+        /// Get all serializable fields in object.
+        /// </summary>
+        /// <param name="instance">Reference object.</param>
+        /// /// <param name="binding">Field types.</param>
+        /// <returns>Fields as <see cref="JObject"/></returns>
+        public static JObject GetFields(this object instance, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        {
+            IEnumerable<FieldInfo> serializableFields = instance.GetType()
+                .GetFields(binding)
+                .Where(x => x.IsDefined(typeof(SerializableAttribute)) || x.IsDefined(typeof(SerializeField)));
+
+            JObject obj = new JObject();
+            foreach (FieldInfo field in serializableFields)
+                obj.Add(field.Name, JToken.FromObject(field.GetValue(instance)));
+            
+            return obj;
+        }
+
+        /// <summary>
+        /// Set all serializable fields in object.
+        /// </summary>
+        /// <param name="instance">Reference object.</param>
+        /// <param name="obj">Assigned data.</param>
+        /// <param name="binding">Field types.</param>
+        public static void SetFields(this object instance, JObject obj, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        {
+            if (obj == null)
+                return;
+
+            IEnumerable<FieldInfo> serializableFields = instance.GetType()
+            .GetFields(binding)
+            .Where(x => x.IsDefined(typeof(SerializableAttribute)) || x.IsDefined(typeof(SerializeField)));
+
+            foreach (FieldInfo field in serializableFields)
+            {
+                if (obj.TryGetValue(field.Name, out JToken token))
+                    field.SetValue(instance, token.ToObject(field.FieldType));
             }
         }
     }

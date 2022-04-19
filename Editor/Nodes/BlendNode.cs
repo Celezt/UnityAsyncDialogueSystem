@@ -1,7 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -12,7 +10,7 @@ namespace Celezt.DialogueSystem.Editor
     [CreateNode("Process/Blend")]
     public class BlendNode : CustomGraphNode
     {
-        [JsonProperty] private float _timeOffset = 0;
+        [SerializeField] private float _timeOffset = 0;
 
         protected override void Awake()
         {
@@ -33,12 +31,9 @@ namespace Celezt.DialogueSystem.Editor
             outputPort.portName = "with";
             outputPort.portColor = FlowType.Color;
             outputContainer.Add(outputPort);
-        }
 
-        protected override void Start()
-        {
             FloatField blendTextField = new FloatField()
-            {             
+            {
                 value = _timeOffset,
             };
             blendTextField.RegisterValueChangedCallback(callback =>
@@ -50,14 +45,6 @@ namespace Celezt.DialogueSystem.Editor
             extensionContainer.Add(blendTextField);
 
             RefreshExpandedState();
-        }
-
-        protected override object OnSerialization() => this;
-
-        protected override void OnDeserialization(JObject loadedData)
-        {
-            var data =loadedData.ToObject<BlendNode>();
-            _timeOffset = data._timeOffset;
         }
     }
 }

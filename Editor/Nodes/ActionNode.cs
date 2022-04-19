@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,7 +10,7 @@ namespace Celezt.DialogueSystem.Editor
     [CreateNode("Behaviour/Action")]
     public class ActionNode : CustomGraphNode
     {
-        [JsonProperty] private List<Choice> _choices = new List<Choice>();
+        [SerializeField] private List<Choice> _choices = new List<Choice>();
 
         [Serializable]
         public struct Choice
@@ -34,10 +32,7 @@ namespace Celezt.DialogueSystem.Editor
             actionPort.AddToClassList("dg-port-vertical__input");
             inputVerticalContainer.Insert(0, actionPort);
             mainContainer.AddToClassList("dg-main-container");
-        }
 
-        protected override void Start()
-        {
             Button addChoiceButton = new Button(() =>
             {
                 AddNewChoicePort(new Choice { Text = "New Choice" });
@@ -49,20 +44,6 @@ namespace Celezt.DialogueSystem.Editor
 
             addChoiceButton.AddToClassList("dg-button");
             mainContainer.Insert(2, addChoiceButton);
-        }
-
-        protected override object OnSerialization() => this;
-
-        protected override void OnDeserialization(JObject loadedData)
-        {
-            ActionNode node = loadedData.ToObject<ActionNode>();
-
-            _choices = node._choices;
-
-            foreach (var choice in _choices)
-            {
-                AddNewChoicePort(choice);
-            }
         }
 
         private void AddNewChoicePort(Choice choiceData)
