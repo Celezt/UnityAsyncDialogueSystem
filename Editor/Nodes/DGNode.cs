@@ -13,7 +13,7 @@ namespace Celezt.DialogueSystem.Editor
     /// </summary>
     public abstract class DGNode : Node
     {
-        public GUID Guid => _guid;
+        public GUID Guid { get; private set; }
 
         public VisualElement inputVerticalContainer { get; private set; } = new VisualElement();
         public VisualElement outputVerticalContainer { get; private set; } = new VisualElement();
@@ -24,8 +24,6 @@ namespace Celezt.DialogueSystem.Editor
             get => GraphView.EditorWindow.HasUnsavedChanges;
             set => GraphView.EditorWindow.HasUnsavedChanges = value;
         }
-
-        private GUID _guid;
 
         [Flags]
         public enum EdgeState
@@ -57,7 +55,7 @@ namespace Celezt.DialogueSystem.Editor
         internal void InternalStart(DialogueGraphView graphView, GUID guid)
         {
             GraphView = graphView;
-            _guid = guid;
+            Guid = guid;
 
             mainContainer.Insert(0, inputVerticalContainer);
             mainContainer.Add(outputVerticalContainer);

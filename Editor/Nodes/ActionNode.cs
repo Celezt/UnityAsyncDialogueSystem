@@ -31,6 +31,9 @@ namespace Celezt.DialogueSystem.Editor
             inputVerticalContainer.Insert(0, actionPort);
             mainContainer.AddToClassList("dg-main-container");
 
+            foreach (Choice choice in _choices)
+                AddNewChoicePort(choice);
+
             Button addChoiceButton = new Button(() =>
             {
                 AddNewChoicePort(new Choice { Text = "New Choice" });

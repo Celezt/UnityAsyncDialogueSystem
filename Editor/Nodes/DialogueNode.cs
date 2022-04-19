@@ -37,6 +37,23 @@ namespace Celezt.DialogueSystem.Editor
             extensionContainer.AddToClassList("dg-extension-container");
 
             //
+            //  Input Container
+            //
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
+            inputPort.portName = "Connections";
+            inputPort.portColor = FlowType.Color;
+            inputContainer.Add(inputPort);
+
+            //
+            //  Output Container
+            //
+            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
+            output.portName = "Continue";
+            output.portColor = FlowType.Color;
+            outputContainer.Add(output);
+            outputContainer.AddToClassList("dg-output__choice-container");
+
+            //
             //  Main Container
             //
             VisualElement actorContainer = new VisualElement();
@@ -56,6 +73,8 @@ namespace Celezt.DialogueSystem.Editor
             actorContainer.Add(actorIDTextField);
             mainContainer.Insert(2, actorContainer);
 
+            foreach (Choice choice in _choices)
+                AddNewChoicePort(choice);
 
             Button addChoiceButton = new Button(() =>
             {
@@ -68,23 +87,6 @@ namespace Celezt.DialogueSystem.Editor
 
             addChoiceButton.AddToClassList("dg-button");
             mainContainer.Insert(3, addChoiceButton);
-
-            //
-            //  Input Container
-            //
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
-            inputPort.portName = "Connections";
-            inputPort.portColor = FlowType.Color;
-            inputContainer.Add(inputPort);
-
-            //
-            //  Output Container
-            //
-            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
-            output.portName = "Continue";
-            output.portColor = FlowType.Color;
-            outputContainer.Add(output);
-            outputContainer.AddToClassList("dg-output__choice-container");
 
             //
             //  Extensions Container
