@@ -1,3 +1,4 @@
+using Celezt.DialogueSystem.Editor.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,10 +27,11 @@ namespace Celezt.DialogueSystem.Editor
         {
             _graphView = graphView;
 
-            SetPosition(new Rect(10, 30, 180, 350));
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "DGBlackboard");
+
+            SetPosition(new Rect(10, 30, 250, 400));
             ReflectBlackboardProperties();
 
-            scrollable = true;
             subTitle = "Dialogue Graph";
             editTextRequested = EditTextRequested;
             addItemRequested = AddItemRequested;
@@ -41,6 +43,9 @@ namespace Celezt.DialogueSystem.Editor
             };
             foreach (var property in _properties)
                 AddProperty(property);
+
+            if (_properties.Count > 0)  // Only scrollable if not empty.
+                scrollable = false;
 
             Add(_section);
         }
@@ -70,6 +75,7 @@ namespace Celezt.DialogueSystem.Editor
             };
             var row = new BlackboardRow(field, new BlackboardFieldPropertyView(property));
             row.userData = property;
+            row.AddManipulator(Delete(row));
 
             if (index < 0)
                 index = _propertyRows.Count;
@@ -80,6 +86,8 @@ namespace Celezt.DialogueSystem.Editor
                 _section.Insert(index, row);
 
             _propertyRows[property.GUID] = row;
+
+            scrollable = true;
         }
 
         private void ReflectBlackboardProperties()
@@ -169,6 +177,21 @@ namespace Celezt.DialogueSystem.Editor
                 foreach (var property in _properties)       // Add all rows in the new order.
                     _section.Add(_propertyRows[property.GUID]);
             }
+        }
+
+        private IManipulator Delete(BlackboardRow row)
+        {
+            return new ContextualMenuManipulator(
+                menuEvent => menuEvent.menu.AppendAction("Delete", actionEvent =>
+                {
+                    var property = row.userData as IBlackboardProperty;
+                    _propertyRows[property.GUID].RemoveFromHierarchy();
+                    _propertyRows.Remove(property.GUID);
+                    _properties.Remove(property);
+
+                    if (_properties.Count == 0) // No longer scrollable if no properties exist.
+                        scrollable = false;
+                }));
         }
     }
 }

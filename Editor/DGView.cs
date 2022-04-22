@@ -138,7 +138,6 @@ namespace Celezt.DialogueSystem.Editor
             }
         }
 
-
         private void AddManipulators()
         {
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);

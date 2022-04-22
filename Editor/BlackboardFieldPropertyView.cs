@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Celezt.DialogueSystem.Editor.Utilities;
-using UnityEditor.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -15,9 +13,7 @@ namespace Celezt.DialogueSystem.Editor
         {
             _property = property;
 
-            this.AddStyleSheet(StyleUtility.STYLE_PATH + "DGBlackboard");
-
-            AddRow("Value", property.BuildController());
+            AddRow("Value", _property.BuildController());
         }
 
         private VisualElement AddRow(string labelText, VisualElement control)
