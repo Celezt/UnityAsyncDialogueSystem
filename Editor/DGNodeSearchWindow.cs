@@ -8,10 +8,10 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public class DialogueGraphNodeSearchWindow : ScriptableObject, ISearchWindowProvider
+    public class DGNodeSearchWindow : ScriptableObject, ISearchWindowProvider
     {
-        private DialogueGraphView _graphView;
-        private DialogueGraphEditorWindow _editorWindow;
+        private DGView _graphView;
+        private DGEditorWindow _editorWindow;
         private Texture2D _indentationIcon;
 
         private struct SearchNode : IEquatable<SearchNode>
@@ -23,7 +23,7 @@ namespace Celezt.DialogueSystem.Editor
             public bool Equals(SearchNode other) => Name == other.Name;
         }
 
-        public void Initialize(DialogueGraphView graphView, DialogueGraphEditorWindow editorWindow)
+        public void Initialize(DGView graphView, DGEditorWindow editorWindow)
         {
             _graphView = graphView;
             _editorWindow = editorWindow;

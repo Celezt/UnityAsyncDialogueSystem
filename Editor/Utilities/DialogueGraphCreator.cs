@@ -21,7 +21,7 @@ namespace Celezt.DialogueSystem.Editor
                 return;
 
             if (GUID.TryParse(selectedGUIDs[0], out GUID guid))
-                CreateNewSelected(JsonUtility.SerializeGraph(DialogueGraphView.DG_VERSION, guid));
+                CreateNewSelected(JsonUtility.SerializeGraph(DGView.DG_VERSION, guid));
         }
 
         public static void CreateNewSelected(ReadOnlySpan<char> content)
@@ -33,12 +33,12 @@ namespace Celezt.DialogueSystem.Editor
 
             string path = AssetDatabase.GUIDToAssetPath(selectedGUIDs[0]);
 
-            if (File.Exists($"{path}/New Dialogue Graph{DialogueGraphImporter.FILE_EXTENSION}"))
+            if (File.Exists($"{path}/New Dialogue Graph{DGImporter.FILE_EXTENSION}"))
             {
                 int index = 1;
                 do
                 {
-                    string fullName = $"{path}/New Dialogue Graph {index}{DialogueGraphImporter.FILE_EXTENSION}";
+                    string fullName = $"{path}/New Dialogue Graph {index}{DGImporter.FILE_EXTENSION}";
                     if (!File.Exists(fullName))
                     {
                         File.WriteAllText(fullName, content.ToString());
@@ -48,7 +48,7 @@ namespace Celezt.DialogueSystem.Editor
                 } while (++index < int.MaxValue);
             }
             else
-                File.WriteAllText($"{path}/New Dialogue Graph{DialogueGraphImporter.FILE_EXTENSION}", content.ToString());
+                File.WriteAllText($"{path}/New Dialogue Graph{DGImporter.FILE_EXTENSION}", content.ToString());
 
             AssetDatabase.Refresh();
         }
@@ -107,7 +107,7 @@ namespace Celezt.DialogueSystem.Editor
             if (Path.HasExtension(path))
             {
                 ReadOnlySpan<char> extension = Path.GetExtension(path);
-                if (MemoryExtensions.Equals(extension, DialogueGraphImporter.FILE_EXTENSION, StringComparison.Ordinal))
+                if (MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION, StringComparison.Ordinal))
                     return true;
             }
 
@@ -119,11 +119,11 @@ namespace Celezt.DialogueSystem.Editor
             if (Path.HasExtension(path))
             {
                 ReadOnlySpan<char> extension = Path.GetExtension(path);
-                if (!MemoryExtensions.Equals(extension, DialogueGraphImporter.FILE_EXTENSION, StringComparison.Ordinal))
+                if (!MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION, StringComparison.Ordinal))
                     return false;
             }
             else 
-                path = path.ToString() + DialogueGraphImporter.FILE_EXTENSION;
+                path = path.ToString() + DGImporter.FILE_EXTENSION;
 
             return true;
         }

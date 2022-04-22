@@ -9,8 +9,8 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
 
-    [CustomEditor(typeof(DialogueGraphImporter))]
-    public class DialogueGraphImporterEditor : ScriptedImporterEditor
+    [CustomEditor(typeof(DGImporter))]
+    public class DGImporterEditor : ScriptedImporterEditor
     {
         public override void OnInspectorGUI()
         {
@@ -32,10 +32,10 @@ namespace Celezt.DialogueSystem.Editor
             if (extension.IsEmpty || extension.IsWhiteSpace())
                 return false;
 
-            if (!MemoryExtensions.Equals(extension, DialogueGraphImporter.FILE_EXTENSION.AsSpan(), StringComparison.Ordinal))
+            if (!MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION.AsSpan(), StringComparison.Ordinal))
                 return false;
 
-            foreach (var w in Resources.FindObjectsOfTypeAll<DialogueGraphEditorWindow>())
+            foreach (var w in Resources.FindObjectsOfTypeAll<DGEditorWindow>())
             {
                 if (w.SelectedGuid == guid)
                 {
@@ -44,7 +44,7 @@ namespace Celezt.DialogueSystem.Editor
                 }
             }
 
-            var window = EditorWindow.CreateWindow<DialogueGraphEditorWindow>(typeof(DialogueGraphEditorWindow), typeof(SceneView));
+            var window = EditorWindow.CreateWindow<DGEditorWindow>(typeof(DGEditorWindow), typeof(SceneView));
             window.Initialize(guid);
             window.Focus();
             return true;

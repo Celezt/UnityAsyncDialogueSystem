@@ -19,7 +19,6 @@ namespace Celezt.DialogueSystem.Editor
             //
             Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
             inputPort.portName = "blend";
-            inputPort.portColor = FlowType.Color;
             inputContainer.Add(inputPort);
 
             //
@@ -27,7 +26,6 @@ namespace Celezt.DialogueSystem.Editor
             //
             Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
             outputPort.portName = "with";
-            outputPort.portColor = FlowType.Color;
             outputContainer.Add(outputPort);
 
             FloatField blendTextField = new FloatField()
@@ -37,7 +35,7 @@ namespace Celezt.DialogueSystem.Editor
             blendTextField.RegisterValueChangedCallback(callback =>
             {
                 _timeOffset = (callback.target as FloatField).value;
-                HasUnsavedChanges = true;
+                hasUnsavedChanges = true;
             });
 
             extensionContainer.Add(blendTextField);

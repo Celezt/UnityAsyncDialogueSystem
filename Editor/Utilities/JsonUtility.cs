@@ -41,10 +41,10 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 if (node is DGNode { } dgNode)
                 {
                     positionData.Add(Vector2Int.RoundToInt(dgNode.GetPosition().position));
-                    customSerializeData.Add(dgNode.GetFields());
+                    customSerializeData.Add(JsonUtility.GetFields(dgNode));
                     nodeSerializeData.Add(new NodeSerializeData
                     {
-                        ID = dgNode.Guid.ToString(),
+                        ID = dgNode.GUID.ToString(),
                         Type = dgNode.GetType().FullName,
                     });
                 }
@@ -60,7 +60,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                         {
                             InputPort =
                             {
-                                NodeID = inNode.Guid.ToString(),
+                                NodeID = inNode.GUID.ToString(),
                                 PortNumber = new Func<int>(() => {
                                     int inputNumber = inNode.inputContainer.IndexOf(edge.input);
                                     int verticalInputNumber = inNode.inputVerticalContainer.IndexOf(edge.input);
@@ -76,7 +76,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                             },
                             OutputPort =
                             {
-                                NodeID = outNode.Guid.ToString(),
+                                NodeID = outNode.GUID.ToString(),
                                 PortNumber = new Func<int>(() => {
                                     int outputNumber = outNode.outputContainer.IndexOf(edge.output);
                                     int verticalOutputNumber = outNode.outputVerticalContainer.IndexOf(edge.output);
@@ -130,7 +130,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             return JsonConvert.DeserializeObject<GraphSerializeData>(content.ToString());
         }
 
-        internal static void DeserializeGraph(this DialogueGraphView graphView, ReadOnlySpan<char> content)
+        internal static void DeserializeGraph(this DGView graphView, ReadOnlySpan<char> content)
         {
             GraphSerializeData deserializedData = DeserializeGraph(content);
 
@@ -198,7 +198,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
         /// <param name="instance">Reference object.</param>
         /// /// <param name="binding">Field types.</param>
         /// <returns>Fields as <see cref="JObject"/></returns>
-        public static JObject GetFields(this object instance, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        public static JObject GetFields(object instance, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
         {
             IEnumerable<FieldInfo> serializableFields = instance.GetType()
                 .GetFields(binding)
@@ -217,7 +217,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
         /// <param name="instance">Reference object.</param>
         /// <param name="obj">Assigned data.</param>
         /// <param name="binding">Field types.</param>
-        public static void SetFields(this object instance, JObject obj, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        public static void SetFields(object instance, JObject obj, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
         {
             if (obj == null)
                 return;

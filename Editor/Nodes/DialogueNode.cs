@@ -26,9 +26,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Action Container
             //
-            Port actionPort = this.InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Multi, typeof(ActionType));
-            actionPort.portName = "";
-            actionPort.portColor = ActionType.Color;
+            Port actionPort = InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Multi, typeof(ActionType));
 
             actionPort.AddToClassList("dg-port-vertical__output");
             outputVerticalContainer.Add(actionPort);
@@ -39,17 +37,15 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Input Container
             //
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
+            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
             inputPort.portName = "Connections";
-            inputPort.portColor = FlowType.Color;
             inputContainer.Add(inputPort);
 
             //
             //  Output Container
             //
-            Port output = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
+            Port output = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
             output.portName = "Continue";
-            output.portColor = FlowType.Color;
             outputContainer.Add(output);
             outputContainer.AddToClassList("dg-output__choice-container");
 
@@ -66,7 +62,7 @@ namespace Celezt.DialogueSystem.Editor
             actorIDTextField.RegisterValueChangedCallback(callback =>
             {
                 _actorID = (callback.target as TextField).value;
-                HasUnsavedChanges = true;
+                hasUnsavedChanges = true;
             });
 
             actorIDTextField.AddToClassList("dg-text-field__hidden");
@@ -124,30 +120,26 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddNewChoicePort(Choice choiceData)
         {
-            HasUnsavedChanges = true;
+            hasUnsavedChanges = true;
 
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
-            outputPort.portName = "";
-            outputPort.portColor = FlowType.Color;
-            outputPort.userData = choiceData;
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
 
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));
+            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));
             inputPort.portName = "Condition";
-            inputPort.portColor = ConditionType.Color;
 
             Button deleteChoiceButton = new Button(() =>
             {
                 if (outputPort.connected)
-                    GraphView.DeleteElements(outputPort.connections);
+                    graphView.DeleteElements(outputPort.connections);
 
                 if(inputPort.connected)
-                    GraphView.DeleteElements(inputPort.connections);
+                    graphView.DeleteElements(inputPort.connections);
 
-                HasUnsavedChanges = true;
+                hasUnsavedChanges = true;
 
                 _choices.Remove(choiceData);
-                GraphView.RemoveElement(outputPort);
-                GraphView.RemoveElement(inputPort);
+                graphView.RemoveElement(outputPort);
+                graphView.RemoveElement(inputPort);
             });
 
             deleteChoiceButton.AddToClassList("dg-button__delete");
@@ -159,7 +151,7 @@ namespace Celezt.DialogueSystem.Editor
             choiceTextField.RegisterValueChangedCallback(callback =>
             {
                 choiceData.Text = callback.newValue;
-                HasUnsavedChanges = true;
+                hasUnsavedChanges = true;
             });
 
 

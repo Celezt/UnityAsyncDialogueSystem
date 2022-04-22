@@ -7,12 +7,12 @@ using System;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public class DialogueGraphAssetPostProcessor : AssetPostprocessor
+    public class DGAssetPostProcessor : AssetPostprocessor
     {
         private static void UpdateAfterAssetChange(string[] newNames)
         {
-            DialogueGraphEditorWindow[] windows = Resources.FindObjectsOfTypeAll<DialogueGraphEditorWindow>();
-            foreach (DialogueGraphEditorWindow window in windows)
+            DGEditorWindow[] windows = Resources.FindObjectsOfTypeAll<DGEditorWindow>();
+            foreach (DGEditorWindow window in windows)
             {
                 for (int i = 0; i < newNames.Length; i++)
                 {
@@ -24,8 +24,8 @@ namespace Celezt.DialogueSystem.Editor
 
         private static void DisplayDeletionDialogue(string[] deletedAssets)
         {
-            DialogueGraphEditorWindow[] windows = Resources.FindObjectsOfTypeAll<DialogueGraphEditorWindow>();
-            foreach (DialogueGraphEditorWindow window in windows)
+            DGEditorWindow[] windows = Resources.FindObjectsOfTypeAll<DGEditorWindow>();
+            foreach (DGEditorWindow window in windows)
             {
                 for (int i = 0; i < deletedAssets.Length; i++)
                 {
@@ -38,21 +38,21 @@ namespace Celezt.DialogueSystem.Editor
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
             // Moved assets
-            bool anyMovedDialogues = movedAssets.Any(x => x.EndsWith(DialogueGraphImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase));
-            anyMovedDialogues |= movedAssets.Any(x => x.EndsWith(DialogueGraphImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase));
+            bool anyMovedDialogues = movedAssets.Any(x => x.EndsWith(DGImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase));
+            anyMovedDialogues |= movedAssets.Any(x => x.EndsWith(DGImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase));
             if (anyMovedDialogues)
                 UpdateAfterAssetChange(movedAssets);
 
             // Deleted assets
-            bool anyRemovedDialogues = deletedAssets.Any(x => x.EndsWith(DialogueGraphImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase));
-            anyRemovedDialogues |= deletedAssets.Any(x => x.EndsWith(DialogueGraphImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase));
+            bool anyRemovedDialogues = deletedAssets.Any(x => x.EndsWith(DGImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase));
+            anyRemovedDialogues |= deletedAssets.Any(x => x.EndsWith(DGImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase));
             if (anyRemovedDialogues)
                 DisplayDeletionDialogue(deletedAssets);
 
-            DialogueGraphEditorWindow[] windows = Resources.FindObjectsOfTypeAll<DialogueGraphEditorWindow>();
+            DGEditorWindow[] windows = Resources.FindObjectsOfTypeAll<DGEditorWindow>();
 
             List<GUID> changedGraphGuids = importedAssets
-                .Where(x => x.EndsWith(DialogueGraphImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
+                .Where(x => x.EndsWith(DGImporter.FILE_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
                 .Select(AssetDatabase.GUIDFromAssetPath)
                 .ToList();
 

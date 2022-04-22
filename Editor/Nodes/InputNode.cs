@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Celezt.DialogueSystem.Editor.Utilities;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -13,15 +14,12 @@ namespace Celezt.DialogueSystem.Editor
 
         protected override void Awake()
         {
-            mainContainer.AddToClassList("dg-main-container");
-            mainContainer.AddToClassList("dg-connection-container");
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/ConnectionNode");
 
             //
             // Output Container
             //
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
-            outputPort.portName = "";
-            outputPort.portColor = FlowType.Color;
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
 
             TextField outputTextField = new TextField()
             {
@@ -30,7 +28,7 @@ namespace Celezt.DialogueSystem.Editor
             outputTextField.RegisterValueChangedCallback(callback =>
             {
                 _id = (callback.target as TextField).value;
-                HasUnsavedChanges = true;
+                hasUnsavedChanges = true;
             });
 
             outputTextField.AddToClassList("dg-text-field__hidden");

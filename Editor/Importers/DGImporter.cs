@@ -10,7 +10,7 @@ namespace Celezt.DialogueSystem.Editor
     using Utilities;
 
      [ScriptedImporter(1, FILE_EXTENSION)]
-    public class DialogueGraphImporter : ScriptedImporter
+    public class DGImporter : ScriptedImporter
     {
         public const string FILE_EXTENSION = ".dialoguegraph";
 

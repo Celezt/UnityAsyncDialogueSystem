@@ -15,11 +15,11 @@ namespace Celezt.DialogueSystem.Editor
     using Unity.Plastic.Newtonsoft.Json.Linq;
     using Utilities;
 
-    public class DialogueGraphView : GraphView
+    public class DGView : GraphView
     {
         internal const int DG_VERSION = 1;
 
-        internal DialogueGraphEditorWindow EditorWindow
+        internal DGEditorWindow EditorWindow
         {
             get => _editorWindow;
             private set => _editorWindow = value;
@@ -28,10 +28,11 @@ namespace Celezt.DialogueSystem.Editor
         internal Dictionary<Type, NodeProperties> NodePropertiesDictionary { get; private set; } = new Dictionary<Type, NodeProperties>();
         internal Dictionary<GUID, DGNode> NodeDictionary { get; private set; } = new Dictionary<GUID, DGNode>();
 
-        private DialogueGraphEditorWindow _editorWindow;
-        private DialogueGraphNodeSearchWindow _searchWindow;
+        private DGEditorWindow _editorWindow;
+        private DGNodeSearchWindow _searchWindow;
+        private DGBlackboard _blackboard;
 
-        public DialogueGraphView(DialogueGraphEditorWindow editorWindow)
+        public DGView(DGEditorWindow editorWindow)
         {
             _editorWindow = editorWindow;
 
@@ -39,6 +40,7 @@ namespace Celezt.DialogueSystem.Editor
             AddManipulators();
             AddGridBackground();
             AddSearchWindow();
+            AddBlackboard();
             OnGraphViewChanged();
             AddStyles();
             
@@ -64,7 +66,7 @@ namespace Celezt.DialogueSystem.Editor
 
         public DGNode CopyNode(DGNode toCopy, Vector2 position)
         {
-            var node = CreateNode(toCopy.GetType(), position, GUID.Generate(), toCopy.GetFields());
+            var node = CreateNode(toCopy.GetType(), position, GUID.Generate(), JsonUtility.GetFields(toCopy));
 
             return node;
         }
@@ -78,7 +80,7 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             var node = (DGNode)Activator.CreateInstance(type);
-            node.SetFields(obj);
+            JsonUtility.SetFields(node, obj);
 
             if (NodePropertiesDictionary.TryGetValue(type, out NodeProperties properties))
             {
@@ -126,7 +128,7 @@ namespace Celezt.DialogueSystem.Editor
                     Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DGNode)}");
                     continue;
                 }
-
+                
                 CreateNodeAttribute createNodeAttribute = type.GetCustomAttribute<CreateNodeAttribute>();
                 NodePropertiesDictionary.Add(type, new NodeProperties 
                 { 
@@ -136,18 +138,15 @@ namespace Celezt.DialogueSystem.Editor
             }
         }
 
+
         private void AddManipulators()
         {
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new RectangleSelector());
-            this.AddManipulator(CreateGroupContextualMenu());
         }
-
-        private IManipulator CreateGroupContextualMenu() => new ContextualMenuManipulator(
-            menuEvent => menuEvent.menu.AppendAction("Create Group", actionEvent => AddElement(CreateGroup(GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)))));
-
+       
         private void AddGridBackground()
         {     
             GridBackground gridBackground = new GridBackground();
@@ -157,24 +156,36 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddSearchWindow()
         {
-            if (_searchWindow is null)
+            if (_searchWindow == null)
             {
-                _searchWindow = ScriptableObject.CreateInstance<DialogueGraphNodeSearchWindow>();
+                _searchWindow = ScriptableObject.CreateInstance<DGNodeSearchWindow>();
                 _searchWindow.Initialize(this, _editorWindow);
             }
-            
+
             nodeCreationRequest = context => SearchWindow.Open(new SearchWindowContext(context.screenMousePosition), _searchWindow);
+        }
+
+        private void AddBlackboard()
+        {
+            if (_blackboard == null)
+            {
+                _blackboard = new DGBlackboard(this);
+                Add(_blackboard);
+            }
+            _editorWindow.OnTitleChanged += newTitle =>
+            {
+                _blackboard.title = newTitle;
+            };
         }
 
         private void AddStyles()
         {
-            this.AddStyleSheet("DGView");
-            this.AddStyleSheet("DGNode");
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "DGView");
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "DGNode");
         }
 
         private void OnGraphViewChanged() 
         {         
-            
             graphViewChanged = changes =>
             {
                 if (changes.edgesToCreate is { })
@@ -205,7 +216,7 @@ namespace Celezt.DialogueSystem.Editor
                             if (node is DGNode customNode)
                             {
                                 customNode.InternalInvokeDestroy();
-                                NodeDictionary.Remove(customNode.Guid);
+                                NodeDictionary.Remove(customNode.GUID);
                             }
                         }
                     }

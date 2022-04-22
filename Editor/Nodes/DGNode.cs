@@ -13,16 +13,16 @@ namespace Celezt.DialogueSystem.Editor
     /// </summary>
     public abstract class DGNode : Node
     {
-        public GUID Guid { get; private set; }
+        public GUID GUID { get; private set; }
 
         public VisualElement inputVerticalContainer { get; private set; } = new VisualElement();
         public VisualElement outputVerticalContainer { get; private set; } = new VisualElement();
 
-        protected DialogueGraphView GraphView { get; private set; }
-        protected bool HasUnsavedChanges
+        protected DGView graphView { get; private set; }
+        protected bool hasUnsavedChanges
         {
-            get => GraphView.EditorWindow.HasUnsavedChanges;
-            set => GraphView.EditorWindow.HasUnsavedChanges = value;
+            get => graphView.EditorWindow.HasUnsavedChanges;
+            set => graphView.EditorWindow.HasUnsavedChanges = value;
         }
 
         [Flags]
@@ -34,11 +34,34 @@ namespace Celezt.DialogueSystem.Editor
             Output = 1 << 4,
         }
 
+        public override Port InstantiatePort(Orientation orientation, Direction direction, Port.Capacity capacity, Type type)
+        {
+            Port port = base.InstantiatePort(orientation, direction, capacity, type);
+            port.portName = "";
+
+            if (typeof(IPortType).IsAssignableFrom(type))
+            {
+                IPortType portType = (IPortType)Activator.CreateInstance(type);
+                port.portColor = portType.Color;
+            }
+
+            return port;
+        }
+
+        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            evt.menu.AppendAction("Group Selection", actionEvent =>
+            {
+                graphView.AddElement(graphView.CreateGroup(graphView.GetLocalMousePosition(actionEvent.eventInfo.localMousePosition)));
+            });
+
+            base.BuildContextualMenu(evt);
+        }
+
         /// <summary>
         /// Called when created.
         /// </summary>
         protected virtual void Awake() { }
-
         /// <summary>
         /// Called if the state of any edges connected to this node is about be to changed.
         /// </summary>
@@ -52,10 +75,10 @@ namespace Celezt.DialogueSystem.Editor
 
         internal void InternalInvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
         internal void InternalInvokeDestroy() => OnDestroy();
-        internal void InternalStart(DialogueGraphView graphView, GUID guid)
+        internal void InternalStart(DGView graphView, GUID guid)
         {
-            GraphView = graphView;
-            Guid = guid;
+            this.graphView = graphView;
+            this.GUID = guid;
 
             mainContainer.Insert(0, inputVerticalContainer);
             mainContainer.Add(outputVerticalContainer);

@@ -1,0 +1,13 @@
+.row-view {
+	flex-direction: row;
+	margin-left: 15px;
+}
+
+.row-view-label {
+	color: #969696;
+	min-width: 80px;
+}
+
+.row-view-control {
+	flex-grow: 1;
+}

@@ -11,7 +11,7 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Utilities;
 
-    public class DialogueGraphEditorWindow : EditorWindow
+    public class DGEditorWindow : EditorWindow
     {
         internal const int DG_VERSION = 1;
 
@@ -59,10 +59,14 @@ namespace Celezt.DialogueSystem.Editor
         /// If graph is about to be saved as a new asset.
         /// </summary>
         internal event Action OnSaveAsChanges = delegate { };
+        /// <summary>
+        /// If graph name is has changed.
+        /// </summary>
+        internal event Action<string> OnTitleChanged = delegate { };
 
-        private DialogueGraphView _graphView;
+        private DGView _graphView;
 
-        public DialogueGraphEditorWindow Initialize(GUID assetGuid)
+        public DGEditorWindow Initialize(GUID assetGuid)
         {
             UnityEngine.Object asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(AssetDatabase.GUIDToAssetPath(assetGuid));
 
@@ -83,7 +87,7 @@ namespace Celezt.DialogueSystem.Editor
 
             // Add graph view.
             {
-                _graphView = new DialogueGraphView(this);
+                _graphView = new DGView(this);
                 _graphView.StretchToParentSize();
                 rootVisualElement.Add(_graphView);
             }
@@ -105,7 +109,7 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             // Add style sheet.
-            _graphView.AddStyleSheet("DGVariables");
+            _graphView.AddStyleSheet(StyleUtility.STYLE_PATH + "DGVariables");
 
             _lastSerializedContent = ReadAssetFile().ToString();
             _graphView.DeserializeGraph(_lastSerializedContent);       
@@ -141,6 +145,7 @@ namespace Celezt.DialogueSystem.Editor
                 title = title.ToString() + "(deleted)";
 
             titleContent.text = title.ToString();
+            OnTitleChanged.Invoke(title.ToString());
         }
 
         public void AssetWasDeleted()
@@ -319,7 +324,7 @@ namespace Celezt.DialogueSystem.Editor
                 ReadOnlySpan<char> newFilePath = EditorUtility.SaveFilePanelInProject(
                     "Save Graph As...",
                     Path.GetFileNameWithoutExtension(oldFilePath).ToString(),
-                    DialogueGraphImporter.FILE_EXTENSION.Substring(1),   // Remove dot.
+                    DGImporter.FILE_EXTENSION.Substring(1),   // Remove dot.
                     "",
                     Path.GetDirectoryName(oldFilePath).ToString()
                 ).Replace(Application.dataPath, "Assets");  // Simplify path.
@@ -334,7 +339,7 @@ namespace Celezt.DialogueSystem.Editor
                     if (DialogueGraphCreator.Create(newFilePath, serializedJSON))
                     {
                         AssetDatabase.ImportAsset(newFilePath.ToString());
-                        DialogueGraphImporterEditor.ShowGraphEditorWindow(newFilePath.ToString());
+                        DGImporterEditor.ShowGraphEditorWindow(newFilePath.ToString());
                         saveFilePath = newFilePath;
                     }
                 }

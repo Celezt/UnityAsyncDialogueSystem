@@ -25,7 +25,6 @@ namespace Celezt.DialogueSystem.Editor
             //
             Port actionPort = this.InstantiatePort(Orientation.Vertical, Direction.Input, Port.Capacity.Multi, typeof(ActionType));
             actionPort.portName = "";
-            actionPort.portColor = ActionType.Color;
 
             actionPort.AddToClassList("dg-port-vertical__input");
             inputVerticalContainer.Insert(0, actionPort);
@@ -49,29 +48,26 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddNewChoicePort(Choice choiceData)
         {
-            HasUnsavedChanges = true;
+            hasUnsavedChanges = true;
 
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
-            outputPort.portName = "";
-            outputPort.portColor = FlowType.Color;
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
 
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));
+            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));
             inputPort.portName = "Condition";
-            inputPort.portColor = ConditionType.Color;
 
             Button deleteChoiceButton = new Button(() =>
             {
                 if (outputPort.connected)
-                    GraphView.DeleteElements(outputPort.connections);
+                    graphView.DeleteElements(outputPort.connections);
 
                 if (inputPort.connected)
-                    GraphView.DeleteElements(inputPort.connections);
+                    graphView.DeleteElements(inputPort.connections);
 
-                HasUnsavedChanges = true;
+                hasUnsavedChanges = true;
 
                 _choices.Remove(choiceData);
-                GraphView.RemoveElement(outputPort);
-                GraphView.RemoveElement(inputPort);
+                graphView.RemoveElement(outputPort);
+                graphView.RemoveElement(inputPort);
             });
 
             deleteChoiceButton.AddToClassList("dg-button__delete");
@@ -83,7 +79,7 @@ namespace Celezt.DialogueSystem.Editor
             choiceTextField.RegisterValueChangedCallback(callback =>
             {
                 choiceData.Text = callback.newValue;
-                HasUnsavedChanges = true;
+                hasUnsavedChanges = true;
             });
 
 
