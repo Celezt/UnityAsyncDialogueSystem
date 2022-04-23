@@ -25,6 +25,12 @@ namespace Celezt.DialogueSystem.Editor
             private set => _editorWindow = value;
         }
 
+        internal DGBlackboard Blackboard
+        {
+            get => _blackboard;
+            private set => _blackboard = value;
+        }
+
         internal Dictionary<Type, NodeProperties> NodePropertiesDictionary { get; private set; } = new Dictionary<Type, NodeProperties>();
         internal Dictionary<GUID, DGNode> NodeDictionary { get; private set; } = new Dictionary<GUID, DGNode>();
 

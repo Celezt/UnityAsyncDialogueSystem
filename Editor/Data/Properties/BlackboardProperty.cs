@@ -8,14 +8,13 @@ namespace Celezt.DialogueSystem.Editor
 {
     public abstract class BlackboardProperty<T> : IBlackboardProperty
     {
-        public Guid GUID => _guid;
         public string Name
         {
             get
             {
                 if (string.IsNullOrEmpty(_name))
                 {
-                    if (string.IsNullOrEmpty(CustomTypeName)) 
+                    if (string.IsNullOrEmpty(CustomTypeName))
                         _name = "New " + typeof(T).Name;
                     else
                         _name = "New " + CustomTypeName;
@@ -25,17 +24,24 @@ namespace Celezt.DialogueSystem.Editor
             }
             set => _name = value;
         }
-        public object Value 
-        { 
+        public object Value
+        {
             get => _value;
             set => _value = (T)value;
         }
+        public bool hasUnsavedChanges
+        {
+            get => _blackboard.graphView.EditorWindow.hasUnsavedChanges;
+            set => _blackboard.graphView.EditorWindow.hasUnsavedChanges = value;
+        }
+        public Guid GUID => _guid;
         public virtual string CustomTypeName { get; } = null;
 
         protected readonly Guid _guid = Guid.NewGuid();
 
         protected T _value;
         protected string _name;
+        protected DGBlackboard _blackboard;
 
         public abstract VisualElement BuildController();
 
@@ -51,5 +57,10 @@ namespace Celezt.DialogueSystem.Editor
         }
         public override int GetHashCode() => _guid.GetHashCode();
         public override string ToString() => _name;
+
+        void IBlackboardProperty.Initialize(DGBlackboard blackboard)
+        {
+            _blackboard = blackboard;
+        }
     }
 }

@@ -21,8 +21,8 @@ namespace Celezt.DialogueSystem.Editor
         protected DGView graphView { get; private set; }
         protected bool hasUnsavedChanges
         {
-            get => graphView.EditorWindow.HasUnsavedChanges;
-            set => graphView.EditorWindow.HasUnsavedChanges = value;
+            get => graphView.EditorWindow.hasUnsavedChanges;
+            set => graphView.EditorWindow.hasUnsavedChanges = value;
         }
 
         [Flags]

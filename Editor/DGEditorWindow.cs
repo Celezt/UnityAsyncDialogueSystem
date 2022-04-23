@@ -21,17 +21,17 @@ namespace Celezt.DialogueSystem.Editor
             set => _selectedGuid = value;
         }
 
-        internal bool HasUnsavedChanges
+        new internal bool hasUnsavedChanges
         {
-            get => hasUnsavedChanges;
-            set => hasUnsavedChanges = value;
+            get => base.hasUnsavedChanges;
+            set => base.hasUnsavedChanges = value;
         }
 
         internal bool HasChangesSinceLastSerialization
         {
             get
             {
-                ReadOnlySpan<char> currentSerializedJson = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
+                ReadOnlySpan<char> currentSerializedJson = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
                 return !MemoryExtensions.Equals(currentSerializedJson, _lastSerializedContent, StringComparison.Ordinal);
             }
         }
@@ -132,12 +132,12 @@ namespace Celezt.DialogueSystem.Editor
 
             if (HasChangesSinceLastSerialization)
             {
-                hasUnsavedChanges = true;
+                base.hasUnsavedChanges = true;
                 saveChangesMessage = SaveChangeMessage;
             }
             else
             {
-                hasUnsavedChanges = false;
+                base.hasUnsavedChanges = false;
                 saveChangesMessage = "";
             }
             
@@ -224,7 +224,7 @@ namespace Celezt.DialogueSystem.Editor
             if (!AssetFileExist)
                 DisplayDeleteDialogue(false);
 
-            if (hasUnsavedChanges)
+            if (base.hasUnsavedChanges)
             {
                 int option = EditorUtility.DisplayDialogComplex(
                     "Dialogue Graph has been modified",
@@ -297,9 +297,9 @@ namespace Celezt.DialogueSystem.Editor
             if (FilePath.IsEmpty || FilePath.IsWhiteSpace())
                 return false;
 
-            ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
+            ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
             DialogueGraphCreator.Overwrite(FilePath, serializedJSON);
-            hasUnsavedChanges = false;
+            base.hasUnsavedChanges = false;
 
             return true;
         }
@@ -334,7 +334,7 @@ namespace Celezt.DialogueSystem.Editor
 
                 if (!MemoryExtensions.Equals(newFilePath, oldFilePath, StringComparison.Ordinal))
                 {
-                    ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView.nodes, _graphView.edges);
+                    ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
 
                     if (DialogueGraphCreator.Create(newFilePath, serializedJSON))
                     {

@@ -18,7 +18,12 @@ namespace Celezt.DialogueSystem.Editor
             {
                 value = _value,           
             };
-           
+            control.RegisterValueChangedCallback(x =>
+            {
+                _value = x.newValue;
+                hasUnsavedChanges = true;
+
+            });
             return control;
         }
     }

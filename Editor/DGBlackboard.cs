@@ -14,10 +14,15 @@ namespace Celezt.DialogueSystem.Editor
 {
     public class DGBlackboard : Blackboard
     {
+        public IReadOnlyList<IBlackboardProperty> Properties => _properties;
+
+        new internal DGView graphView => _graphView;
+
         private readonly DGView _graphView;
 
+        [SerializeField] private List<IBlackboardProperty> _properties = new List<IBlackboardProperty>();
+
         private List<Type> _propertyTypes = new List<Type>();
-        private List<IBlackboardProperty> _properties = new List<IBlackboardProperty>();
         private Dictionary<Guid, BlackboardRow> _propertyRows = new Dictionary<Guid, BlackboardRow>();
         private Dictionary<string, IBlackboardProperty> _propertyNames = new Dictionary<string, IBlackboardProperty>();
 
@@ -41,11 +46,6 @@ namespace Celezt.DialogueSystem.Editor
             {
                 headerVisible = false,
             };
-            foreach (var property in _properties)
-                AddProperty(property);
-
-            if (_properties.Count > 0)  // Only scrollable if not empty.
-                scrollable = false;
 
             Add(_section);
         }
@@ -54,6 +54,8 @@ namespace Celezt.DialogueSystem.Editor
         {
             if (_propertyRows.ContainsKey(property.GUID))
                 return;
+
+            property.Initialize(this);
 
             // Rename if duplicate.
             {
@@ -75,7 +77,7 @@ namespace Celezt.DialogueSystem.Editor
             };
             var row = new BlackboardRow(field, new BlackboardFieldPropertyView(property));
             row.userData = property;
-            row.AddManipulator(Delete(row));
+            row.AddManipulator(DeleteRowManipulator(row));
 
             if (index < 0)
                 index = _propertyRows.Count;
@@ -136,6 +138,8 @@ namespace Celezt.DialogueSystem.Editor
 
                 _propertyNames.Remove(oldPropertyName);
                 _propertyNames.Add(newPropertyName, property);
+
+                _graphView.EditorWindow.hasUnsavedChanges = true;
             }
         }
 
@@ -179,7 +183,7 @@ namespace Celezt.DialogueSystem.Editor
             }
         }
 
-        private IManipulator Delete(BlackboardRow row)
+        private IManipulator DeleteRowManipulator(BlackboardRow row)
         {
             return new ContextualMenuManipulator(
                 menuEvent => menuEvent.menu.AppendAction("Delete", actionEvent =>

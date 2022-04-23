@@ -19,5 +19,7 @@ namespace Celezt.DialogueSystem.Editor
 
         public VisualElement BuildController();
 
+        internal void Initialize(DGBlackboard blackboard);
+
     }
 }

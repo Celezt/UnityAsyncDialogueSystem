@@ -29,20 +29,30 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             return JsonConvert.DeserializeObject(deserialize.ToString(), type);
         }
 
-        public static ReadOnlySpan<char> SerializeGraph(int version, GUID objectID, UQueryState<Node> nodes, UQueryState<Edge> edges)
+        public static ReadOnlySpan<char> SerializeGraph(int version, GUID objectID, DGView graphView)
         {
-            List<NodeSerializeData> nodeSerializeData = new List<NodeSerializeData>();
-            List<EdgeSerializeData> edgeSerializeData = new List<EdgeSerializeData>();
+            List<NodeSerializeData> nodeData = new List<NodeSerializeData>();
+            List<EdgeSerializeData> edgeData = new List<EdgeSerializeData>();
             List<SerializedVector2Int> positionData = new List<SerializedVector2Int>();
-            List<object> customSerializeData = new List<object>();
-            
-            nodes.ForEach(node =>
+            List<object> specialData = new List<object>();
+            List<object> propertyData = new List<object>();
+
+            foreach (var property in graphView.Blackboard.Properties)
+            {
+                JObject obj = new JObject();
+                obj.Add("Type", property.GetType().FullName); 
+                obj.Add("Name", property.Name);
+                obj.Add("Value", JToken.FromObject(property.Value));
+                propertyData.Add(obj);
+            }
+
+            graphView.nodes.ForEach(node =>
             {            
                 if (node is DGNode { } dgNode)
                 {
                     positionData.Add(Vector2Int.RoundToInt(dgNode.GetPosition().position));
-                    customSerializeData.Add(JsonUtility.GetFields(dgNode));
-                    nodeSerializeData.Add(new NodeSerializeData
+                    specialData.Add(GetFields(dgNode));
+                    nodeData.Add(new NodeSerializeData
                     {
                         ID = dgNode.GUID.ToString(),
                         Type = dgNode.GetType().FullName,
@@ -50,13 +60,13 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 }
             });
 
-            edges.ForEach(edge =>
+            graphView.edges.ForEach(edge =>
             {
                 if (edge.input.node is DGNode inNode)
                 {
                     if (edge.output.node is DGNode outNode)
                     {
-                        edgeSerializeData.Add(new EdgeSerializeData
+                        edgeData.Add(new EdgeSerializeData
                         {
                             InputPort =
                             {
@@ -99,10 +109,11 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             {
                 DGVersion = version,
                 ObjectID = objectID.ToString(),
-                Nodes = nodeSerializeData,
-                Edges = edgeSerializeData,
+                Properties = propertyData,
+                Nodes = nodeData,
+                Edges = edgeData,
                 Positions = positionData,
-                CustomSaveData = customSerializeData,
+                CustomSaveData = specialData,
             };
 
 
@@ -133,6 +144,42 @@ namespace Celezt.DialogueSystem.Editor.Utilities
         internal static void DeserializeGraph(this DGView graphView, ReadOnlySpan<char> content)
         {
             GraphSerializeData deserializedData = DeserializeGraph(content);
+
+            foreach (object obj in deserializedData.Properties)
+            {
+                JObject jObj = (JObject)obj;
+                Type type = null;
+                {
+                    if (jObj.TryGetValue("Type", out JToken token))
+                    {
+                        type = Type.GetType(token.ToObject<string>());
+                        jObj.Remove("Type");
+                    }
+                }
+
+                if (type == null)
+                {
+                    Debug.LogWarning("Unable to find blackboard property type");
+                    continue;
+                }
+
+                IBlackboardProperty property = (IBlackboardProperty)Activator.CreateInstance(type);
+
+                {
+                    if (jObj.TryGetValue("Name", out JToken token))
+                    {
+                        property.Name = token.ToObject<string>();
+                    }
+                }
+                {
+                    if (jObj.TryGetValue("Value", out JToken token))
+                    {
+                        property.Value = token.ToObject(property.PropertyType);
+                    }
+                }
+
+                graphView.Blackboard.AddProperty(property);
+            }
 
             // Load all nodes.
             int length = deserializedData.Nodes.Count;
@@ -193,6 +240,20 @@ namespace Celezt.DialogueSystem.Editor.Utilities
         }
 
         /// <summary>
+        /// Get all serializable properties and fields in object.
+        /// </summary>
+        /// <param name="instance">Reference object.</param>
+        /// /// <param name="binding">Property and field types.</param>
+        /// <returns>Properties and fields as <see cref="JObject"/></returns>
+        public static JObject GetFieldsAndProperties(object instance, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        {
+            JObject obj = GetProperties(instance, binding);
+            obj.Merge(GetFields(instance, binding));
+
+            return obj;
+        }
+
+        /// <summary>
         /// Get all serializable fields in object.
         /// </summary>
         /// <param name="instance">Reference object.</param>
@@ -209,6 +270,37 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 obj.Add(field.Name, JToken.FromObject(field.GetValue(instance)));
             
             return obj;
+        }
+
+        /// <summary>
+        /// Get all serializable properties in object.
+        /// </summary>
+        /// <param name="instance">Reference object.</param>
+        /// /// <param name="binding">Property types.</param>
+        /// <returns>Properties as <see cref="JObject"/></returns>
+        public static JObject GetProperties(object instance, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        {
+            IEnumerable<PropertyInfo> serializableFields = instance.GetType()
+                .GetProperties(binding)
+                .Where(x => x.IsDefined(typeof(SerializableAttribute)) || x.IsDefined(typeof(SerializeField)));
+
+            JObject obj = new JObject();
+            foreach (PropertyInfo field in serializableFields)
+                obj.Add(field.Name, JToken.FromObject(field.GetValue(instance)));
+
+            return obj;
+        }
+
+        /// <summary>
+        /// Set all serializable properties and fields in object.
+        /// </summary>
+        /// <param name="instance">Reference object.</param>
+        /// <param name="obj">Assigned data.</param>
+        /// <param name="binding">Property and field types.</param>
+        public static void SetFieldsAndProperties(object instance, JObject obj, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        {
+            SetProperties(instance, obj);
+            SetFields(instance, obj);
         }
 
         /// <summary>
@@ -230,6 +322,28 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             {
                 if (obj.TryGetValue(field.Name, out JToken token))
                     field.SetValue(instance, token.ToObject(field.FieldType));
+            }
+        }
+
+        /// <summary>
+        /// Set all serializable properties in object.
+        /// </summary>
+        /// <param name="instance">Reference object.</param>
+        /// <param name="obj">Assigned data.</param>
+        /// <param name="binding">Property types.</param>
+        public static void SetProperties(object instance, JObject obj, BindingFlags binding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+        {
+            if (obj == null)
+                return;
+
+            IEnumerable<PropertyInfo> serializableFields = instance.GetType()
+            .GetProperties(binding)
+            .Where(x => x.IsDefined(typeof(SerializableAttribute)) || x.IsDefined(typeof(SerializeField)));
+
+            foreach (PropertyInfo field in serializableFields)
+            {
+                if (obj.TryGetValue(field.Name, out JToken token))
+                    field.SetValue(instance, token.ToObject(field.PropertyType));
             }
         }
     }
