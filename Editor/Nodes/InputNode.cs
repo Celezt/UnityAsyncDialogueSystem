@@ -19,7 +19,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Output Container
             //
-            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
 
             TextField outputTextField = new TextField()
             {

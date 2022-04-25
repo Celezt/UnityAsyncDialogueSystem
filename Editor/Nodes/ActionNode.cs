@@ -23,7 +23,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Action Container
             //
-            Port actionPort = this.InstantiatePort(Orientation.Vertical, Direction.Input, Port.Capacity.Multi, typeof(ActionType));
+            Port actionPort = this.InstantiatePort(Orientation.Vertical, Direction.Input, Port.Capacity.Multi, typeof(ActionPortType));
             actionPort.portName = "";
 
             actionPort.AddToClassList("dg-port-vertical__input");
@@ -50,9 +50,9 @@ namespace Celezt.DialogueSystem.Editor
         {
             hasUnsavedChanges = true;
 
-            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
 
-            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));
+            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionPortType));
             inputPort.portName = "Condition";
 
             Button deleteChoiceButton = new Button(() =>

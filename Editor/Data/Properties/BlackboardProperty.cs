@@ -6,8 +6,10 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public abstract class BlackboardProperty<T> : IBlackboardProperty
+    public abstract class BlackboardProperty<TValue, TPort> : IBlackboardProperty where TPort : IPortType 
     {
+        public Guid GUID => _guid;
+        public Type PortType => typeof(TPort);
         public string Name
         {
             get
@@ -15,7 +17,7 @@ namespace Celezt.DialogueSystem.Editor
                 if (string.IsNullOrEmpty(_name))
                 {
                     if (string.IsNullOrEmpty(CustomTypeName))
-                        _name = "New " + typeof(T).Name;
+                        _name = "New " + typeof(TValue).Name;
                     else
                         _name = "New " + CustomTypeName;
                 }
@@ -27,19 +29,18 @@ namespace Celezt.DialogueSystem.Editor
         public object Value
         {
             get => _value;
-            set => _value = (T)value;
+            set => _value = (TValue)value;
         }
         public bool hasUnsavedChanges
         {
             get => _blackboard.graphView.EditorWindow.hasUnsavedChanges;
             set => _blackboard.graphView.EditorWindow.hasUnsavedChanges = value;
         }
-        public Guid GUID => _guid;
         public virtual string CustomTypeName { get; } = null;
 
         protected readonly Guid _guid = Guid.NewGuid();
 
-        protected T _value;
+        protected TValue _value;
         protected string _name;
         protected DGBlackboard _blackboard;
 

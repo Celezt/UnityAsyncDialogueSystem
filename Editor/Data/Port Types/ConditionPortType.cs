@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public struct FlowType : IPortType
+    public struct ConditionPortType : IPortType
     {
-        public Color Color => new Color(0.2f, 0.4f, 0.5f);
+        public Color Color => new Color(0.6f, 0.8f, 0.5f);
     }
 }

@@ -31,7 +31,7 @@ namespace Celezt.DialogueSystem.Editor
             private set => _blackboard = value;
         }
 
-        internal Dictionary<Type, NodeProperties> NodePropertiesDictionary { get; private set; } = new Dictionary<Type, NodeProperties>();
+        internal Dictionary<Type, NodeTraits> NodeTraitDictionary { get; private set; } = new Dictionary<Type, NodeTraits>();
         internal Dictionary<GUID, DGNode> NodeDictionary { get; private set; } = new Dictionary<GUID, DGNode>();
 
         private DGEditorWindow _editorWindow;
@@ -88,7 +88,7 @@ namespace Celezt.DialogueSystem.Editor
             var node = (DGNode)Activator.CreateInstance(type);
             JsonUtility.SetFields(node, obj);
 
-            if (NodePropertiesDictionary.TryGetValue(type, out NodeProperties properties))
+            if (NodeTraitDictionary.TryGetValue(type, out NodeTraits properties))
             {
                 if (!string.IsNullOrWhiteSpace(properties.NodeTitle))
                     node.title = properties.NodeTitle;
@@ -136,7 +136,7 @@ namespace Celezt.DialogueSystem.Editor
                 }
                 
                 CreateNodeAttribute createNodeAttribute = type.GetCustomAttribute<CreateNodeAttribute>();
-                NodePropertiesDictionary.Add(type, new NodeProperties 
+                NodeTraitDictionary.Add(type, new NodeTraits 
                 { 
                     MenuName = createNodeAttribute.MenuName,
                     NodeTitle = createNodeAttribute.NodeTitle,

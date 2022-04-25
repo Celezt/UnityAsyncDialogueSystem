@@ -10,6 +10,7 @@ namespace Celezt.DialogueSystem.Editor
     public interface IBlackboardProperty : IEquatable<IBlackboardProperty>
     {
         public Guid GUID { get; }
+        public Type PortType { get; }
         public string Name { get; set; }
         public object Value { get; set; }
         public string CustomTypeName { get; }

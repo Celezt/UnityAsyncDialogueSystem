@@ -17,14 +17,14 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Input Container
             //
-            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
+            Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowPortType));
             inputPort.portName = "blend";
             inputContainer.Add(inputPort);
 
             //
             // Output Container
             //
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
+            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
             outputPort.portName = "with";
             outputContainer.Add(outputPort);
 

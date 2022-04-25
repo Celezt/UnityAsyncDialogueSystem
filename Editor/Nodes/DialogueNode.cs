@@ -26,7 +26,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Action Container
             //
-            Port actionPort = InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Multi, typeof(ActionType));
+            Port actionPort = InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Multi, typeof(ActionPortType));
 
             actionPort.AddToClassList("dg-port-vertical__output");
             outputVerticalContainer.Add(actionPort);
@@ -37,14 +37,14 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Input Container
             //
-            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowType));
+            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowPortType));
             inputPort.portName = "Connections";
             inputContainer.Add(inputPort);
 
             //
             //  Output Container
             //
-            Port output = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
+            Port output = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
             output.portName = "Continue";
             outputContainer.Add(output);
             outputContainer.AddToClassList("dg-output__choice-container");
@@ -122,9 +122,9 @@ namespace Celezt.DialogueSystem.Editor
         {
             hasUnsavedChanges = true;
 
-            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowType));
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
 
-            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionType));
+            Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionPortType));
             inputPort.portName = "Condition";
 
             Button deleteChoiceButton = new Button(() =>

@@ -38,10 +38,11 @@ namespace Celezt.DialogueSystem.Editor
             ReflectBlackboardProperties();
 
             subTitle = "Dialogue Graph";
-            editTextRequested = EditTextRequested;
-            addItemRequested = AddItemRequested;
-            moveItemRequested = MoveItemRequested;
-
+            editTextRequested = OnEditName;
+            addItemRequested = OnAddItem;
+            moveItemRequested = OnMoveItem;
+            
+            
             _section = new BlackboardSection
             {
                 headerVisible = false,
@@ -68,7 +69,7 @@ namespace Celezt.DialogueSystem.Editor
 
             _propertyNames.Add(property.Name, property);
             _properties.Add(property);
-
+            
             var field = new BlackboardField
             {
                 text = property.Name,
@@ -78,6 +79,10 @@ namespace Celezt.DialogueSystem.Editor
             var row = new BlackboardRow(field, new BlackboardFieldPropertyView(property));
             row.userData = property;
             row.AddManipulator(DeleteRowManipulator(row));
+
+            var pill = row.Q<Pill>();
+            pill.RegisterCallback<MouseEnterEvent>(evt => OnMouseHoverRow(evt, property));
+            pill.RegisterCallback<MouseLeaveEvent>(evt => OnMouseHoverRow(evt, property));
 
             if (index < 0)
                 index = _propertyRows.Count;
@@ -106,7 +111,7 @@ namespace Celezt.DialogueSystem.Editor
             }
         }
 
-        private void AddItemRequested(Blackboard blackboard)
+        private void OnAddItem(Blackboard blackboard)
         {
             var gm = new GenericMenu();
 
@@ -119,7 +124,7 @@ namespace Celezt.DialogueSystem.Editor
             gm.ShowAsContext();
         }
 
-        private void EditTextRequested(Blackboard blackboard, VisualElement element, string newPropertyName)
+        private void OnEditName(Blackboard blackboard, VisualElement element, string newPropertyName)
         {
             if (string.IsNullOrEmpty(newPropertyName))
                 return;
@@ -135,15 +140,15 @@ namespace Celezt.DialogueSystem.Editor
                 IBlackboardProperty property = _propertyNames[oldPropertyName];
                 property.Name = newPropertyName;
                 field.text = newPropertyName;
-
+                
                 _propertyNames.Remove(oldPropertyName);
                 _propertyNames.Add(newPropertyName, property);
-
+                
                 _graphView.EditorWindow.hasUnsavedChanges = true;
             }
         }
 
-        private void MoveItemRequested(Blackboard blackboard, int newIndex, VisualElement element)
+        private void OnMoveItem(Blackboard blackboard, int newIndex, VisualElement element)
         {
             // Reorder properties.
             {
@@ -172,7 +177,7 @@ namespace Celezt.DialogueSystem.Editor
                 else
                     _properties.Insert(newIndex, property);
             }
-
+            
             // Reorder rows.
             {
                 foreach (var row in _propertyRows.Values)   // Remove all rows.
@@ -196,6 +201,17 @@ namespace Celezt.DialogueSystem.Editor
                     if (_properties.Count == 0) // No longer scrollable if no properties exist.
                         scrollable = false;
                 }));
+        }
+
+        private void OnMouseHoverRow(EventBase evt, IBlackboardProperty property)
+        {
+            if (evt.eventTypeId == MouseEnterEvent.TypeId())
+            {
+                foreach (Node node in _graphView.nodes)
+                {
+
+                }
+            }
         }
     }
 }

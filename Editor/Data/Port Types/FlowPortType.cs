@@ -4,9 +4,8 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public struct NodeTraits
+    public struct FlowPortType : IPortType
     {
-        public string MenuName;
-        public string NodeTitle;
+        public Color Color => new Color(0.2f, 0.4f, 0.5f);
     }
 }
