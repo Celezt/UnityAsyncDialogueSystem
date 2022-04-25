@@ -8,26 +8,14 @@ namespace Celezt.DialogueSystem.Editor
 {
     public class PropertyNode : DGNode
     {
-        public IBlackboardProperty Property
-        {
-            get => _property;
-            set
-            {
-                _property = value;
-
-                if (_property != null)
-                {
-                    Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, _property.PortType);
-                    outputContainer.Add(outputPort);
-                }
-            }
-        }
-
-        private IBlackboardProperty _property;  
-        
         protected override void Awake()
         {
-            
+           IBlackboardProperty property = userData as IBlackboardProperty;
+
+            outputContainer.Clear();
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, property.PortType);
+            outputPort.portName = property.Name;
+            outputContainer.Add(outputPort);
         }
     }
 }

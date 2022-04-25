@@ -40,6 +40,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
             foreach (var property in graphView.Blackboard.Properties)
             {
                 JObject obj = new JObject();
+                obj.Add("ID", property.ID.ToString("N"));
                 obj.Add("Type", property.GetType().FullName); 
                 obj.Add("Name", property.Name);
                 obj.Add("Value", JToken.FromObject(property.Value));
@@ -54,7 +55,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                     specialData.Add(GetFields(dgNode));
                     nodeData.Add(new NodeSerializeData
                     {
-                        ID = dgNode.GUID.ToString(),
+                        ID = dgNode.ID.ToString("N"),
                         Type = dgNode.GetType().FullName,
                     });
                 }
@@ -70,7 +71,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                         {
                             InputPort =
                             {
-                                NodeID = inNode.GUID.ToString(),
+                                NodeID = inNode.ID.ToString("N"),
                                 PortNumber = new Func<int>(() => {
                                     int inputNumber = inNode.inputContainer.IndexOf(edge.input);
                                     int verticalInputNumber = inNode.inputVerticalContainer.IndexOf(edge.input);
@@ -86,7 +87,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                             },
                             OutputPort =
                             {
-                                NodeID = outNode.GUID.ToString(),
+                                NodeID = outNode.ID.ToString("N"),
                                 PortNumber = new Func<int>(() => {
                                     int outputNumber = outNode.outputContainer.IndexOf(edge.output);
                                     int verticalOutputNumber = outNode.outputVerticalContainer.IndexOf(edge.output);
@@ -145,41 +146,63 @@ namespace Celezt.DialogueSystem.Editor.Utilities
         {
             GraphSerializeData deserializedData = DeserializeGraph(content);
 
-            foreach (object obj in deserializedData.Properties)
+            if (deserializedData.Properties != null)
             {
-                JObject jObj = (JObject)obj;
-                Type type = null;
+                foreach (object obj in deserializedData.Properties)
                 {
-                    if (jObj.TryGetValue("Type", out JToken token))
+                    JObject jObj = (JObject)obj;
+
+                    Guid id = Guid.Empty;
                     {
-                        type = Type.GetType(token.ToObject<string>());
-                        jObj.Remove("Type");
+                        if (jObj.TryGetValue("ID", out JToken token))
+                        {
+                            string guidString = token.ToObject<string>();
+                            if (!Guid.TryParseExact(guidString, "N", out id))
+                            {
+                                Debug.LogWarning("Unable to parse Guid: " + guidString);
+                                continue;
+                            }
+
+                        }
                     }
-                }
 
-                if (type == null)
-                {
-                    Debug.LogWarning("Unable to find blackboard property type");
-                    continue;
-                }
-
-                IBlackboardProperty property = (IBlackboardProperty)Activator.CreateInstance(type);
-
-                {
-                    if (jObj.TryGetValue("Name", out JToken token))
+                    if (id == Guid.Empty)
                     {
-                        property.Name = token.ToObject<string>();
+                        Debug.LogWarning("Unable to find blackboard property \"ID\"");
+                        continue;
                     }
-                }
-                {
-                    if (jObj.TryGetValue("Value", out JToken token))
-                    {
-                        property.Value = token.ToObject(property.PropertyType);
-                    }
-                }
 
-                graphView.Blackboard.AddProperty(property);
-            }
+                    Type type = null;
+                    {
+                        if (jObj.TryGetValue("Type", out JToken token))
+                            type = Type.GetType(token.ToObject<string>());
+                    }
+
+                    if (type == null)
+                    {
+                        Debug.LogWarning("Unable to find blackboard property \"Type\"");
+                        continue;
+                    }
+
+                    IBlackboardProperty property = (IBlackboardProperty)Activator.CreateInstance(type);
+                    property.SetID(id);
+
+                    {
+                        if (jObj.TryGetValue("Name", out JToken token))
+                        {
+                            property.Name = token.ToObject<string>();
+                        }
+                    }
+                    {
+                        if (jObj.TryGetValue("Value", out JToken token))
+                        {
+                            property.Value = token.ToObject(property.ValueType);
+                        }
+                    }
+
+                    graphView.Blackboard.AddProperty(property);
+                }
+            }        
 
             // Load all nodes.
             int length = deserializedData.Nodes.Count;
@@ -189,10 +212,23 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 SerializedVector2Int positionData = deserializedData.Positions[i];
                 object customData = deserializedData.CustomSaveData[i];
 
-                if (!GUID.TryParse(nodeData.ID, out GUID guid))
+                if (!Guid.TryParseExact(nodeData.ID, "N", out Guid id))
                     throw new Exception(nodeData.ID + " is invalid GUID");
 
-                DGNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, guid, (JObject)customData);
+                IBlackboardProperty property = null;
+                if (Type.GetType(nodeData.Type) == typeof(PropertyNode))    // Is property node.
+                {
+                    foreach (var currentProperty in graphView.Blackboard.Properties)
+                    {
+                        if (currentProperty.ID == id)
+                        {
+                            property = currentProperty;
+                            break;
+                        }
+                    }
+                }
+
+                DGNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, id, (JObject)customData, property);
                 graphView.AddElement(graphNode);
             }
 
@@ -202,10 +238,10 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 PortSerializeData outputData = edgeData.OutputPort;
                 PortSerializeData inputData = edgeData.InputPort;
 
-                if (!GUID.TryParse(outputData.NodeID, out GUID outguid))
+                if (!Guid.TryParseExact(outputData.NodeID, "N", out Guid outguid))
                     throw new Exception(outputData.NodeID + " is invalid GUID");
 
-                if (!GUID.TryParse(inputData.NodeID, out GUID inguid))
+                if (!Guid.TryParseExact(inputData.NodeID, "N", out Guid inguid))
                     throw new Exception(inputData.NodeID + " is invalid GUID");
 
                 DGNode outNode = graphView.NodeDictionary[outguid];

@@ -6,6 +6,6 @@ namespace Celezt.DialogueSystem.Editor
 {
     public struct NumericPortType : IPortType
     {
-        public Color Color => new Color(0.1f, 0.1f, 0.0f);
+        public Color Color => new Color(0.5f, 0.5f, 0.0f);
     }
 }

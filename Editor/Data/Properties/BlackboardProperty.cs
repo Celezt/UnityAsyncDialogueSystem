@@ -6,9 +6,9 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public abstract class BlackboardProperty<TValue, TPort> : IBlackboardProperty where TPort : IPortType 
+    public abstract class BlackboardProperty<TValue, TPort> : IBlackboardProperty where TPort : IPortType
     {
-        public Guid GUID => _guid;
+        public Guid ID => _id;
         public Type PortType => typeof(TPort);
         public string Name
         {
@@ -38,7 +38,7 @@ namespace Celezt.DialogueSystem.Editor
         }
         public virtual string CustomTypeName { get; } = null;
 
-        protected readonly Guid _guid = Guid.NewGuid();
+        private Guid _id = Guid.NewGuid();
 
         protected TValue _value;
         protected string _name;
@@ -46,22 +46,27 @@ namespace Celezt.DialogueSystem.Editor
 
         public abstract VisualElement BuildController();
 
-        public bool Equals(IBlackboardProperty other) => other.GUID == _guid;
+        public bool Equals(IBlackboardProperty other) => other.ID == _id;
         public override bool Equals(object obj)
         {
             if (obj is IBlackboardProperty other)
                 return Equals(other);
             else if (obj is Guid guid)
-                return _guid == guid;
+                return _id == guid;
 
             return false;
         }
-        public override int GetHashCode() => _guid.GetHashCode();
+        public override int GetHashCode() => _id.GetHashCode();
         public override string ToString() => _name;
 
         void IBlackboardProperty.Initialize(DGBlackboard blackboard)
         {
             _blackboard = blackboard;
+        }
+
+        void IBlackboardProperty.SetID(Guid id)
+        {
+            _id = id;
         }
     }
 }

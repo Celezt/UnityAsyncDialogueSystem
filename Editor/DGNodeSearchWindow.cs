@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using Celezt.DialogueSystem.Editor.Utilities;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -23,6 +24,12 @@ namespace Celezt.DialogueSystem.Editor
             public bool Equals(SearchNode other) => Name == other.Name;
         }
 
+        private struct NodeEntry
+        {
+            public Type NodeType;
+            public object UserData;
+        }
+
         public void Initialize(DGView graphView, DGEditorWindow editorWindow)
         {
             _graphView = graphView;
@@ -37,17 +44,27 @@ namespace Celezt.DialogueSystem.Editor
         {
             List<SearchTreeEntry> searchTreeEntries = new List<SearchTreeEntry>()
             {
-                new SearchTreeGroupEntry(new GUIContent("Create Node"))
+                new SearchTreeGroupEntry(new GUIContent("Create Node")),
+                new SearchTreeGroupEntry(new GUIContent("Property"), 1),
             };
 
+            foreach (IBlackboardProperty property in _graphView.Blackboard.Properties)
+            {
+                searchTreeEntries.Add(new SearchTreeEntry(new GUIContent($"{property.Name} (Property)", _indentationIcon))
+                {
+                    level = 2,
+                    userData = new NodeEntry { NodeType = typeof(PropertyNode),  UserData = property },
+                });
+            }
+
             List<SearchNode> searchNodes = new List<SearchNode>();
-            foreach (var nodeType in _graphView.NodeTraitDictionary)
+            foreach (var nodeType in _graphView.NodeTypeDictionary)
             {
                 if (string.IsNullOrEmpty(nodeType.Value.MenuName))
                     continue;
 
                 List<SearchNode> currentSearchNodes = searchNodes;
-                Queue<string> entries = new Queue<string>(nodeType.Value.MenuName.Split('/').Select(x => x.Trim()));
+                Queue<string> entries = new Queue<string>(nodeType.Value.MenuName.Trim().Split('/').Select(x => x.Trim()));
 
                 while (entries.Count > 0)
                 {
@@ -85,7 +102,7 @@ namespace Celezt.DialogueSystem.Editor
                     searchTreeEntries.Add(new SearchTreeEntry(new GUIContent(searchNode.Name, _indentationIcon))
                     {
                         level = depth,
-                        userData = searchNode.Type,
+                        userData = new NodeEntry { NodeType = searchNode.Type }
                     });
                 }
                 else
@@ -104,11 +121,22 @@ namespace Celezt.DialogueSystem.Editor
 
         public bool OnSelectEntry(SearchTreeEntry searchTreeEntry, SearchWindowContext context)
         {
-            if (_graphView.NodeTraitDictionary.ContainsKey((Type)searchTreeEntry.userData))
+            if (searchTreeEntry.userData == null)
             {
-                _graphView.AddElement(_graphView.CreateNode((Type)searchTreeEntry.userData, _graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position), GUID.Generate()));
-                return true;
+                Debug.LogWarning($"Search tree entry: {searchTreeEntry.name} has no data");
+                return false;
+            }
 
+            NodeEntry entry = (NodeEntry)searchTreeEntry.userData;
+
+            if (_graphView.NodeTypeDictionary.ContainsKey(entry.NodeType))
+            {
+                _graphView.AddElement(
+                    _graphView.CreateNode(entry.NodeType, _graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position), 
+                    entry.NodeType == typeof(PropertyNode) ? ((IBlackboardProperty)entry.UserData).ID : Guid.NewGuid(), // Use property id if node is a property node.
+                    userData: entry.UserData));
+
+                return true;
             }
 
             return false;

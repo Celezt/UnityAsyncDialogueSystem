@@ -31,8 +31,11 @@ namespace Celezt.DialogueSystem.Editor
             private set => _blackboard = value;
         }
 
-        internal Dictionary<Type, NodeTraits> NodeTraitDictionary { get; private set; } = new Dictionary<Type, NodeTraits>();
-        internal Dictionary<GUID, DGNode> NodeDictionary { get; private set; } = new Dictionary<GUID, DGNode>();
+        internal Dictionary<Type, NodeTraits> NodeTypeDictionary { get; private set; } = new Dictionary<Type, NodeTraits>()
+        {
+            {typeof(PropertyNode), new NodeTraits()} 
+        };
+        internal Dictionary<Guid, DGNode> NodeDictionary { get; private set; } = new Dictionary<Guid, DGNode>();
 
         private DGEditorWindow _editorWindow;
         private DGNodeSearchWindow _searchWindow;
@@ -72,12 +75,12 @@ namespace Celezt.DialogueSystem.Editor
 
         public DGNode CopyNode(DGNode toCopy, Vector2 position)
         {
-            var node = CreateNode(toCopy.GetType(), position, GUID.Generate(), JsonUtility.GetFields(toCopy));
+            var node = CreateNode(toCopy.GetType(), position, Guid.NewGuid(), JsonUtility.GetFields(toCopy));
 
             return node;
         }
 
-        public DGNode CreateNode(Type type, Vector2 position, GUID guid, JObject obj = null)
+        public DGNode CreateNode(Type type, Vector2 position, Guid id, JObject obj = null, object userData = null)
         {
             if (!typeof(DGNode).IsAssignableFrom(type))
             {
@@ -87,16 +90,17 @@ namespace Celezt.DialogueSystem.Editor
 
             var node = (DGNode)Activator.CreateInstance(type);
             JsonUtility.SetFields(node, obj);
-
-            if (NodeTraitDictionary.TryGetValue(type, out NodeTraits properties))
+           
+            if (NodeTypeDictionary.TryGetValue(type, out NodeTraits properties))
             {
                 if (!string.IsNullOrWhiteSpace(properties.NodeTitle))
                     node.title = properties.NodeTitle;
             }
 
+            node.userData = userData;
             node.SetPosition(new Rect(position, Vector2.zero));
-            node.InternalStart(this, guid);
-            NodeDictionary.Add(guid, node);
+            node.InternalStart(this, id);
+            NodeDictionary.Add(id, node);
 
             return node;
         }
@@ -136,7 +140,7 @@ namespace Celezt.DialogueSystem.Editor
                 }
                 
                 CreateNodeAttribute createNodeAttribute = type.GetCustomAttribute<CreateNodeAttribute>();
-                NodeTraitDictionary.Add(type, new NodeTraits 
+                NodeTypeDictionary.Add(type, new NodeTraits 
                 { 
                     MenuName = createNodeAttribute.MenuName,
                     NodeTitle = createNodeAttribute.NodeTitle,
@@ -221,7 +225,7 @@ namespace Celezt.DialogueSystem.Editor
                             if (node is DGNode customNode)
                             {
                                 customNode.InternalInvokeDestroy();
-                                NodeDictionary.Remove(customNode.GUID);
+                                NodeDictionary.Remove(customNode.ID);
                             }
                         }
                     }

@@ -13,7 +13,7 @@ namespace Celezt.DialogueSystem.Editor
     /// </summary>
     public abstract class DGNode : Node
     {
-        public GUID GUID { get; private set; }
+        public Guid ID { get; private set; }
 
         public VisualElement inputVerticalContainer { get; private set; } = new VisualElement();
         public VisualElement outputVerticalContainer { get; private set; } = new VisualElement();
@@ -75,10 +75,10 @@ namespace Celezt.DialogueSystem.Editor
 
         internal void InternalInvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
         internal void InternalInvokeDestroy() => OnDestroy();
-        internal void InternalStart(DGView graphView, GUID guid)
+        internal void InternalStart(DGView graphView, Guid id)
         {
             this.graphView = graphView;
-            this.GUID = guid;
+            this.ID = id;
 
             mainContainer.Insert(0, inputVerticalContainer);
             mainContainer.Add(outputVerticalContainer);
