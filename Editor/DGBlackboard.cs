@@ -209,6 +209,7 @@ namespace Celezt.DialogueSystem.Editor
                 menuEvent => menuEvent.menu.AppendAction("Delete", actionEvent =>
                 {
                     var property = row.userData as IBlackboardProperty;
+                    property.OnDestroy();
                     _propertyRows[property.ID].RemoveFromHierarchy();
                     _propertyRows.Remove(property.ID);
                     _properties.Remove(property);

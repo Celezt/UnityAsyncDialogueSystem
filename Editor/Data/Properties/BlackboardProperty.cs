@@ -46,6 +46,8 @@ namespace Celezt.DialogueSystem.Editor
         }
         public virtual string CustomTypeName { get; } = null;
 
+        public event Action OnDestroyCallback = delegate { };
+
         protected TValue _value;
         protected string _name;
         protected DGBlackboard _blackboard;
@@ -56,6 +58,7 @@ namespace Celezt.DialogueSystem.Editor
         private Guid _id = Guid.NewGuid();
 
         public abstract VisualElement BuildController();
+        public virtual void OnDestroy() { }
 
         public bool Equals(IBlackboardProperty other) => other.ID == _id;
         public override bool Equals(object obj)
@@ -83,6 +86,11 @@ namespace Celezt.DialogueSystem.Editor
         void IBlackboardProperty.Initialize(DGBlackboard blackboard)
         {
             _blackboard = blackboard;
+        }
+
+        void IBlackboardProperty.OnDestroy()
+        {
+            OnDestroyCallback.Invoke();
         }
 
         void IBlackboardProperty.SetID(Guid id)

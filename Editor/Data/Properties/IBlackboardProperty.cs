@@ -18,11 +18,14 @@ namespace Celezt.DialogueSystem.Editor
         public Type ValueType => Value.GetType();
         public string ValueTypeName => string.IsNullOrEmpty(CustomTypeName) ? ValueType.Name : CustomTypeName;
 
+        public event Action OnDestroyCallback;
+
         public VisualElement BuildController();
         public void RegisterValueChangedCallback(EventCallback<ChangeEvent<object>> callback);
         public void RegisterNameChangedCallback(EventCallback<ChangeEvent<string>> callback);
 
         internal void Initialize(DGBlackboard blackboard);
+        internal void OnDestroy();
         internal void SetID(Guid id);
 
 

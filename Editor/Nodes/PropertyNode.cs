@@ -12,6 +12,8 @@ namespace Celezt.DialogueSystem.Editor
         [SerializeField]
         private string _propertyID;
 
+        private readonly Color _disableColor = new Color(0.3f, 0.3f, 0.3f);
+
         protected override void Awake()
         {
             this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/PropertyNode");
@@ -32,11 +34,26 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     outputPort.portName = x.newValue;
                 });
+
+                property.OnDestroyCallback += () =>
+                {
+                    if (outputPort.connected)
+                        graphView.DeleteElements(outputPort.connections);
+
+                    outputPort.portType = typeof(bool);
+                    outputPort.portName = $"({property.ValueTypeName} Destroyed)";
+                    outputPort.portColor = _disableColor;
+                    outputPort.AddToClassList("port-disable");
+                    RefreshPorts();
+                };
             }
             else
             {
-                Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(BasePortType));
+                Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(bool));
                 outputPort.portName = "(Loading Error)";
+                outputPort.portColor = _disableColor;
+                outputPort.AddToClassList("port-disable");
+
                 outputContainer.Add(outputPort);
             }
 
