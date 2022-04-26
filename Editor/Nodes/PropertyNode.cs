@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using Celezt.DialogueSystem.Editor.Utilities;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -13,6 +14,8 @@ namespace Celezt.DialogueSystem.Editor
 
         protected override void Awake()
         {
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/PropertyNode");
+
             if (userData != null)
             {
                 IBlackboardProperty property = userData as IBlackboardProperty;
