@@ -214,9 +214,9 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         if (element is Edge edge)
                         {
-                            if (edge.input.node is DGNode inNode)
+                            if (edge.input != null && edge.input.node is DGNode inNode)
                                 inNode.InternalInvokeEdgeChange(edge, DGNode.EdgeState.Removed | DGNode.EdgeState.Input);
-                            if (edge.output.node is DGNode outNode)
+                            if (edge.output != null && edge.output.node is DGNode outNode)
                                 outNode.InternalInvokeEdgeChange(edge, DGNode.EdgeState.Removed | DGNode.EdgeState.Output);
                         }   
                         

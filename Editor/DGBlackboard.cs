@@ -23,6 +23,7 @@ namespace Celezt.DialogueSystem.Editor
         [SerializeField] private List<IBlackboardProperty> _properties = new List<IBlackboardProperty>();
 
         private List<Type> _propertyTypes = new List<Type>();
+        private List<Type> _valueTypes = new List<Type>();
         private Dictionary<Guid, BlackboardRow> _propertyRows = new Dictionary<Guid, BlackboardRow>();
         private Dictionary<string, IBlackboardProperty> _propertyNames = new Dictionary<string, IBlackboardProperty>();
 
@@ -49,6 +50,19 @@ namespace Celezt.DialogueSystem.Editor
             };
 
             Add(_section);
+        }
+
+        /// <summary>
+        /// Get blackboard property type from corresponding value type.
+        /// </summary>
+        public Type GetPropertyType(Type value)
+        {
+           int index = _valueTypes.IndexOf(value);
+
+            if (index == -1)
+                return null;
+
+            return _propertyTypes[index];
         }
 
         public void AddProperty(IBlackboardProperty property, int index = -1)
@@ -108,6 +122,7 @@ namespace Celezt.DialogueSystem.Editor
                 }
 
                 _propertyTypes.Add(type);
+                _valueTypes.Add(type.BaseType.GenericTypeArguments[0]);  // Get generic value type from base.
             }
         }
 

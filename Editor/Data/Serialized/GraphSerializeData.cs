@@ -15,6 +15,6 @@ namespace Celezt.DialogueSystem.Editor
         public List<NodeSerializeData> Nodes;
         public List<EdgeSerializeData> Edges;
         public List<SerializedVector2Int> Positions;
-        public List<dynamic> CustomSaveData;
+        public List<dynamic> Specialization;
     }
 }

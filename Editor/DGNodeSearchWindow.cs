@@ -132,9 +132,7 @@ namespace Celezt.DialogueSystem.Editor
             if (_graphView.NodeTypeDictionary.ContainsKey(entry.NodeType))
             {
                 _graphView.AddElement(
-                    _graphView.CreateNode(entry.NodeType, _graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position), 
-                    entry.NodeType == typeof(PropertyNode) ? ((IBlackboardProperty)entry.UserData).ID : Guid.NewGuid(), // Use property id if node is a property node.
-                    userData: entry.UserData));
+                    _graphView.CreateNode(entry.NodeType, _graphView.GetLocalMousePosition(context.screenMousePosition - _editorWindow.position.position), Guid.NewGuid(), userData: entry.UserData));
 
                 return true;
             }
