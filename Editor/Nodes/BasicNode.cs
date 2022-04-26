@@ -41,16 +41,15 @@ namespace Celezt.DialogueSystem.Editor
                     _value = x.newValue;
                 });
 
-                title = graphView.Blackboard.GetValueName(propertyType);
-
                 outputContainer.Clear();
                 Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, graphView.Blackboard.GetPortType(propertyType));
+                outputPort.portName = graphView.Blackboard.GetValueName(propertyType);
 
                 VisualElement field = property.BuildController();
                 field.AddToClassList("field-value");
 
-                outputPort.Add(field);
                 outputContainer.Add(outputPort);
+                extensionContainer.Add(field);
             }
             else
             {
@@ -62,6 +61,7 @@ namespace Celezt.DialogueSystem.Editor
                 outputContainer.Add(outputPort);
             }
 
+            RefreshExpandedState();
             RefreshPorts();
         }
     }
