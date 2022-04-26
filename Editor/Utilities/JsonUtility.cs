@@ -228,10 +228,11 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                 if (!Guid.TryParseExact(nodeData.ID, "N", out Guid id))
                     throw new Exception(nodeData.ID + " is invalid GUID");
 
+                object userData = null;
+
                 //
                 // If property node.
                 //
-                IBlackboardProperty property = null;
                 if (Type.GetType(nodeData.Type) == typeof(PropertyNode))    
                 {
                     if (specialData.TryGetValue("_propertyID", out JToken token))   // Get property id from property node.
@@ -242,7 +243,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                             {
                                 if (currentProperty.ID == propertyID)
                                 {
-                                    property = currentProperty;
+                                    userData = currentProperty;
                                     break;
                                 }
                             }
@@ -250,7 +251,19 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                     }
                 }
 
-                DGNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, id, specialData, property);
+
+                //
+                // If basic node.
+                //
+                if (Type.GetType(nodeData.Type) == typeof(BasicNode))
+                {
+                    if (specialData.TryGetValue("_type", out JToken token))
+                    {
+                        userData = graphView.Blackboard.GetPropertyType(Type.GetType(token.ToObject<string>()));
+                    }
+                }
+
+                DGNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, id, specialData, userData);
                 graphView.AddElement(graphNode);
             }
 

@@ -15,6 +15,8 @@ namespace Celezt.DialogueSystem.Editor
     public class DGBlackboard : Blackboard
     {
         public IReadOnlyList<IBlackboardProperty> Properties => _properties;
+        public IReadOnlyList<Type> PropertyTypes => _propertyTypes;
+        public int TypeCount => _propertyTypes.Count;
 
         new internal DGView graphView => _graphView;
 
@@ -24,6 +26,8 @@ namespace Celezt.DialogueSystem.Editor
 
         private List<Type> _propertyTypes = new List<Type>();
         private List<Type> _valueTypes = new List<Type>();
+        private List<Type> _portTypes = new List<Type>();
+        private List<string> _valueTypeCustomName = new List<string>();
         private Dictionary<Guid, BlackboardRow> _propertyRows = new Dictionary<Guid, BlackboardRow>();
         private Dictionary<string, IBlackboardProperty> _propertyNames = new Dictionary<string, IBlackboardProperty>();
 
@@ -55,14 +59,58 @@ namespace Celezt.DialogueSystem.Editor
         /// <summary>
         /// Get blackboard property type from corresponding value type.
         /// </summary>
-        public Type GetPropertyType(Type value)
+        public Type GetPropertyType(Type valueType)
         {
-           int index = _valueTypes.IndexOf(value);
+            int index = _valueTypes.IndexOf(valueType);
 
             if (index == -1)
                 return null;
 
             return _propertyTypes[index];
+        }
+
+        /// <summary>
+        /// Get value type from corresponding blackboard property type.
+        /// </summary>
+        public Type GetValueType(Type propertyType)
+        {
+            int index = _propertyTypes.IndexOf(propertyType);
+
+            if (index == -1)
+                return null;
+
+            return _valueTypes[index];
+        }
+
+        /// <summary>
+        /// Get port type from corresponding blackboard property type
+        /// </summary>
+        public Type GetPortType(Type propertyType)
+        {
+            int index = _propertyTypes.IndexOf(propertyType);
+
+            if (index == -1)
+                return null;
+
+            return _portTypes[index];
+        }
+
+        /// <summary>
+        /// Get value name from corresponding blackboard property type.
+        /// </summary>
+        public string GetValueName(Type propertyType)
+        {
+            int index = _propertyTypes.IndexOf(propertyType);
+
+            if (index == -1)
+                return null;
+
+            string name = _valueTypeCustomName[index];
+
+            if (string.IsNullOrEmpty(name))
+                return _valueTypes[index].Name;
+
+            return _valueTypeCustomName[index];
         }
 
         public void AddProperty(IBlackboardProperty property, int index = -1)
@@ -121,8 +169,12 @@ namespace Celezt.DialogueSystem.Editor
                     continue;
                 }
 
+                BlackboardPropertyAttribute createNodeAttribute = type.GetCustomAttribute<BlackboardPropertyAttribute>();
+
                 _propertyTypes.Add(type);
                 _valueTypes.Add(type.BaseType.GenericTypeArguments[0]);  // Get generic value type from base.
+                _portTypes.Add(type.BaseType.GenericTypeArguments[1]); // Get generic value type from base.
+                _valueTypeCustomName.Add(createNodeAttribute.CustomTypeName);
             }
         }
 

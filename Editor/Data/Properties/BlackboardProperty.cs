@@ -10,17 +10,13 @@ namespace Celezt.DialogueSystem.Editor
     {
         public Guid ID => _id;
         public Type PortType => typeof(TPort);
+        public string ValueTypeName => _blackboard.GetValueName(typeof(BlackboardProperty<TValue, TPort>));
         public string Name
         {
             get
             {
                 if (string.IsNullOrEmpty(_name))
-                {
-                    if (string.IsNullOrEmpty(CustomTypeName))
-                        _name = "New " + typeof(TValue).Name;
-                    else
-                        _name = "New " + CustomTypeName;
-                }
+                    _name = "New " + _blackboard.GetValueName(typeof(BlackboardProperty<TValue, TPort>));
 
                 return _name;
             }
@@ -44,7 +40,7 @@ namespace Celezt.DialogueSystem.Editor
             get => _blackboard.graphView.EditorWindow.hasUnsavedChanges;
             set => _blackboard.graphView.EditorWindow.hasUnsavedChanges = value;
         }
-        public virtual string CustomTypeName { get; } = null;
+
 
         public event Action OnDestroyCallback = delegate { };
 

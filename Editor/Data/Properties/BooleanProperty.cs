@@ -6,11 +6,9 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [BlackboardProperty]
+    [BlackboardProperty("bool")]
     public class BooleanProperty : BlackboardProperty<bool, ConditionPortType>
     {
-        public override string CustomTypeName => "bool";
-
         private enum ConditionState
         {
             False,
@@ -25,7 +23,7 @@ namespace Celezt.DialogueSystem.Editor
             };
             control.RegisterValueChangedCallback(x =>
             {
-                _value = ToBool((ConditionState)x.newValue);
+                Value = ToBool((ConditionState)x.newValue);
                 hasUnsavedChanges = true;
             });
             return control;

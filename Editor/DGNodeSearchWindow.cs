@@ -45,15 +45,32 @@ namespace Celezt.DialogueSystem.Editor
             List<SearchTreeEntry> searchTreeEntries = new List<SearchTreeEntry>()
             {
                 new SearchTreeGroupEntry(new GUIContent("Create Node")),
-                new SearchTreeGroupEntry(new GUIContent("Property"), 1),
             };
 
+            //
+            //  Property nodes.
+            //
+            searchTreeEntries.Add(new SearchTreeGroupEntry(new GUIContent("Property"), 1));
             foreach (IBlackboardProperty property in _graphView.Blackboard.Properties)
             {
                 searchTreeEntries.Add(new SearchTreeEntry(new GUIContent($"{property.Name} (Property)", _indentationIcon))
                 {
                     level = 2,
                     userData = new NodeEntry { NodeType = typeof(PropertyNode),  UserData = property },
+                });
+            }
+
+            //
+            //  Basic nodes.
+            //
+            searchTreeEntries.Add(new SearchTreeGroupEntry(new GUIContent("Basic"), 1));
+            DGBlackboard blackboard = _graphView.Blackboard;
+            foreach (Type propertyType in blackboard.PropertyTypes)
+            {
+                searchTreeEntries.Add(new SearchTreeEntry(new GUIContent(blackboard.GetValueName(propertyType), _indentationIcon))
+                {
+                    level = 2,
+                    userData = new NodeEntry { NodeType = typeof(BasicNode), UserData = propertyType },
                 });
             }
 

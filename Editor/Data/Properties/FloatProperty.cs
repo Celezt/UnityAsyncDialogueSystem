@@ -7,11 +7,9 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [BlackboardProperty]
+    [BlackboardProperty("float")]
     public class FloatProperty : BlackboardProperty<float, NumericPortType>
     {
-        public override string CustomTypeName => "float";
-
         public override VisualElement BuildController()
         {
             var control = new FloatField
@@ -20,7 +18,7 @@ namespace Celezt.DialogueSystem.Editor
             };
             control.RegisterValueChangedCallback(x =>
             {
-                _value = x.newValue;
+                Value = x.newValue;
                 hasUnsavedChanges = true;
                 
             });

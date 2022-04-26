@@ -1,0 +1,12 @@
+#node-border {
+	min-width: 120px;
+}
+
+.port-disable.port.output > #type {
+	color: var(--dg-color-light);
+}
+
+.field-value {
+	flex-direction: column;
+	min-width: 80px;
+}

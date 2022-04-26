@@ -7,11 +7,9 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [BlackboardProperty]
+    [BlackboardProperty("int")]
     public class IntegerProperty : BlackboardProperty<int, NumericPortType>
     {
-        public override string CustomTypeName => "int";
-
         public override VisualElement BuildController()
         {
             var control = new IntegerField

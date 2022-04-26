@@ -13,10 +13,9 @@ namespace Celezt.DialogueSystem.Editor
         public Type PortType { get; }
         public string Name { get; set; }
         public object Value { get; set; }
-        public string CustomTypeName { get; }
+        public string ValueTypeName { get; }
 
         public Type ValueType => Value.GetType();
-        public string ValueTypeName => string.IsNullOrEmpty(CustomTypeName) ? ValueType.Name : CustomTypeName;
 
         public event Action OnDestroyCallback;
 
