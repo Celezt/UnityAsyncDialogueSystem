@@ -21,7 +21,7 @@ namespace Celezt.DialogueSystem.Editor
                 IBlackboardProperty property = userData as IBlackboardProperty;
 
                 if (string.IsNullOrEmpty(_propertyID))
-                    _propertyID =property.ID.ToString("N");
+                    _propertyID = property.ID.ToString("N");
 
                 outputContainer.Clear();
                 Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, property.PortType);
@@ -34,6 +34,8 @@ namespace Celezt.DialogueSystem.Editor
                 outputPort.portName = "(Loading Error)";
                 outputContainer.Add(outputPort);
             }
+
+            RefreshPorts();
         }
     }
 }
