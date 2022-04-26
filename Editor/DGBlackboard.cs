@@ -185,7 +185,7 @@ namespace Celezt.DialogueSystem.Editor
             foreach (Type type in _propertyTypes)
             {
                 IBlackboardProperty property = (IBlackboardProperty)Activator.CreateInstance(type);
-                gm.AddItem(new GUIContent(property.ValueTypeName), false, () => AddProperty(property));
+                gm.AddItem(new GUIContent(GetValueName(property.GetType())), false, () => AddProperty(property));
             }
 
             gm.ShowAsContext();
@@ -265,6 +265,7 @@ namespace Celezt.DialogueSystem.Editor
                     _propertyRows[property.ID].RemoveFromHierarchy();
                     _propertyRows.Remove(property.ID);
                     _properties.Remove(property);
+                    _propertyNames.Remove(property.Name);
 
                     if (_properties.Count == 0) // No longer scrollable if no properties exist.
                         scrollable = false;

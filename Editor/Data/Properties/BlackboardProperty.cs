@@ -10,13 +10,13 @@ namespace Celezt.DialogueSystem.Editor
     {
         public Guid ID => _id;
         public Type PortType => typeof(TPort);
-        public string ValueTypeName => _blackboard.GetValueName(typeof(BlackboardProperty<TValue, TPort>));
+        public string ValueTypeName => _blackboard.GetValueName(GetType());
         public string Name
         {
             get
             {
                 if (string.IsNullOrEmpty(_name))
-                    _name = "New " + _blackboard.GetValueName(typeof(BlackboardProperty<TValue, TPort>));
+                    _name = "New " + _blackboard.GetValueName(GetType());
 
                 return _name;
             }
