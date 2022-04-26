@@ -41,7 +41,7 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Output Container
             //
-            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(ConditionNode));
+            Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(ConditionPortType));
             outputPort.portName = "Out";
             outputContainer.Add(outputPort);
 
