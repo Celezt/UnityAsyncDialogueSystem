@@ -21,7 +21,7 @@ namespace Celezt.DialogueSystem.Editor
         }
         protected override void Awake()
         {
-            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/PropertyNode");
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/ValueNode");
             //
             // Output Container
             //
@@ -53,6 +53,7 @@ namespace Celezt.DialogueSystem.Editor
 
             extensionContainer.Add(boolState);
 
+            RefreshPorts();
             RefreshExpandedState();
         }
     }

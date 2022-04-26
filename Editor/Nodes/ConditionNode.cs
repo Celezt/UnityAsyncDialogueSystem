@@ -56,6 +56,8 @@ namespace Celezt.DialogueSystem.Editor
             });
 
             extensionContainer.Add(enumField);
+
+            RefreshPorts();
             RefreshExpandedState();
         }
 
