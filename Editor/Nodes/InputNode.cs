@@ -36,6 +36,8 @@ namespace Celezt.DialogueSystem.Editor
 
             outputPort.Add(outputTextField);
             outputContainer.Add(outputPort);
+
+            RefreshPorts();
         }
     }
 }
