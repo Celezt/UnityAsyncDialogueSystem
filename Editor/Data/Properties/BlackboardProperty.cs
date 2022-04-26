@@ -24,12 +24,20 @@ namespace Celezt.DialogueSystem.Editor
 
                 return _name;
             }
-            set => _name = value;
+            set
+            {
+                _onNameChangedCallback.Invoke(ChangeEvent<string>.GetPooled(_name, value));
+                _name = value;
+            }
         }
         public object Value
         {
             get => _value;
-            set => _value = (TValue)value;
+            set
+            {
+                _onValueChangedCallback.Invoke(ChangeEvent<object>.GetPooled(_value, value));
+                _value = (TValue)value;
+            }
         }
         public bool hasUnsavedChanges
         {
@@ -38,11 +46,14 @@ namespace Celezt.DialogueSystem.Editor
         }
         public virtual string CustomTypeName { get; } = null;
 
-        private Guid _id = Guid.NewGuid();
-
         protected TValue _value;
         protected string _name;
         protected DGBlackboard _blackboard;
+
+        private event EventCallback<ChangeEvent<object>> _onValueChangedCallback = delegate { };
+        private event EventCallback<ChangeEvent<string>> _onNameChangedCallback = delegate { };
+
+        private Guid _id = Guid.NewGuid();
 
         public abstract VisualElement BuildController();
 
@@ -58,6 +69,16 @@ namespace Celezt.DialogueSystem.Editor
         }
         public override int GetHashCode() => _id.GetHashCode();
         public override string ToString() => _name;
+
+        public void RegisterValueChangedCallback(EventCallback<ChangeEvent<object>> callback)
+        {
+            _onValueChangedCallback += callback;
+        }
+
+        public void RegisterNameChangedCallback(EventCallback<ChangeEvent<string>> callback)
+        {
+            _onNameChangedCallback += callback;
+        }
 
         void IBlackboardProperty.Initialize(DGBlackboard blackboard)
         {

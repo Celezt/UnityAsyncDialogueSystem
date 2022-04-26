@@ -20,7 +20,7 @@ namespace Celezt.DialogueSystem.Editor
             };
             control.RegisterValueChangedCallback(x =>
             {
-                _value = x.newValue;
+                Value = x.newValue;
                 hasUnsavedChanges = true;
 
             });

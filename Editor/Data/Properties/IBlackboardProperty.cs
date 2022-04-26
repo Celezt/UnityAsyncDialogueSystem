@@ -19,9 +19,12 @@ namespace Celezt.DialogueSystem.Editor
         public string ValueTypeName => string.IsNullOrEmpty(CustomTypeName) ? ValueType.Name : CustomTypeName;
 
         public VisualElement BuildController();
+        public void RegisterValueChangedCallback(EventCallback<ChangeEvent<object>> callback);
+        public void RegisterNameChangedCallback(EventCallback<ChangeEvent<string>> callback);
 
         internal void Initialize(DGBlackboard blackboard);
         internal void SetID(Guid id);
+
 
     }
 }

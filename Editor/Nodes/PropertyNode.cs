@@ -27,6 +27,11 @@ namespace Celezt.DialogueSystem.Editor
                 Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, property.PortType);
                 outputPort.portName = property.Name;
                 outputContainer.Add(outputPort);
+
+                property.RegisterNameChangedCallback(x =>
+                {
+                    outputPort.portName = x.newValue;
+                });
             }
             else
             {
