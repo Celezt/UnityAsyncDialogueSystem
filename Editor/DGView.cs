@@ -116,7 +116,7 @@ namespace Celezt.DialogueSystem.Editor
                 if (startPort.direction == port.direction)  // Ignore if same direction (input/output).
                     return;
 
-                if (startPort.portType != port.portType)    // Ignore if not same port type.
+                if (!(port.portType.IsAssignableFrom(startPort.portType) || startPort.portType.IsAssignableFrom(port.portType)))    // Ignore if not same port type.
                     return;
 
                 compatiblePorts.Add(port);

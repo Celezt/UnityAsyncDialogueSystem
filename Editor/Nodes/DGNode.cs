@@ -39,7 +39,7 @@ namespace Celezt.DialogueSystem.Editor
             Port port = base.InstantiatePort(orientation, direction, capacity, type);
             port.portName = "";
 
-            if (typeof(IPortType).IsAssignableFrom(type))
+            if (!type.IsInterface && typeof(IPortType).IsAssignableFrom(type))
             {
                 IPortType portType = (IPortType)Activator.CreateInstance(type);
                 port.portColor = portType.Color;

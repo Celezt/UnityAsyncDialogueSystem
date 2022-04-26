@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public struct ActionPortType : IPortType
+    public class ActionPortType : BasePortType
     {
-        public Color Color => new Color(0.8f, 0.2f, 0.3f);
+        public override Color Color => new Color(0.8f, 0.2f, 0.3f);
     }
 }

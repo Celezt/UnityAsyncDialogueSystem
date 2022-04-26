@@ -216,7 +216,7 @@ namespace Celezt.DialogueSystem.Editor.Utilities
                     throw new Exception(nodeData.ID + " is invalid GUID");
 
                 IBlackboardProperty property = null;
-                if (Type.GetType(nodeData.Type) == typeof(PropertyNode))    // Is property node.
+                if (Type.GetType(nodeData.Type) == typeof(PropertyNode))    // If property node.
                 {
                     foreach (var currentProperty in graphView.Blackboard.Properties)
                     {
