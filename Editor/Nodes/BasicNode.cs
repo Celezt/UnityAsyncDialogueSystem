@@ -46,10 +46,9 @@ namespace Celezt.DialogueSystem.Editor
                 outputPort.portName = graphView.Blackboard.GetValueName(propertyType);
 
                 VisualElement field = property.BuildController();
-                field.AddToClassList("field-value");
 
                 outputContainer.Add(outputPort);
-                extensionContainer.Add(field);
+                controlContainer.Add(field);
             }
             else
             {
@@ -61,7 +60,6 @@ namespace Celezt.DialogueSystem.Editor
                 outputContainer.Add(outputPort);
             }
 
-            RefreshExpandedState();
             RefreshPorts();
         }
     }

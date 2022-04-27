@@ -1,3 +1,4 @@
+using Celezt.DialogueSystem.Editor.Utilities;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
@@ -10,37 +11,29 @@ namespace Celezt.DialogueSystem.Editor
     [CreateNode("Process/Blend", "Blend")]
     public class BlendNode : DGNode
     {
-        [SerializeField] private float _timeOffset = 0;
-
         protected override void Awake()
         {
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/BlendNode");
+
             //
             // Input Container
             //
             Port inputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowPortType));
-            inputPort.portName = "blend";
+            inputPort.portName = "Base";
             inputContainer.Add(inputPort);
+
+            Port valuePort = this.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(NumericPortType));
+            valuePort.portName = "Value";
+            inputContainer.Add(valuePort);
 
             //
             // Output Container
             //
             Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
-            outputPort.portName = "with";
+            outputPort.portName = "Blend";
             outputContainer.Add(outputPort);
-            
-            FloatField blendTextField = new FloatField()
-            {
-                value = _timeOffset,
-            };
-            blendTextField.RegisterValueChangedCallback(callback =>
-            {
-                _timeOffset = (callback.target as FloatField).value;
-                hasUnsavedChanges = true;
-            });
-            
-            extensionContainer.Add(blendTextField);
-            
-            RefreshExpandedState();
+
+            RefreshPorts();
         }
     }
 }

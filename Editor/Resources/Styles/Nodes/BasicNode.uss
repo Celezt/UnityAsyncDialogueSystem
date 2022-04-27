@@ -3,7 +3,7 @@
 }
 
 #node-border {
-	min-width: 60px;
+	min-width: 90px;
 }
 
 #contents > #top > #output {
@@ -12,15 +12,4 @@
 
 .port-disable.port.output > #type {
 	color: var(--dg-color-light);
-}
-
-.field-value {
-	margin-left: 5px;
-	margin-right: 5px;
-	min-width: 80px;
-}
-
-#extension {
-	justify-content: center;
-	min-height: 30px;
 }

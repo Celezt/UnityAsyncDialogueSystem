@@ -44,6 +44,11 @@ namespace Celezt.DialogueSystem.Editor
             set => graphView.EditorWindow.hasUnsavedChanges = value;
         }
 
+        private VisualElement _parentControlContainer = new VisualElement()
+        {
+            name = "bottom",
+        };
+
         [Flags]
         public enum EdgeState
         {
@@ -100,14 +105,15 @@ namespace Celezt.DialogueSystem.Editor
             this.ID = id;
 
             mainContainer.Insert(0, inputVerticalContainer);
-            topContainer.parent.Add(controlContainer);
+            topContainer.parent.Add(_parentControlContainer);
 
             var controlDivider = new VisualElement
             {
                 name = "divider",
             };
             controlDivider.AddToClassList("horizontal");
-            controlContainer.Add(controlDivider);
+            _parentControlContainer.Add(controlDivider);
+            _parentControlContainer.Add(controlContainer);
 
             var outputVerticalDivider = new VisualElement
             {
@@ -118,6 +124,11 @@ namespace Celezt.DialogueSystem.Editor
             mainContainer.Add(outputVerticalContainer);
 
             Awake();
+
+            if (controlContainer.childCount <= 0)   // If control container is empty.
+            {
+                controlContainer.RemoveFromHierarchy();
+            }
         }
     }
 }

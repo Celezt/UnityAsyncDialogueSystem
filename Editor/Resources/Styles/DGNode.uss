@@ -3,6 +3,8 @@
 
 #controls {
 	background-color: var(--dg-color-default);
+	flex: 1 0 auto;
+	padding: 4px;
 }
 
 /* Vertical Input */
