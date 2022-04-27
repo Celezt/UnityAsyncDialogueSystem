@@ -100,7 +100,7 @@ namespace Celezt.DialogueSystem.Editor
 
             node.userData = userData;
             node.SetPosition(new Rect(position, Vector2.zero));
-            node.InternalStart(this, id);
+            node.InternalInitialize(this, id);
             NodeDictionary.Add(id, node);
 
             return node;

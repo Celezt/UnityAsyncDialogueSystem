@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Celezt.DialogueSystem.Editor.Utilities;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -23,16 +24,14 @@ namespace Celezt.DialogueSystem.Editor
 
         protected override void Awake()
         {
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/DialogueNode");
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/ActionNode");
+
             //
             // Action Container
             //
             Port actionPort = InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Multi, typeof(ActionPortType));
-
-            actionPort.AddToClassList("dg-port-vertical__output");
             outputVerticalContainer.Add(actionPort);
-
-            mainContainer.AddToClassList("dg-main-container");
-            extensionContainer.AddToClassList("dg-extension-container");
 
             //
             //  Input Container
@@ -47,13 +46,14 @@ namespace Celezt.DialogueSystem.Editor
             Port output = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
             output.portName = "Continue";
             outputContainer.Add(output);
-            outputContainer.AddToClassList("dg-output__choice-container");
 
             //
             //  Main Container
             //
-            VisualElement actorContainer = new VisualElement();
-            actorContainer.AddToClassList("dg-padding-8-container");
+            VisualElement actorContainer = new VisualElement()
+            {
+                name = "actor",
+            };
 
             TextField actorIDTextField = new TextField()
             {
@@ -65,7 +65,7 @@ namespace Celezt.DialogueSystem.Editor
                 hasUnsavedChanges = true;
             });
 
-            actorIDTextField.AddToClassList("dg-text-field__hidden");
+            actorIDTextField.AddToClassList("text-field__hidden");
             actorContainer.Add(actorIDTextField);
             mainContainer.Insert(2, actorContainer);
 
@@ -81,15 +81,16 @@ namespace Celezt.DialogueSystem.Editor
                 text = "Add Choice",
             };
 
-            addChoiceButton.AddToClassList("dg-button");
+            addChoiceButton.AddToClassList("button");
             mainContainer.Insert(3, addChoiceButton);
 
             //
-            //  Extensions Container
+            //  Contol Container.
             //
-            VisualElement customDataContainer = new VisualElement();
-
-            customDataContainer.AddToClassList("dg-custom-data-container");
+            VisualElement textContainer = new VisualElement()
+            {
+                name = "text"
+            };
 
             Foldout textFoldout = new Foldout()
             {
@@ -108,14 +109,13 @@ namespace Celezt.DialogueSystem.Editor
                 _text = target.value;
             });
 
-            textTextField.AddToClassList("dg-text-field");
-            textTextField.AddToClassList("dg-quote-text-field");
+            textTextField.AddToClassList("text-field");
 
             textFoldout.Add(textTextField);
-            customDataContainer.Add(textFoldout);
-            extensionContainer.Add(customDataContainer);
+            textContainer.Add(textFoldout);
+            controlContainer.Add(textContainer);
 
-            RefreshExpandedState();
+            RefreshPorts();
         }
 
         private void AddNewChoicePort(Choice choiceData)
@@ -142,7 +142,7 @@ namespace Celezt.DialogueSystem.Editor
                 graphView.RemoveElement(inputPort);
             });
 
-            deleteChoiceButton.AddToClassList("dg-button__delete");
+            deleteChoiceButton.AddToClassList("button__delete");
 
             TextField choiceTextField = new TextField()
             {
@@ -155,9 +155,8 @@ namespace Celezt.DialogueSystem.Editor
             });
 
 
-            choiceTextField.AddToClassList("dg-text-field__choice");
-            choiceTextField.AddToClassList("dg-text-field__hidden");
-            outputPort.AddToClassList("dg-port__choice-container");
+            choiceTextField.AddToClassList("text-field__choice");
+            choiceTextField.AddToClassList("text-field__hidden");
 
             outputPort.Add(choiceTextField);
             outputPort.Add(deleteChoiceButton);

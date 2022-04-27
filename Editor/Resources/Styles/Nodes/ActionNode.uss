@@ -1,0 +1,67 @@
+/* Containers */
+
+#node-border {
+	background-color: var(--dg-color-dark);
+	min-width: 220px;
+}
+
+#output > .port.output {
+	margin-left: -8px;
+}
+
+/* Buttons */
+
+.button {
+	background-color: var(--dg-color-dark-2);
+	border-color: transparent;
+	margin: 4px;
+	max-height: 25px;
+}
+
+.button:hover {
+	background-color: var(--dg-color-default-dark);
+	color: var(--dg-color-light-2);
+}
+
+.button:active {
+	background-color: var(--dg-color-dark-3);
+	color: var(--dg-color-light);
+}
+
+.button__delete {
+	background-color: var(--dg-color-delete);
+	border-color: transparent;
+	border-radius: 2px;
+	padding: 1px;
+	min-height: 23px;
+	position: absolute;
+	left: 5px;
+}
+
+.button__delete:hover {
+	background-color: var(--dg-color-delete__hover);
+}
+
+.button__delete:active {
+	background-color: var(--dg-color-default);
+}
+
+/* Fields */
+
+.text-field__hidden > .unity-text-field__input {
+	background-color: transparent;
+	border-color: transparent;
+	min-width: 40px;
+}
+
+.text-field__hidden > .unity-text-field__input:focus {
+	background-color: var(--dg-color-dark-3);
+	border-color: var(--dg-color-dark-2);
+}
+
+.text-field__choice > .unity-text-field__input {
+	font-size: 11px;
+	-unity-text-align: middle-right;
+	padding-right: 0px;
+	margin-left: 20px;
+}

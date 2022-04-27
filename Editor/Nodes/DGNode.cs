@@ -15,8 +15,27 @@ namespace Celezt.DialogueSystem.Editor
     {
         public Guid ID { get; private set; }
 
-        public VisualElement inputVerticalContainer { get; private set; } = new VisualElement();
-        public VisualElement outputVerticalContainer { get; private set; } = new VisualElement();
+        /// <summary>
+        /// Vertical input container used for vertical input ports.
+        /// </summary>
+        public VisualElement inputVerticalContainer { get; } = new VisualElement()
+        {
+            name = "input-vertical",
+        };
+        /// <summary>
+        /// Vertical output container used for vertical output ports.
+        /// </summary>
+        public VisualElement outputVerticalContainer { get; } = new VisualElement()
+        {
+            name = "output-vertical",
+        };
+        /// <summary>
+        /// Control container used for controllable content.
+        /// </summary>
+        public VisualElement controlContainer { get; } = new VisualElement()
+        {
+            name = "controls",
+        };
 
         protected DGView graphView { get; private set; }
         protected bool hasUnsavedChanges
@@ -75,12 +94,27 @@ namespace Celezt.DialogueSystem.Editor
 
         internal void InternalInvokeEdgeChange(Edge edge, EdgeState state) => OnEdgeChanged(edge, state);
         internal void InternalInvokeDestroy() => OnDestroy();
-        internal void InternalStart(DGView graphView, Guid id)
+        internal void InternalInitialize(DGView graphView, Guid id)
         {
             this.graphView = graphView;
             this.ID = id;
 
             mainContainer.Insert(0, inputVerticalContainer);
+            topContainer.parent.Add(controlContainer);
+
+            var controlDivider = new VisualElement
+            {
+                name = "divider",
+            };
+            controlDivider.AddToClassList("horizontal");
+            controlContainer.Add(controlDivider);
+
+            var outputVerticalDivider = new VisualElement
+            {
+                name = "divider",
+            };
+            outputVerticalDivider.AddToClassList("horizontal");
+            outputVerticalContainer.Add(outputVerticalDivider);
             mainContainer.Add(outputVerticalContainer);
 
             Awake();

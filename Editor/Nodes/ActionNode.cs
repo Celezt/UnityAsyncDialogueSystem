@@ -1,3 +1,4 @@
+using Celezt.DialogueSystem.Editor.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,15 +21,14 @@ namespace Celezt.DialogueSystem.Editor
 
         protected override void Awake()
         {
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/ActionNode");
+
             //
             // Action Container
             //
             Port actionPort = this.InstantiatePort(Orientation.Vertical, Direction.Input, Port.Capacity.Multi, typeof(ActionPortType));
-            actionPort.portName = "";
 
-            actionPort.AddToClassList("dg-port-vertical__input");
             inputVerticalContainer.Insert(0, actionPort);
-            mainContainer.AddToClassList("dg-main-container");
 
             foreach (Choice choice in _choices)
                 AddNewChoicePort(choice);
@@ -42,7 +42,7 @@ namespace Celezt.DialogueSystem.Editor
                 text = "Add Choice",
             };
 
-            addChoiceButton.AddToClassList("dg-button");
+            addChoiceButton.AddToClassList("button");
             mainContainer.Insert(2, addChoiceButton);
         }
 
@@ -70,7 +70,7 @@ namespace Celezt.DialogueSystem.Editor
                 graphView.RemoveElement(inputPort);
             });
 
-            deleteChoiceButton.AddToClassList("dg-button__delete");
+            deleteChoiceButton.AddToClassList("button__delete");
 
             TextField choiceTextField = new TextField()
             {
@@ -83,9 +83,8 @@ namespace Celezt.DialogueSystem.Editor
             });
 
 
-            choiceTextField.AddToClassList("dg-text-field__choice");
-            choiceTextField.AddToClassList("dg-text-field__hidden");
-            outputPort.AddToClassList("dg-port__choice-container");
+            choiceTextField.AddToClassList("text-field__choice");
+            choiceTextField.AddToClassList("text-field__hidden");
 
             outputPort.Add(choiceTextField);
             outputPort.Add(deleteChoiceButton);

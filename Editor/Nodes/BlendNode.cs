@@ -27,7 +27,7 @@ namespace Celezt.DialogueSystem.Editor
             Port outputPort = this.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
             outputPort.portName = "with";
             outputContainer.Add(outputPort);
-
+            
             FloatField blendTextField = new FloatField()
             {
                 value = _timeOffset,
@@ -37,9 +37,9 @@ namespace Celezt.DialogueSystem.Editor
                 _timeOffset = (callback.target as FloatField).value;
                 hasUnsavedChanges = true;
             });
-
+            
             extensionContainer.Add(blendTextField);
-
+            
             RefreshExpandedState();
         }
     }
