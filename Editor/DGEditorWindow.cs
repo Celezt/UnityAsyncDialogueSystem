@@ -9,8 +9,6 @@ using UnityEditor.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    using Utilities;
-
     public class DGEditorWindow : EditorWindow
     {
         internal const int DG_VERSION = 1;

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using Celezt.DialogueSystem.Editor.Utilities;
 
 namespace Celezt.DialogueSystem.Editor
 {

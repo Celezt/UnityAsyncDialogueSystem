@@ -8,8 +8,6 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    using Utilities;
-
     public class DialogueGraphCreator
     {
         [MenuItem("Assets/Create/Dialogue Graph", priority = 90)]

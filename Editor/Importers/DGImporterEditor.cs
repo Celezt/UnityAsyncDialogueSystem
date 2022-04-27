@@ -7,8 +7,6 @@ using UnityEditor.Callbacks;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    using Utilities;
-
     [CustomEditor(typeof(DGImporter))]
     public class DGImporterEditor : ScriptedImporterEditor
     {

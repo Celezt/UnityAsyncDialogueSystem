@@ -13,7 +13,6 @@ namespace Celezt.DialogueSystem.Editor
 {
     using Unity.Plastic.Newtonsoft.Json;
     using Unity.Plastic.Newtonsoft.Json.Linq;
-    using Utilities;
 
     public class DGView : GraphView
     {

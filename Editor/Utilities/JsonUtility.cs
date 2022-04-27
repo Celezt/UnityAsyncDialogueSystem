@@ -10,7 +10,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Celezt.DialogueSystem.Editor.Utilities
+namespace Celezt.DialogueSystem.Editor
 {
     public static class JsonUtility
     {

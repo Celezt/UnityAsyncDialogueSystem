@@ -7,8 +7,6 @@ using UnityEditor.AssetImporters;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    using Utilities;
-
      [ScriptedImporter(1, FILE_EXTENSION)]
     public class DGImporter : ScriptedImporter
     {

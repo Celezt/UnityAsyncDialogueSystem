@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace Celezt.DialogueSystem.Editor
+namespace Celezt.DialogueSystem
 {
     public static class ReflectionUtility
     {
