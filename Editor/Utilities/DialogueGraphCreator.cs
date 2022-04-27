@@ -8,9 +8,9 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    public class DialogueGraphCreator
+    public static class DialogueGraphCreator
     {
-        [MenuItem("Assets/Create/Dialogue Graph", priority = 90)]
+        [MenuItem("Assets/Create/Dialogue/Dialogue Graph", priority = 90)]
         public static void CreateEmptySelected()
         {
             string[] selectedGUIDs = Selection.assetGUIDs;
