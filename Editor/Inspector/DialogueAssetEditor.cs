@@ -2,38 +2,41 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System;
+using System.Reflection;
+using System.Linq;
 
-namespace Celezt.DialogueSystem
+namespace Celezt.DialogueSystem.Editor
 {
+    [CustomEditor(typeof(DSPlayableAsset<>), true), CanEditMultipleObjects]
     public class DialogueAssetEditor : UnityEditor.Editor
     {
-        private Dictionary<string, SerializedProperty> serializedProperties = new Dictionary<string, SerializedProperty>();
-
         public virtual void BuildInspector() { }
-
-        protected void AddPropertyField(string propertyName)
-        {
-            if (serializedProperties.ContainsKey(propertyName))
-                return;
-
-            SerializedProperty property = serializedObject.FindProperty("Template." + propertyName);
-            serializedProperties.Add(propertyName, property);
-            
-            EditorGUILayout.PropertyField(property);
-        }
  
         public sealed override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            EditorGUI.BeginChangeCheck();
+            SerializeAllPropertyField();
+            BuildInspector();         
             DrawPropertiesExcluding(serializedObject, "m_Script");
-            if (EditorGUI.EndChangeCheck())
-                serializedObject.ApplyModifiedProperties();
-
-            BuildInspector();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void SerializeAllPropertyField()
+        {
+            DSPlayableAsset asset = serializedObject.targetObject as DSPlayableAsset;
+            DSPlayableBehaviour behaviour = asset.BehaviourReference;
+
+            IEnumerable<SerializedProperty> serializedProperties =
+                from s in behaviour.GetType()
+                    .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .Select(x => serializedObject.FindProperty("_template." + x.Name))
+                where s != null select s;
+
+            foreach (SerializedProperty serializedProperty in serializedProperties)
+                EditorGUILayout.PropertyField(serializedProperty, true);
         }
     }
 }

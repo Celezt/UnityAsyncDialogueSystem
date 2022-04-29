@@ -5,21 +5,14 @@ using UnityEngine.Playables;
 
 namespace Celezt.DialogueSystem
 {
-    public class DialogueMixerBehaviour : PlayableBehaviour
+    public class DSMixerBehaviour : PlayableBehaviour
     {
         private List<BehaviourData> _oldBehaviours = new List<BehaviourData>();
-
-        private PlayableDirector _director;
 
         private struct BehaviourData
         {
             public Playable Playable;
-            public DialogueBehaviour Behaviour;
-        }
-
-        public override void OnPlayableCreate(Playable playable)
-        {
-            _director = playable.GetGraph().GetResolver() as PlayableDirector;
+            public DSPlayableBehaviour Behaviour;
         }
 
         public override void ProcessFrame(Playable playable, FrameData info, object playerData)
@@ -38,14 +31,13 @@ namespace Celezt.DialogueSystem
                 {
                     Playable currentPlayable = playable.GetInput(i);
 
-                    if (!currentPlayable.GetPlayableType().IsSubclassOf(typeof(DialogueBehaviour)))
+                    if (!currentPlayable.GetPlayableType().IsSubclassOf(typeof(DSPlayableBehaviour)))
                         return;
 
-                    DialogueBehaviour input = ((ScriptPlayable<DialogueBehaviour>)currentPlayable).GetBehaviour();
+                    DSPlayableBehaviour input = ((ScriptPlayable<DSPlayableBehaviour>)currentPlayable).GetBehaviour();
 
                     if (input != null)
                     {
-                        input.ProcessMixerFrame(_director, currentPlayable, info, playerData);
                         currentBehaviours.Add(new BehaviourData
                         {
                             Playable = currentPlayable,
@@ -61,7 +53,7 @@ namespace Celezt.DialogueSystem
 
             // Calls after exiting a clip.
             for (int i = 0; i < _oldBehaviours.Count; i++)
-                _oldBehaviours[i].Behaviour.PostMixerFrame(_director, _oldBehaviours[i].Playable, info, playerData);
+                _oldBehaviours[i].Behaviour.PostFrame(_oldBehaviours[i].Playable, info, playerData);
 
             _oldBehaviours = currentBehaviours;
         }

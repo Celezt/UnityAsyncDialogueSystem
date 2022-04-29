@@ -7,28 +7,35 @@ using UnityEngine.Timeline;
 namespace Celezt.DialogueSystem
 {
     [TrackColor(0.7f, 0.2f, 0.2f)]
-    [TrackClipType(typeof(DialogueAsset))]
+    [TrackClipType(typeof(DSPlayableAsset))]
     public class DialogueTrack : TrackAsset
     {
-        public DialogueMixerBehaviour Template = new DialogueMixerBehaviour();
+        private DSMixerBehaviour _template = new DSMixerBehaviour();
+        private PlayableDirector _director;
 
         public override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)
         {
+            _director = graph.GetResolver() as PlayableDirector;
+
             foreach (TimelineClip clip in GetClips())
             {
-                if (clip.asset is DialogueAsset)
+                if (clip.asset is DSPlayableAsset)
                 {
-                    DialogueAsset asset = clip.asset as DialogueAsset;
-                    DialogueBehaviour behaviour = asset.BehaviourReference;
+                    DSPlayableAsset asset = clip.asset as DSPlayableAsset;
+                    DSPlayableBehaviour behaviour = asset.BehaviourReference;
+                    behaviour.Director = _director;
+                    behaviour.Asset = asset;
 
                     clip.displayName = asset.name;
+
+                    behaviour.OnCreateTrackMixer(graph, go, inputCount);
 
                     behaviour.StartTime = clip.start;
                     behaviour.EndTime = clip.end;   
                 }
             }
 
-            return ScriptPlayable<DialogueMixerBehaviour>.Create(graph, Template, inputCount);
+            return ScriptPlayable<DSMixerBehaviour>.Create(graph, _template, inputCount);
         }
     }
 }
