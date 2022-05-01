@@ -55,10 +55,9 @@ namespace Celezt.DialogueSystem.Editor
                 hasUnsavedChanges = true;
             });
 
-            extensionContainer.Add(enumField);
+            controlContainer.Add(enumField);
 
             RefreshPorts();
-            RefreshExpandedState();
         }
 
         private void Comparison()
