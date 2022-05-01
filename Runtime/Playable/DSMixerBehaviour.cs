@@ -49,6 +49,11 @@ namespace Celezt.DialogueSystem
             public bool Equals(BehaviourData other) => Behaviour == other.Behaviour;
         }
 
+        public override void OnPlayableCreate(Playable playable)
+        {
+            _binder.OnCreateTrackMixer.Invoke();
+        }
+
         public override void ProcessFrame(Playable playable, FrameData info, object playerData)
         {
             ProcessClips(playable, info, playerData);

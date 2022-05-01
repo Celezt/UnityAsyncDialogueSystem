@@ -14,24 +14,35 @@ namespace Celezt.DialogueSystem
         public bool IsAvailable => _tracks.Any(x => x.Mixer.IsAvailable);
         public IReadOnlyList<DialogueTrack> Tracks => _tracks;
 
+        public int TrackCount => _tracks.Count;
+
         public PlayableDirector Director
         {
             get => _director;
             internal set => _director = value;
         }
 
+        public UnityEvent OnCreateTrackMixer;
         public UnityEvent<Callback> OnEnterClip;
         public UnityEvent<Callback> OnExitClip;
 
-        [System.NonSerialized]
         private List<DialogueTrack> _tracks = new List<DialogueTrack>();
-        [System.NonSerialized]
         private List<object> _userData = new List<object>();
 
         private PlayableDirector _director;
 
-        public object GetUserData(int index) => _userData[index];
-        public void SetUserData(int index, object value) => _userData[index] = value;
+        public object GetUserData(int index)
+        {
+            if (_userData.Count > index)
+                return _userData[index];
+
+            return null;
+        }
+        public void SetUserData(int index, object value)
+        {
+            if (_userData.Count > index)
+                _userData[index] = value;
+        }
 
         internal DialogueSystemBinder Add(DialogueTrack track)
         {
@@ -64,8 +75,8 @@ namespace Celezt.DialogueSystem
             public int Index { get; internal set; }
             public object UserData
             {
-                get => Binder._userData[Index];
-                set => Binder._userData[Index] = value;
+                get => Binder.GetUserData(Index);
+                set => Binder.SetUserData(Index, value);
             }
             public DSPlayableBehaviour Behaviour { get; internal set; }
             public DialogueTrack Track { get; internal set; }

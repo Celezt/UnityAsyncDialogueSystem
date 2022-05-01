@@ -8,6 +8,7 @@ namespace Celezt.DialogueSystem
 {
     public class ParagraphBehaviour : DSPlayableBehaviour
     {
+        public string Actor;
         [TextArea]
         public string Text;
 
