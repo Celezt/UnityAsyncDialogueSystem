@@ -15,9 +15,25 @@ namespace Celezt.DialogueSystem
             Binder.OnEnterClip.Invoke(new DialogueSystemBinder.Callback
             {
                 Index = index,
+                Binder = Binder,
                 Track = Track as DialogueTrack,
                 Behaviour = behaviour,
+                Info = info,
+                Playable = playable,
+            });
+        }
+
+        protected override void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
+        {
+            int index = Binder.DialogueTracks.IndexOf(Track);
+            Binder.OnProcessClip.Invoke(new DialogueSystemBinder.Callback
+            {
+                Index = index,
                 Binder = Binder,
+                Track = Track as DialogueTrack,
+                Behaviour = behaviour,
+                Info = info,
+                Playable = playable,
             });
         }
 
@@ -28,9 +44,11 @@ namespace Celezt.DialogueSystem
             Binder.OnExitClip.Invoke(new DialogueSystemBinder.Callback
             {
                 Index = index,
+                Binder = Binder,
                 Track = Track as DialogueTrack,
                 Behaviour = behaviour,
-                Binder = Binder,
+                Info = info,
+                Playable = playable,
             });
         }
     }

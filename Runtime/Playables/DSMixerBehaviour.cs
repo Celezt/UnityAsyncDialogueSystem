@@ -50,6 +50,7 @@ namespace Celezt.DialogueSystem
         }
 
         protected virtual void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData) { }
+        protected virtual void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData) { }
         protected virtual void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData) { }
 
         public sealed override void OnPlayableCreate(Playable playable)
@@ -110,6 +111,8 @@ namespace Celezt.DialogueSystem
                     _currentClips[i].Behaviour.EnterClip(_currentClips[i].Playable, info, playerData as DialogueSystemBinder);
                     _currentClips[i].Behaviour.ProcessState = DSPlayableBehaviour.ProcessStates.Processing;
                 }
+
+                OnProcessClip(_currentClips[i].Playable, _currentClips[i].Behaviour, info, playerData);
             }
 
             _oldClips = _currentClips.ToList();

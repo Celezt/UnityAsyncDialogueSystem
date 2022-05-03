@@ -23,10 +23,11 @@ namespace Celezt.DialogueSystem
             get => _director;
             internal set => _director = value;
         }
-
+        
         public UnityEvent OnCreateTrackMixer;
         public UnityEvent<Callback> OnEnterClip;
         public UnityEvent<Callback> OnExitClip;
+        public UnityEvent<Callback> OnProcessClip;
 
         private List<DialogueTrack> _dialogueTracks = new List<DialogueTrack>();
         private List<object> _userData = new List<object>();
@@ -78,14 +79,21 @@ namespace Celezt.DialogueSystem
         public struct Callback
         {
             public int Index { get; internal set; }
+            public double Time => Director.time;
+            public double Start => Clip.start;
+            public double End => Clip.end;
             public object UserData
             {
                 get => Binder.GetUserData(Index);
                 set => Binder.SetUserData(Index, value);
             }
+            public DialogueSystemBinder Binder { get; internal set; }
             public DSPlayableBehaviour Behaviour { get; internal set; }
             public DialogueTrack Track { get; internal set; }
-            public DialogueSystemBinder Binder { get; internal set; }
+            public TimelineClip Clip => Behaviour.Clip;
+            public PlayableDirector Director => Binder.Director;
+            public Playable Playable { get; internal set; }
+            public FrameData Info { get; internal set; }
         }
     }
 }

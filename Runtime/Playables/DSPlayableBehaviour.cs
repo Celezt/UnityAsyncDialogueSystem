@@ -11,19 +11,36 @@ namespace Celezt.DialogueSystem
     /// </summary>
     public class DSPlayableBehaviour : PlayableBehaviour
     {
+        /// <summary>
+        /// If the clip is currently playing.
+        /// </summary>
         public bool IsPlaying
         {
             get
             {
                 double time = Director.time;
-                return time <= EndTime && time > StartTime;
+                return time <= Clip.start && time > Clip.end;
             }
         }
 
+        /// <summary>
+        /// How much time is left in unit interval [1,0]. 0 if before and 1 if after.
+        /// </summary>
+        public float Inteval
+        {
+            get
+            {
+                double startTime = Clip.start;
+                double endTime = Clip.end;
+                double currentTime = Director.time;
+
+                return Mathf.Clamp01((float)((currentTime - startTime) / (endTime - startTime)));
+            }
+        }
+
+        public TimelineClip Clip { get; internal set; }
         public DSPlayableAsset Asset { get; internal set; }
         public PlayableDirector Director { get; internal set; }
-        public double StartTime { get; internal set; }
-        public double EndTime { get; internal set; }
         /// <summary>
         /// Current process state of the clip.
         /// </summary>

@@ -30,13 +30,11 @@ namespace Celezt.DialogueSystem
                     DSPlayableBehaviour behaviour = asset.BehaviourReference;
                     behaviour.Director = director;
                     behaviour.Asset = asset;
+                    behaviour.Clip = clip;
 
                     clip.displayName = asset.name;
 
                     behaviour.OnCreateTrackMixer(graph, go, inputCount, clip);
-
-                    behaviour.StartTime = clip.start;
-                    behaviour.EndTime = clip.end;
                 }
             }
 
