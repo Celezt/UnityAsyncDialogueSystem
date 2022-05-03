@@ -5,16 +5,18 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.Events;
+using System;
 
 namespace Celezt.DialogueSystem
 {
     [DisallowMultipleComponent]
     public class DialogueSystemBinder : MonoBehaviour
     {
-        public bool IsAvailable => _tracks.Any(x => x.Mixer.IsAvailable);
-        public IReadOnlyList<DialogueTrack> Tracks => _tracks;
+        public bool IsProcessing => _dialogueTracks.Any(x => x.Mixer.IsProcessing);
+        public IReadOnlyList<DialogueTrack> DialogueTracks => _dialogueTracks;
+        public IEnumerable<object> UserData => _userData;
 
-        public int TrackCount => _tracks.Count;
+        public int TrackCount => _dialogueTracks.Count;
 
         public PlayableDirector Director
         {
@@ -26,7 +28,7 @@ namespace Celezt.DialogueSystem
         public UnityEvent<Callback> OnEnterClip;
         public UnityEvent<Callback> OnExitClip;
 
-        private List<DialogueTrack> _tracks = new List<DialogueTrack>();
+        private List<DialogueTrack> _dialogueTracks = new List<DialogueTrack>();
         private List<object> _userData = new List<object>();
 
         private PlayableDirector _director;
@@ -44,31 +46,34 @@ namespace Celezt.DialogueSystem
                 _userData[index] = value;
         }
 
-        internal DialogueSystemBinder Add(DialogueTrack track)
+        internal DialogueSystemBinder Add(DSTrack track)
         {
-            if (_tracks.Contains(track))
-                return this;
+            if (track.GetType() == typeof(DialogueTrack))
+            {
+                if (_dialogueTracks.Contains(track))
+                    return this;
 
-            _tracks.Add(track);
-            _userData.Add(null);
+                _dialogueTracks.Add(track as DialogueTrack);
+                _userData.Add(null);
+            }
 
             return this;
         }
 
-        internal bool Remove(DialogueTrack track)
+        internal bool Remove(DSTrack track)
         {
-            int index = _tracks.IndexOf(track);
+            int index = _dialogueTracks.IndexOf(track);
 
             if (index != -1)
                 return false;
 
-            _tracks.RemoveAt(index);
+            if (track is DialogueTrack)
+                _dialogueTracks.RemoveAt(index);
+
             _userData.RemoveAt(index);
 
             return true;
         }
-
-        public DialogueTrack this[int index] => Tracks[index];
 
         public struct Callback
         {

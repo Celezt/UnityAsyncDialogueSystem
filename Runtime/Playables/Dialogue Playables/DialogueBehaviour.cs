@@ -6,7 +6,7 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
-    public class ParagraphBehaviour : DSPlayableBehaviour
+    public class DialogueBehaviour : DSPlayableBehaviour
     {
         public string Actor;
         [TextArea]
