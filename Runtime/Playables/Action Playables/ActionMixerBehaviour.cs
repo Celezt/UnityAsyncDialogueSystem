@@ -9,15 +9,6 @@ namespace Celezt.DialogueSystem
 {
     public class ActionMixerBehaviour : DSMixerBehaviour
     {
-        protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
-        {
 
-        }
-
-
-        protected override void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
-        {
-
-        }
     }
 }

@@ -11,14 +11,17 @@ namespace Celezt.DialogueSystem
     public abstract class DSTrack : TrackAsset
     {
         public DSMixerBehaviour Mixer { get; internal set; }
+        public DialogueSystemBinder Binder => _binder;
+        public PlayableDirector Director => _director;
 
         private DialogueSystemBinder _binder;
+        private PlayableDirector _director;
 
         protected virtual DSMixerBehaviour CreateTrackMixer(PlayableGraph graph, DialogueSystemBinder binder, PlayableDirector director, GameObject go, int inputCount) => new DSMixerBehaviour();
 
         public sealed override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)
         {
-            PlayableDirector director = graph.GetResolver() as PlayableDirector;
+            _director = graph.GetResolver() as PlayableDirector;
 
             GetBinder(graph);
 
@@ -28,9 +31,10 @@ namespace Celezt.DialogueSystem
                 {
                     DSPlayableAsset asset = clip.asset as DSPlayableAsset;
                     DSPlayableBehaviour behaviour = asset.BehaviourReference;
-                    behaviour.Director = director;
+                    behaviour.Director = _director;
                     behaviour.Asset = asset;
                     behaviour.Clip = clip;
+                    behaviour.Binder = _binder;
 
                     clip.displayName = asset.name;
 
@@ -38,7 +42,7 @@ namespace Celezt.DialogueSystem
                 }
             }
 
-            DSMixerBehaviour template = CreateTrackMixer(graph, _binder, director, go, inputCount);
+            DSMixerBehaviour template = CreateTrackMixer(graph, _binder, _director, go, inputCount);
             template.Binder = _binder;
             template.Track = this;
 
@@ -62,19 +66,20 @@ namespace Celezt.DialogueSystem
             if (_binder != null)
                 return;
 
-            PlayableDirector director = graph.GetResolver() as PlayableDirector;
+            if (_director == null)
+                _director = graph.GetResolver() as PlayableDirector;
 
-            if (director.GetGenericBinding(this) is DialogueSystemBinder binder)
+            if (_director.GetGenericBinding(this) is DialogueSystemBinder binder)
                 _binder = binder;
-            else if (director.TryGetComponent(out binder))
+            else if (_director.TryGetComponent(out binder))
             {
-                director.SetGenericBinding(this, binder);
+                _director.SetGenericBinding(this, binder);
                 _binder = binder;
             }
 
             if (_binder != null)
             {
-                _binder.Director = director;
+                _binder.Director = _director;
                 _binder.Add(this);
             }
 

@@ -14,7 +14,7 @@ namespace Celezt.DialogueSystem
     {
         public bool IsProcessing => _dialogueTracks.Any(x => x.Mixer.IsProcessing);
         public IReadOnlyList<DialogueTrack> DialogueTracks => _dialogueTracks;
-        public IEnumerable<object> UserData => _userData;
+        public SerializableDictionary<PlayableAsset, ActionBinder> ActionBinderDictionary => _actionBinderDictionary;
 
         public int TrackCount => _dialogueTracks.Count;
 
@@ -29,51 +29,81 @@ namespace Celezt.DialogueSystem
         public UnityEvent<Callback> OnExitClip;
         public UnityEvent<Callback> OnProcessClip;
 
+        [SerializeField, HideInInspector]
+        private SerializableDictionary<PlayableAsset, ActionBinder> _actionBinderDictionary = new SerializableDictionary<PlayableAsset, ActionBinder>();
+
         private List<DialogueTrack> _dialogueTracks = new List<DialogueTrack>();
-        private List<object> _userData = new List<object>();
+        private List<ActionTrack> _actionTracks = new List<ActionTrack>();
+        private Dictionary<DSTrack, TrackProperties> _trackProperties = new Dictionary<DSTrack, TrackProperties>();
 
         private PlayableDirector _director;
 
-        public object GetUserData(int index)
-        {
-            if (_userData.Count > index)
-                return _userData[index];
-
-            return null;
-        }
-        public void SetUserData(int index, object value)
-        {
-            if (_userData.Count > index)
-                _userData[index] = value;
-        }
-
         internal DialogueSystemBinder Add(DSTrack track)
         {
-            if (track.GetType() == typeof(DialogueTrack))
+            switch (track)
             {
-                if (_dialogueTracks.Contains(track))
-                    return this;
+                case DialogueTrack:
+                    {
+                        if (_dialogueTracks.Contains(track))
+                            return this;
 
-                _dialogueTracks.Add(track as DialogueTrack);
-                _userData.Add(null);
+                        _dialogueTracks.Add(track as DialogueTrack);
+                        break;
+                    }
+                case ActionTrack:
+                    {
+                        if (_actionTracks.Contains(track))
+                            return this;
+
+                        _actionTracks.Add(track as ActionTrack);
+                        break;
+                    }
             }
+
+            _trackProperties[track] = new TrackProperties();
 
             return this;
         }
 
         internal bool Remove(DSTrack track)
         {
-            int index = _dialogueTracks.IndexOf(track);
+            switch (track)
+            {
+                case DialogueTrack dialogueTrack:
+                    {
+                        _dialogueTracks.Remove(dialogueTrack);
 
-            if (index != -1)
-                return false;
+                        break;
+                    }
+                case ActionTrack actionTrack:
+                    {
+                        _actionTracks.Remove(actionTrack);
+                        break;
+                    }
+            }
 
-            if (track is DialogueTrack)
-                _dialogueTracks.RemoveAt(index);
-
-            _userData.RemoveAt(index);
+            _trackProperties.Remove(track);
 
             return true;
+        }
+
+        [Serializable]
+        public class TrackProperties
+        {
+            public object UserData
+            {
+                get => _userData;
+                set => _userData = value;
+            }
+
+            private object _userData;
+        }
+
+        [Serializable]
+        public struct ActionBinder
+        {
+            public UnityEvent OnEnter;
+            public UnityEvent OnExit;
         }
 
         public struct Callback
@@ -84,8 +114,8 @@ namespace Celezt.DialogueSystem
             public double End => Clip.end;
             public object UserData
             {
-                get => Binder.GetUserData(Index);
-                set => Binder.SetUserData(Index, value);
+                get => Binder._trackProperties[Track].UserData;
+                set => Binder._trackProperties[Track].UserData = value;
             }
             public DialogueSystemBinder Binder { get; internal set; }
             public DSPlayableBehaviour Behaviour { get; internal set; }
