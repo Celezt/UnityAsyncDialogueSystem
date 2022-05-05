@@ -53,11 +53,6 @@ namespace Celezt.DialogueSystem
         protected virtual void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData) { }
         protected virtual void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData) { }
 
-        public sealed override void OnPlayableCreate(Playable playable)
-        {
-            _binder.OnCreateTrackMixer.Invoke();
-        }
-
         public sealed override void ProcessFrame(Playable playable, FrameData info, object playerData)
         {
             ProcessClips(playable, info, playerData);

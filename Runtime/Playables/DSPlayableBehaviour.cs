@@ -41,7 +41,6 @@ namespace Celezt.DialogueSystem
         public TimelineClip Clip { get; internal set; }
         public DSPlayableAsset Asset { get; internal set; }
         public PlayableDirector Director { get; internal set; }
-        public DialogueSystemBinder Binder { get; internal set; }
         /// <summary>
         /// Current process state of the clip.
         /// </summary>

@@ -14,8 +14,6 @@ namespace Celezt.DialogueSystem
     {
         public bool IsProcessing => _dialogueTracks.Any(x => x.Mixer.IsProcessing);
         public IReadOnlyList<DialogueTrack> DialogueTracks => _dialogueTracks;
-        public SerializableDictionary<PlayableAsset, ActionBinder> ActionBinderDictionary => _actionBinderDictionary;
-
         public int TrackCount => _dialogueTracks.Count;
 
         public PlayableDirector Director
@@ -23,64 +21,31 @@ namespace Celezt.DialogueSystem
             get => _director;
             internal set => _director = value;
         }
-        
-        public UnityEvent OnCreateTrackMixer;
+
         public UnityEvent<Callback> OnEnterClip;
         public UnityEvent<Callback> OnExitClip;
         public UnityEvent<Callback> OnProcessClip;
 
-        [SerializeField, HideInInspector]
-        private SerializableDictionary<PlayableAsset, ActionBinder> _actionBinderDictionary = new SerializableDictionary<PlayableAsset, ActionBinder>();
-
         private List<DialogueTrack> _dialogueTracks = new List<DialogueTrack>();
-        private List<ActionTrack> _actionTracks = new List<ActionTrack>();
         private Dictionary<DSTrack, TrackProperties> _trackProperties = new Dictionary<DSTrack, TrackProperties>();
 
         private PlayableDirector _director;
 
-        internal DialogueSystemBinder Add(DSTrack track)
+        internal DialogueSystemBinder Add(DialogueTrack track)
         {
-            switch (track)
-            {
-                case DialogueTrack:
-                    {
-                        if (_dialogueTracks.Contains(track))
-                            return this;
+            if (_dialogueTracks.Contains(track))
+                return this;
 
-                        _dialogueTracks.Add(track as DialogueTrack);
-                        break;
-                    }
-                case ActionTrack:
-                    {
-                        if (_actionTracks.Contains(track))
-                            return this;
-
-                        _actionTracks.Add(track as ActionTrack);
-                        break;
-                    }
-            }
+            _dialogueTracks.Add(track);
 
             _trackProperties[track] = new TrackProperties();
 
             return this;
         }
 
-        internal bool Remove(DSTrack track)
+        internal bool Remove(DialogueTrack track)
         {
-            switch (track)
-            {
-                case DialogueTrack dialogueTrack:
-                    {
-                        _dialogueTracks.Remove(dialogueTrack);
-
-                        break;
-                    }
-                case ActionTrack actionTrack:
-                    {
-                        _actionTracks.Remove(actionTrack);
-                        break;
-                    }
-            }
+            _dialogueTracks.Remove(track);
 
             _trackProperties.Remove(track);
 
@@ -97,13 +62,6 @@ namespace Celezt.DialogueSystem
             }
 
             private object _userData;
-        }
-
-        [Serializable]
-        public struct ActionBinder
-        {
-            public UnityEvent OnEnter;
-            public UnityEvent OnExit;
         }
 
         public struct Callback

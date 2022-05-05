@@ -9,7 +9,7 @@ namespace Celezt.DialogueSystem
     {
         private void OnDestroy()
         {
-            BehaviourReference?.Binder?.ActionBinderDictionary.Remove(this);
+            (BehaviourReference as ActionEventBehaviour).Reciver?.ActionBinderDictionary.Remove(this);
         }
     }
 }

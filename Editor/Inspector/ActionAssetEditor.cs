@@ -11,16 +11,17 @@ namespace Celezt.DialogueSystem.Editor
     {
         public override void BuildInspector()
         {
-            DSPlayableAsset asset = serializedObject.targetObject as DSPlayableAsset;
+            var asset = serializedObject.targetObject as DSPlayableAsset;
+            var behaviour = asset.BehaviourReference as ActionEventBehaviour;
 
-            if (asset.BehaviourReference.Binder == null)
-                asset.BehaviourReference.Director.RebuildGraph();
+            if (behaviour.Reciver == null)
+                behaviour.Director.RebuildGraph();
 
-            DialogueSystemBinder binder = asset.BehaviourReference.Binder;
+            ActionReceiver reciver = behaviour.Reciver;
            
-            SerializedObject serializedBinder = new SerializedObject(binder);
+            SerializedObject serializedBinder = new SerializedObject(reciver);
 
-            int index = binder.ActionBinderDictionary.Keys.IndexOf(asset);
+            int index = reciver.ActionBinderDictionary.Keys.IndexOf(asset);
             if (index != -1)
             {
 
