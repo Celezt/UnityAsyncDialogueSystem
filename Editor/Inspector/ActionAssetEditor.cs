@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem.Editor
 {
     [CustomEditor(typeof(ActionEventAsset), true)]
-    public class ActionAssetEditor : DsPlayableAssetEditor
+    public class ActionAssetEditor : DSPlayableAssetEditor
     {
         public override void BuildInspector()
         {

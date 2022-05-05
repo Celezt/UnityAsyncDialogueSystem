@@ -9,7 +9,7 @@ using System.Linq;
 namespace Celezt.DialogueSystem.Editor
 {
     [CustomEditor(typeof(DSPlayableAsset<>), true), CanEditMultipleObjects]
-    public class DsPlayableAssetEditor : UnityEditor.Editor
+    public class DSPlayableAssetEditor : UnityEditor.Editor
     {
         public virtual void BuildInspector() { }
  
