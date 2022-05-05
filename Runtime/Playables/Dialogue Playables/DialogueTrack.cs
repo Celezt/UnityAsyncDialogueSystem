@@ -23,13 +23,6 @@ namespace Celezt.DialogueSystem
             return template;
         }
 
-        protected sealed override Playable CreatePlayable(PlayableGraph graph, GameObject gameObject, TimelineClip clip)
-        {
-            GetBinder(graph);
-
-            return base.CreatePlayable(graph, gameObject, clip);
-        }
-
         private void OnDestroy()
         {
             _binder?.Remove(this);

@@ -7,7 +7,6 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
-    [TrackBindingType(typeof(DialogueSystemBinder))]
     public abstract class DSTrack : TrackAsset
     {
         public DSMixerBehaviour Mixer { get; internal set; }
@@ -23,7 +22,6 @@ namespace Celezt.DialogueSystem
             if (_director == null)
                 _director = graph.GetResolver() as PlayableDirector;
 
-
             DSMixerBehaviour template = CreateTrackMixer(graph, _director, go, inputCount);
             template.Track = this;
 
@@ -32,7 +30,13 @@ namespace Celezt.DialogueSystem
                 if (clip.asset is DSPlayableAsset)
                 {
                     DSPlayableAsset asset = clip.asset as DSPlayableAsset;
-                    DSPlayableBehaviour behaviour = asset.BehaviourReference;
+
+                    DSPlayableBehaviour behaviour = null;
+                    if (asset.BehaviourReference == null)
+                        behaviour = asset.Initialization(graph, go);
+                    else
+                        behaviour = asset.BehaviourReference;
+
                     behaviour.Director = _director;
                     behaviour.Asset = asset;
                     behaviour.Clip = clip;

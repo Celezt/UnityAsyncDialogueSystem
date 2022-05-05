@@ -9,7 +9,7 @@ namespace Celezt.DialogueSystem
 {
     public class ActionEventBehaviour : DSPlayableBehaviour
     {
-        public ActionReceiver Reciver => _receiver;
+        public ActionReceiver Receiver => _receiver;
 
         ActionReceiver _receiver;
 

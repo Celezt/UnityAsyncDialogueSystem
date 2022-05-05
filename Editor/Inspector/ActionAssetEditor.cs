@@ -14,10 +14,10 @@ namespace Celezt.DialogueSystem.Editor
             var asset = serializedObject.targetObject as DSPlayableAsset;
             var behaviour = asset.BehaviourReference as ActionEventBehaviour;
 
-            if (behaviour.Reciver == null)
+            if (behaviour.Receiver == null)
                 behaviour.Director.RebuildGraph();
 
-            ActionReceiver reciver = behaviour.Reciver;
+            ActionReceiver reciver = behaviour.Receiver;
            
             SerializedObject serializedBinder = new SerializedObject(reciver);
 

@@ -7,8 +7,7 @@ using UnityEngine.Timeline;
 namespace Celezt.DialogueSystem
 {
     [TrackColor(0.7f, 0.2f, 0.2f)]
-    [TrackClipType(typeof(ActionEventAsset))]
-    [TrackClipType(typeof(ButtonAsset))]
+    [TrackClipType(typeof(ActionAsset))]
     [TrackBindingType(typeof(ActionReceiver))]
     public class ActionTrack : DSTrack
     {
@@ -20,13 +19,6 @@ namespace Celezt.DialogueSystem
             var template = new ActionMixerBehaviour();
 
             return template;
-        }
-
-        protected override Playable CreatePlayable(PlayableGraph graph, GameObject gameObject, TimelineClip clip)
-        {
-            GetReceiver(graph);
-
-            return base.CreatePlayable(graph, gameObject, clip);
         }
 
         private void GetReceiver(in PlayableGraph graph)

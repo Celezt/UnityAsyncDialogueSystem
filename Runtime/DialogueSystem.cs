@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
     public class DialogueSystem : ScriptableObject
     {
         private static List<DialogueSystem> _instances = new List<DialogueSystem>();
-
+        
         public PlayableDirector Director
         {
             get

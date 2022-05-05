@@ -9,31 +9,27 @@ namespace Celezt.DialogueSystem
     /// <summary>
     /// A base class for assets that can be used to instantiate a Playable at runtime.
     /// </summary>
-    public abstract class DSPlayableAsset: PlayableAsset, ITimelineClipAsset
+    public abstract class DSPlayableAsset : PlayableAsset, ITimelineClipAsset
     {
-        public abstract new string name { get; }
-        public abstract ClipCaps clipCaps { get; }
-        public abstract DSPlayableBehaviour BehaviourReference { get; }
-    }
+        public new virtual string name => GetType().Name.Replace("Asset", "");
+        public virtual ClipCaps clipCaps => ClipCaps.None;
 
-    
-
-    /// <summary>
-    /// A base class for assets that can be used to instantiate a Playable at runtime.
-    /// </summary>
-    public abstract class DSPlayableAsset<T> : DSPlayableAsset, ITimelineClipAsset where T : DSPlayableBehaviour, new()
-    {
-        public override string name => GetType().Name.Replace("Asset", "");
-        public override ClipCaps clipCaps => ClipCaps.None;
-
-        public sealed override DSPlayableBehaviour BehaviourReference => _template;
+        public DSPlayableBehaviour BehaviourReference => _template;
 
         [SerializeReference, HideInInspector]
-        private T _template = new T();
-
+        private DSPlayableBehaviour _template;
+        
+        protected abstract DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner);
+         
         public sealed override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
         {
             return ScriptPlayable<DSPlayableBehaviour>.Create(graph, _template);
+        }
+
+        internal DSPlayableBehaviour Initialization(PlayableGraph graph, GameObject owner)
+        {
+            _template = CreateBehaviour(graph, owner);
+            return _template;
         }
     }
 }
