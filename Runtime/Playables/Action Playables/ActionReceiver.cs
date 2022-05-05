@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
     {
         public SerializableDictionary<PlayableAsset, ActionBinder> ActionBinderDictionary => _actionBinderDictionary;
 
-        [SerializeField, HideInInspector]
+        [SerializeField]
         private SerializableDictionary<PlayableAsset, ActionBinder> _actionBinderDictionary = new SerializableDictionary<PlayableAsset, ActionBinder>();
 
         [Serializable]

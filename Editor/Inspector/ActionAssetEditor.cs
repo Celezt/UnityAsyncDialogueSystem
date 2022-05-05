@@ -35,6 +35,8 @@ namespace Celezt.DialogueSystem.Editor
 
                 serializedBinder.ApplyModifiedProperties();
             }
+
+            SerializeAllPropertyFields();
         }
     }
 }

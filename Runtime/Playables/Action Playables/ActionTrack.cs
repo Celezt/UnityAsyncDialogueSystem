@@ -8,7 +8,7 @@ namespace Celezt.DialogueSystem
 {
     [TrackColor(0.7f, 0.2f, 0.2f)]
     [TrackClipType(typeof(ActionEventAsset))]
-    [TrackClipType(typeof(ButtonChoiceAsset))]
+    [TrackClipType(typeof(ButtonAsset))]
     [TrackBindingType(typeof(ActionReceiver))]
     public class ActionTrack : DSTrack
     {

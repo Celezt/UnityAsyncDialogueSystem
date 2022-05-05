@@ -14,6 +14,8 @@ namespace Celezt.DialogueSystem
 
         protected PlayableDirector _director;
 
+        private HashSet<DSPlayableAsset> _pendingOnCreate = new HashSet<DSPlayableAsset>();
+
         protected virtual DSMixerBehaviour CreateTrackMixer(PlayableGraph graph, PlayableDirector director, GameObject go, int inputCount) => new DSMixerBehaviour();
 
         public sealed override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)
@@ -23,6 +25,7 @@ namespace Celezt.DialogueSystem
 
 
             DSMixerBehaviour template = CreateTrackMixer(graph, _director, go, inputCount);
+            template.Track = this;
 
             foreach (TimelineClip clip in GetClips())
             {
@@ -37,13 +40,22 @@ namespace Celezt.DialogueSystem
                     clip.displayName = asset.name;
 
                     behaviour.OnCreateTrackMixer(graph, go, inputCount, clip);
+
+                    if (_pendingOnCreate.Contains(asset))
+                    {
+                        behaviour.OnCreateClip();
+                        _pendingOnCreate.Remove(asset);
+                    }
                 }
             }
 
-
-            template.Track = this;
-
             return ScriptPlayable<DSMixerBehaviour>.Create(graph, template, inputCount);
+        }
+
+        protected override void OnCreateClip(TimelineClip clip)
+        {
+            if (clip.asset is DSPlayableAsset asset)    // Waiting on being created.
+                _pendingOnCreate.Add(asset);
         }
     }
 }

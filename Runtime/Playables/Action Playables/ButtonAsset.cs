@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    public class ButtonChoiceAsset : DSPlayableAsset<ButtonChoiceBehaviour>
+    public class ButtonAsset : DSPlayableAsset<ButtonBehaviour>
     {
 
     }

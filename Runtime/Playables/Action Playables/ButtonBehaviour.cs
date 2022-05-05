@@ -9,16 +9,46 @@ using UnityEngine.UI;
 
 namespace Celezt.DialogueSystem
 {
-    public class ButtonChoiceBehaviour : DSPlayableBehaviour
+    public class ButtonBehaviour : DSPlayableBehaviour
     {
         public ExposedReference<Button> ButtonReference;
-        public string ChoiceDescription;
+        public string Text;
         public ActionPlayableSettings Settings;
 
         private Button _button;
         private CanvasGroup _canvasGroup;
-        private TextMeshProUGUI _text;
+        private TextMeshProUGUI _textMesh;
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
+
+        public override void OnCreateClip()
+        {
+            if (Settings == null)   // Get previous clip's setting if it exist.
+            {
+                ButtonAsset previousAsset = null;
+                foreach (var clip in Clip.GetParentTrack().GetClips())
+                {
+                    if (clip == Clip)
+                    {
+                        if (previousAsset != null)
+                        {
+#if UNITY_EDITOR
+                            UnityEditor.EditorGUI.BeginChangeCheck();
+#endif
+                            Settings = (previousAsset.BehaviourReference as ButtonBehaviour).Settings;
+#if UNITY_EDITOR
+                            UnityEditor.EditorGUI.EndChangeCheck();
+#endif
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (clip.asset is ButtonAsset clipAsset)    // The last asset of correct time.
+                            previousAsset = clipAsset;
+                    }
+                }
+            }
+        }
 
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount, TimelineClip clip)
         {
@@ -27,18 +57,23 @@ namespace Celezt.DialogueSystem
             if (_button != null)
             {
                 _canvasGroup = _button.GetComponentInChildren<CanvasGroup>();
-                _text = _button.GetComponentInChildren<TextMeshProUGUI>();
+                _textMesh = _button.GetComponentInChildren<TextMeshProUGUI>();
             }
 
-            if (!string.IsNullOrWhiteSpace(ChoiceDescription))
-                clip.displayName = ChoiceDescription;
+            if (!string.IsNullOrWhiteSpace(Text))
+                clip.displayName = Text;
 
             Hide();
         }
 
         public override void EnterClip(Playable playable, FrameData info, DialogueSystemBinder binder)
         {
-            Show();
+            if (_button != null)
+            {
+                _canvasGroup.interactable = true;
+                if (_textMesh != null)
+                    _textMesh.text = Text;
+            }
         }
 
         public override void ProcessFrame(Playable playable, FrameData info, DialogueSystemBinder binder)
@@ -77,22 +112,14 @@ namespace Celezt.DialogueSystem
             Hide();
         }
 
-        private void Show()
-        {
-            if (_button != null)
-            {
-                _canvasGroup.interactable = true;
-                _text.text = ChoiceDescription;
-            }
-        }
-
         private void Hide()
         {
             if (_button != null)
             {
                 _canvasGroup.alpha = 0;
                 _canvasGroup.interactable = false;
-                _text.text = null;
+                if (_textMesh != null)
+                    _textMesh.text = null;
             }
         }
     }

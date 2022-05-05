@@ -14,8 +14,9 @@ namespace Celezt.DialogueSystem
         public abstract new string name { get; }
         public abstract ClipCaps clipCaps { get; }
         public abstract DSPlayableBehaviour BehaviourReference { get; }
-
     }
+
+    
 
     /// <summary>
     /// A base class for assets that can be used to instantiate a Playable at runtime.

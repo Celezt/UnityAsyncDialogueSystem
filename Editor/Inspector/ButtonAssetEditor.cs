@@ -7,13 +7,31 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomEditor(typeof(ButtonChoiceAsset))]
-    public class ButtonChoiceAssetEditor : DSPlayableAssetEditor
+    [CustomEditor(typeof(ButtonAsset))]
+    public class ButtonAssetEditor : DSPlayableAssetEditor
     {
         public override void BuildInspector()
         {
             DSPlayableAsset asset = serializedObject.targetObject as DSPlayableAsset;
-            ButtonChoiceBehaviour behaviour = asset.BehaviourReference as ButtonChoiceBehaviour;
+            ButtonBehaviour behaviour = asset.BehaviourReference as ButtonBehaviour;
+
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.ButtonReference"));
+
+            // Hide if no button is found.
+            object button = GetValue(behaviour, "_button");
+            if (button != null)
+            {
+                // Hide if no text mesh is found.
+                object textMesh = GetValue(behaviour, "_textMesh");
+                if (textMesh != null)
+                {
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.Text"));
+                    EditorGUI.indentLevel--;
+                }
+            }
+
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.Settings"));
 
             if (behaviour.Settings != null)
             {

@@ -2,7 +2,8 @@
     "name": "celezt.asyncdialogue.editor",
     "rootNamespace": "",
     "references": [
-        "GUID:2140a12b1d3182f4f8bf89127892ff6e"
+        "GUID:2140a12b1d3182f4f8bf89127892ff6e",
+        "GUID:f06555f75b070af458a003d92f9efb00"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -17,26 +17,38 @@ namespace Celezt.DialogueSystem.Editor
         {
             serializedObject.Update();
 
-            SerializeAllPropertyField();
             BuildInspector();         
             DrawPropertiesExcluding(serializedObject, "m_Script");
-            
+
+            if (GetType() == typeof(DSPlayableAssetEditor)) // Called if not derived.
+                SerializeAllPropertyFields();
+
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void SerializeAllPropertyField()
+        protected void SerializeAllPropertyFields(params string[] exceptions)
         {
+            HashSet<string> exceptionHashSet = new HashSet<string>(exceptions);
             DSPlayableAsset asset = serializedObject.targetObject as DSPlayableAsset;
             DSPlayableBehaviour behaviour = asset.BehaviourReference;
 
             IEnumerable<SerializedProperty> serializedProperties =
                 from s in behaviour.GetType()
                     .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .Where(x => !exceptionHashSet.Contains(x.Name))
                     .Select(x => serializedObject.FindProperty("_template." + x.Name))
                 where s != null select s;
 
             foreach (SerializedProperty serializedProperty in serializedProperties)
                 EditorGUILayout.PropertyField(serializedProperty, true);
+        }
+
+        protected object GetValue(object instance, string name) => GetValue<object>(instance, name);
+        protected T GetValue<T>(object instance, string name)
+        {
+            return (T)instance.GetType()
+                .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .GetValue(instance);
         }
     }
 }
