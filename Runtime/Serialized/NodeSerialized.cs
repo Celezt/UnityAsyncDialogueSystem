@@ -3,12 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Celezt.DialogueSystem.Editor
+namespace Celezt.DialogueSystem
 {
     [Serializable]
-    public struct NodeSerializeData
+    public struct NodeSerialized
     {
         public string ID;
         public string Type;
+        public string Binder;
     }
 }

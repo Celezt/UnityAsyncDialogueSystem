@@ -7,8 +7,6 @@ namespace Celezt.DialogueSystem
 {
     public abstract class NodeAsset : ScriptableObject
     {
-        public IReadOnlyDictionary<string, object> NodeValues;
-
         public IEnumerable<NodeAsset> Inputs => _inputs;
         public IEnumerable<int> InputPortNumber => _inputPortNumbers;
 
@@ -49,26 +47,23 @@ namespace Celezt.DialogueSystem
         private List<int> _inputPortNumbers = new List<int>();
 
         private int _inputCount;
+        private bool _initialized;
 
         /// <summary>
-        /// After the asset has been deserialized. Only called when generated from graph.
+        /// When asset has just been created. 
         /// </summary>
-        /// <param name="values"></param>
-        public virtual void OnAfterDeserialize(IReadOnlyDictionary<string, object> values) { }
-        /// <summary>
-        /// When asset has just been created. Called after <see cref="OnAfterDeserialize"/>
-        /// </summary>
-        public virtual void OnCreateAsset() { }
+        /// <param name="values">Deserialized values.</param>
+        protected virtual void OnCreateAsset(IReadOnlyDictionary<string, object> values) { }
         /// <summary>
         /// Process node behaviour based on child nodes.
         /// </summary>
         /// <param name="inputs">Child nodes.</param>
         /// <param name="outputIndex">Parent node output connection.</param>
         /// <returns>Return value.</returns>
-        public abstract object Process(object[] inputs, int outputIndex);
+        protected abstract object Process(object[] inputs, int outputIndex);
 
         /// <summary>
-        /// Get resulting value from this and linked nodes.
+        /// Get resulting value from this and connected nodes.
         /// </summary>
         /// <param name="portNumber"></param>
         /// <returns></returns>
@@ -85,6 +80,25 @@ namespace Celezt.DialogueSystem
             }
 
             return Process(inputs, portNumber);
+        }
+
+        /// <summary>
+        /// Initialize this and connected children.
+        /// </summary>
+        public void InitializeTree()
+        {
+            for (int i = 0; i < _inputs.Count; i++)
+            {
+                if (_inputs[i] == null)
+                    continue;
+
+                _inputs[i].InitializeTree();
+            }
+
+            if (_initialized == false)
+                OnCreateAsset(null);
+
+            _initialized = true;
         }
     }
 }

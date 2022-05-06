@@ -8,6 +8,8 @@ namespace Celezt.DialogueSystem
     [CreateAssetMenu(fileName = "Condition Asset", menuName = "Dialogue/Assets/Condition Asset")]
     public class ConditionAsset : NodeAsset
     {
+        public Comparisons _comparison = Comparisons.Equal;
+
         public enum Comparisons
         {
             Equal,
@@ -18,16 +20,17 @@ namespace Celezt.DialogueSystem
             GreaterOrEqual,
         }
 
-        private void Awake()
+        protected override void OnCreateAsset(IReadOnlyDictionary<string, object> values)
         {
             InputCount = 2;
+
+            if (values != null)
+                _comparison = (Comparisons)values["currentComparison"];
         }
 
-        public override object Process(object[] inputs, int outputIndex)
+        protected override object Process(object[] inputs, int outputIndex)
         {
-            Comparisons comparison = (Comparisons)NodeValues["currentComparison"];
-
-            return CompareValues(comparison, (float)inputs[0], (float)inputs[1]);
+            return CompareValues(_comparison, (float)inputs[0], (float)inputs[1]);
         }
 
         private static bool CompareValues(Comparisons comparison, float first, float second) => comparison switch

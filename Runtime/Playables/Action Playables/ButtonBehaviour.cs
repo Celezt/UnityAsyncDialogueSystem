@@ -65,6 +65,8 @@ namespace Celezt.DialogueSystem
                 clip.displayName = Text;
 
             Hide();
+
+            Condition.InitializeTree();
         }
 
         public override void EnterClip(Playable playable, FrameData info, DialogueSystemBinder binder)

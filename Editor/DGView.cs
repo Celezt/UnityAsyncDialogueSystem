@@ -8,12 +8,10 @@ using UnityEngine;
 using UnityEditor;
 using System.Reflection;
 using System.IO;
+using Newtonsoft.Json.Linq;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    using Unity.Plastic.Newtonsoft.Json;
-    using Unity.Plastic.Newtonsoft.Json.Linq;
-
     public class DGView : GraphView
     {
         internal const int DG_VERSION = 1;
@@ -32,8 +30,8 @@ namespace Celezt.DialogueSystem.Editor
 
         internal Dictionary<Type, NodeTraits> NodeTypeDictionary { get; private set; } = new Dictionary<Type, NodeTraits>()
         {
-            {typeof(PropertyNode), new NodeTraits()},
-            {typeof(BasicNode), new NodeTraits()},
+            {typeof(PropertyNode), new NodeTraits{ } },
+            {typeof(BasicNode), new NodeTraits{ } },
         };
         internal Dictionary<Guid, DGNode> NodeDictionary { get; private set; } = new Dictionary<Guid, DGNode>();
 
@@ -131,19 +129,22 @@ namespace Celezt.DialogueSystem.Editor
         /// </summary>
         private void ReflectNodes()
         {
-            foreach (Type type in ReflectionUtility.GetTypesWithAttribute<CreateNodeAttribute>(AppDomain.CurrentDomain))
+            foreach (Type nodeType in ReflectionUtility.GetTypesWithAttribute<CreateNodeAttribute>(AppDomain.CurrentDomain))
             {
-                if (!typeof(DGNode).IsAssignableFrom(type))
+                if (!typeof(DGNode).IsAssignableFrom(nodeType))
                 {
-                    Debug.LogError($"DIALOGUE ERROR: {type} has no derived {nameof(DGNode)}");
+                    Debug.LogError($"DIALOGUE ERROR: {nodeType} has no derived {nameof(DGNode)}");
                     continue;
                 }
                 
-                CreateNodeAttribute createNodeAttribute = type.GetCustomAttribute<CreateNodeAttribute>();
-                NodeTypeDictionary.Add(type, new NodeTraits 
+                CreateNodeAttribute createNodeAttribute = nodeType.GetCustomAttribute<CreateNodeAttribute>();
+                AssetBinderAttribute assetBinderAttribute = nodeType.GetCustomAttribute<AssetBinderAttribute>();
+
+                NodeTypeDictionary.Add(nodeType, new NodeTraits 
                 { 
                     MenuName = createNodeAttribute.MenuName,
                     NodeTitle = createNodeAttribute.NodeTitle,
+                    AssetType = assetBinderAttribute?.AssetType ?? null,
                 });
             }
         }

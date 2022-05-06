@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -31,8 +31,8 @@ namespace Celezt.DialogueSystem.Editor
 
         public static ReadOnlySpan<char> SerializeGraph(int version, GUID objectID, DGView graphView)
         {
-            List<NodeSerializeData> nodeData = new List<NodeSerializeData>();
-            List<EdgeSerializeData> edgeData = new List<EdgeSerializeData>();
+            List<NodeSerialized> nodeData = new List<NodeSerialized>();
+            List<EdgeSerialized> edgeData = new List<EdgeSerialized>();
             List<SerializedVector2Int> positionData = new List<SerializedVector2Int>();
             List<object> specialData = new List<object>();
             List<object> propertyData = new List<object>();
@@ -51,13 +51,15 @@ namespace Celezt.DialogueSystem.Editor
             {            
                 if (node is DGNode { } dgNode)
                 {
-                    positionData.Add(Vector2Int.RoundToInt(dgNode.GetPosition().position));
+                    positionData.Add(dgNode.GetPosition().position);
                     specialData.Add(GetFields(dgNode));
-                    nodeData.Add(new NodeSerializeData
+
+                    nodeData.Add(new NodeSerialized
                     {
                         ID = dgNode.ID.ToString("N"),
                         Type = dgNode.GetType().FullName,
-                    });
+                        Binder = graphView.NodeTypeDictionary[dgNode.GetType()].AssetType?.FullName ?? "",
+                    });;
                 }
             });
 
@@ -67,7 +69,7 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     if (edge.output.node is DGNode outNode)
                     {
-                        edgeData.Add(new EdgeSerializeData
+                        edgeData.Add(new EdgeSerialized
                         {
                             InputPort =
                             {
@@ -106,7 +108,7 @@ namespace Celezt.DialogueSystem.Editor
                 }
             });
 
-            GraphSerializeData graphSerializeData = new GraphSerializeData
+            GraphSerialized graphSerializeData = new GraphSerialized
             {
                 DGVersion = version,
                 ObjectID = objectID.ToString(),
@@ -123,13 +125,13 @@ namespace Celezt.DialogueSystem.Editor
 
         public static ReadOnlySpan<char> SerializeGraph(int version, GUID objectID)
         {
-            GraphSerializeData graphSerializeData = new GraphSerializeData
+            GraphSerialized graphSerializeData = new GraphSerialized
             {
                 DGVersion = version,
                 ObjectID = objectID.ToString(),
                 Properties = new List<dynamic>(),
-                Nodes = new List<NodeSerializeData>(),
-                Edges = new List<EdgeSerializeData>(),
+                Nodes = new List<NodeSerialized>(),
+                Edges = new List<EdgeSerialized>(),
                 Positions = new List<SerializedVector2Int>(),
                 Specialization = new List<dynamic>(),
             };
@@ -138,14 +140,14 @@ namespace Celezt.DialogueSystem.Editor
             return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
         }
 
-        public static GraphSerializeData DeserializeGraph(ReadOnlySpan<char> content)
+        public static GraphSerialized DeserializeGraph(ReadOnlySpan<char> content)
         {
-            return JsonConvert.DeserializeObject<GraphSerializeData>(content.ToString());
+            return JsonConvert.DeserializeObject<GraphSerialized>(content.ToString());
         }
 
         internal static void DeserializeGraph(this DGView graphView, ReadOnlySpan<char> content)
         {
-            GraphSerializeData deserializedData = DeserializeGraph(content);
+            GraphSerialized deserializedData = DeserializeGraph(content);
 
             if (deserializedData.Properties != null)
             {
@@ -218,22 +220,22 @@ namespace Celezt.DialogueSystem.Editor
             //
             // Deserialize all nodes.
             //
-            int length = deserializedData.Nodes.Count;
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < deserializedData.Nodes.Count; i++)
             {
-                NodeSerializeData nodeData = deserializedData.Nodes[i];
+                NodeSerialized nodeData = deserializedData.Nodes[i];
                 SerializedVector2Int positionData = deserializedData.Positions[i];
                 JObject specialData = deserializedData.Specialization[i] as JObject;
 
                 if (!Guid.TryParseExact(nodeData.ID, "N", out Guid id))
                     throw new Exception(nodeData.ID + " is invalid GUID");
 
+                Type deserializedType = Type.GetType(nodeData.Type);
                 object userData = null;
 
                 //
                 // If property node.
                 //
-                if (Type.GetType(nodeData.Type) == typeof(PropertyNode))    
+                if (deserializedType == typeof(PropertyNode))    
                 {
                     if (specialData.TryGetValue("_propertyID", out JToken token))   // Get property id from property node.
                     {
@@ -251,11 +253,10 @@ namespace Celezt.DialogueSystem.Editor
                     }
                 }
 
-
                 //
                 // If basic node.
                 //
-                if (Type.GetType(nodeData.Type) == typeof(BasicNode))
+                if (deserializedType == typeof(BasicNode))
                 {
                     if (specialData.TryGetValue("_type", out JToken token))
                     {
@@ -263,7 +264,7 @@ namespace Celezt.DialogueSystem.Editor
                     }
                 }
 
-                DGNode graphNode = graphView.CreateNode(Type.GetType(nodeData.Type), positionData, id, specialData, userData);
+                DGNode graphNode = graphView.CreateNode(deserializedType, positionData, id, specialData, userData);
                 graphView.AddElement(graphNode);
             }
 
@@ -272,9 +273,9 @@ namespace Celezt.DialogueSystem.Editor
             //
             for (int i = 0; i < deserializedData.Edges.Count; i++)
             {
-                EdgeSerializeData edgeData = deserializedData.Edges[i];
-                PortSerializeData outputData = edgeData.OutputPort;
-                PortSerializeData inputData = edgeData.InputPort;
+                EdgeSerialized edgeData = deserializedData.Edges[i];
+                PortSerialized outputData = edgeData.OutputPort;
+                PortSerialized inputData = edgeData.InputPort;
 
                 if (!Guid.TryParseExact(outputData.NodeID, "N", out Guid outguid))
                     throw new Exception(outputData.NodeID + " is invalid GUID");

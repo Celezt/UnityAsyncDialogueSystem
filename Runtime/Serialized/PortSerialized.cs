@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Celezt.DialogueSystem.Editor
+namespace Celezt.DialogueSystem
 {
     [Serializable]
-    public struct PortSerializeData
+    public struct PortSerialized
     {
         public string NodeID;
         public int PortNumber;
