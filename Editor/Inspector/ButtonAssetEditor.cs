@@ -31,6 +31,7 @@ namespace Celezt.DialogueSystem.Editor
                 }
             }
 
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.Condition"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.Settings"));
 
             if (behaviour.Settings != null)

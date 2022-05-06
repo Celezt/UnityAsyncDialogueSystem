@@ -13,6 +13,7 @@ namespace Celezt.DialogueSystem
     {
         public ExposedReference<Button> ButtonReference;
         public string Text;
+        public NodeAsset Condition;
         public ActionPlayableSettings Settings;
 
         private Button _button;
