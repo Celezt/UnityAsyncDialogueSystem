@@ -14,6 +14,7 @@ namespace Celezt.DialogueSystem.Editor
         public sealed override void OnInspectorGUI()
         {
             serializedObject.Update();
+            EditorGUI.BeginChangeCheck();
 
             BuildInspector();
             DrawPropertiesExcluding(serializedObject, "m_Script");
@@ -36,6 +37,12 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             serializedObject.ApplyModifiedProperties();
+
+            if (EditorGUI.EndChangeCheck())
+            {
+               var asset = target as NodeAsset;
+               asset.IsDirty();
+            }
         }
 
         protected object GetValue(object instance, string name) => GetValue<object>(instance, name);

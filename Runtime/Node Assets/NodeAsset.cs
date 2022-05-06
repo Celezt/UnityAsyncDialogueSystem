@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Celezt.DialogueSystem
 {
@@ -41,6 +42,9 @@ namespace Celezt.DialogueSystem
             }
         }
 
+        [HideInInspector]
+        public UnityEvent OnChanged;
+
         [SerializeField, HideInInspector]
         private List<NodeAsset> _inputs = new List<NodeAsset>();
         [SerializeField, HideInInspector]
@@ -50,17 +54,12 @@ namespace Celezt.DialogueSystem
         private bool _initialized;
 
         /// <summary>
-        /// When asset has just been created. 
+        /// If asset has any changes.
         /// </summary>
-        /// <param name="values">Deserialized values.</param>
-        protected virtual void OnCreateAsset(IReadOnlyDictionary<string, object> values) { }
-        /// <summary>
-        /// Process node behaviour based on child nodes.
-        /// </summary>
-        /// <param name="inputs">Child nodes.</param>
-        /// <param name="outputIndex">Parent node output connection.</param>
-        /// <returns>Return value.</returns>
-        protected abstract object Process(object[] inputs, int outputIndex);
+        public void IsDirty()
+        {
+            OnChanged.Invoke();
+        }
 
         /// <summary>
         /// Get resulting value from this and connected nodes.
@@ -92,6 +91,9 @@ namespace Celezt.DialogueSystem
                 if (_inputs[i] == null)
                     continue;
 
+                _inputs[i].OnChanged.RemoveListener(IsDirty);
+                _inputs[i].OnChanged.AddListener(IsDirty);
+
                 _inputs[i].InitializeTree();
             }
 
@@ -99,6 +101,30 @@ namespace Celezt.DialogueSystem
                 OnCreateAsset(null);
 
             _initialized = true;
+        }
+
+        /// <summary>
+        /// When asset has just been created. 
+        /// </summary>
+        /// <param name="values">Deserialized values.</param>
+        protected virtual void OnCreateAsset(IReadOnlyDictionary<string, object> values) { }
+        /// <summary>
+        /// Process node behaviour based on child nodes.
+        /// </summary>
+        /// <param name="inputs">Child nodes.</param>
+        /// <param name="outputIndex">Parent node output connection.</param>
+        /// <returns>Return value.</returns>
+        protected abstract object Process(object[] inputs, int outputIndex);
+
+        private void OnDestroy()
+        {
+            for (int i = 0; i < _inputs.Count; i++)
+            {
+                if (_inputs[i] == null)
+                    continue;
+
+                _inputs[i].OnChanged.RemoveListener(IsDirty);
+            }
         }
     }
 }

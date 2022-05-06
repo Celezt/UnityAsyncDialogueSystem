@@ -14,12 +14,16 @@ namespace Celezt.DialogueSystem
             get => _value;
             set
             {
-                if (value is double or int)
-                    _value = Convert.ToSingle(value);
-                else 
-                    _value = value;
+                if (_value != value)
+                {
+                    if (value is double or int)
+                        _value = Convert.ToSingle(value);
+                    else
+                        _value = value;
+                }
             }
         }
+
         private object _value = default(float);
 
         [SerializeField, HideInInspector]

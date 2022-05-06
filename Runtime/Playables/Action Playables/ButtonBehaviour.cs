@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,8 +22,13 @@ namespace Celezt.DialogueSystem
         private TextMeshProUGUI _textMesh;
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
 
+        private Ref<bool> _isActive = false;
+
+        private float _oldAlpha;
+
         public override void OnCreateClip()
         {
+            Ref<bool> s = false;
             if (Settings == null)   // Get previous clip's setting if it exist.
             {
                 ButtonAsset previousAsset = null;
@@ -67,6 +73,8 @@ namespace Celezt.DialogueSystem
             Hide();
 
             Condition.InitializeTree();
+            Condition.OnChanged.RemoveListener(ConditionChanges);
+            Condition.OnChanged.AddListener(ConditionChanges);
         }
 
         public override void EnterClip(Playable playable, FrameData info, DialogueSystemBinder binder)
@@ -81,7 +89,7 @@ namespace Celezt.DialogueSystem
 
         public override void ProcessFrame(Playable playable, FrameData info, DialogueSystemBinder binder)
         {
-            if (_button != null)
+            if (_button != null && _isActive.Value)
             {
                 if (Settings != null)
                 {
@@ -119,11 +127,29 @@ namespace Celezt.DialogueSystem
         {
             if (_button != null)
             {
+                _oldAlpha = _canvasGroup.alpha;
                 _canvasGroup.alpha = 0;
                 _canvasGroup.interactable = false;
-                if (_textMesh != null)
-                    _textMesh.text = null;
             }
+        }
+
+        private void Show()
+        {
+            if (_button != null)
+            {
+                _canvasGroup.alpha = _oldAlpha;
+                _canvasGroup.interactable = true;
+            }
+        }
+
+        private void ConditionChanges()
+        {
+            _isActive.Value = (bool)Condition.GetValue(0);
+
+            if (_isActive == false)
+                Hide();
+            else
+                Show();
         }
     }
 }
