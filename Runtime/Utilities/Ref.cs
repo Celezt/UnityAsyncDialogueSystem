@@ -21,7 +21,6 @@ namespace Celezt.DialogueSystem
         public Ref() => _value = default(T);
 
         public static implicit operator T(Ref<T> refValue) => refValue._value;
-        public static implicit operator Ref<T>(T value) => new Ref<T>(value);
         public static bool operator ==(Ref<T> lhs, Ref<T> rhs) => lhs.Value.Equals(rhs.Value);
         public static bool operator !=(Ref<T> lhs, Ref<T> rhs) => !(lhs == rhs);
         public static bool operator ==(Ref<T> lhs, T rhs) => lhs.Value.Equals(rhs);

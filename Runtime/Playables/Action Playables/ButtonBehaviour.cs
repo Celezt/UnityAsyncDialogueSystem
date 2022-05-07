@@ -22,13 +22,10 @@ namespace Celezt.DialogueSystem
         private TextMeshProUGUI _textMesh;
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
 
-        private Ref<bool> _isActive = false;
-
-        private float _oldAlpha;
+        private Ref<bool> _isActive = new Ref<bool>();
 
         public override void OnCreateClip()
         {
-            Ref<bool> s = false;
             if (Settings == null)   // Get previous clip's setting if it exist.
             {
                 ButtonAsset previousAsset = null;
@@ -72,9 +69,9 @@ namespace Celezt.DialogueSystem
 
             Hide();
 
-            Condition.InitializeTree();
-            Condition.OnChanged.RemoveListener(ConditionChanges);
-            Condition.OnChanged.AddListener(ConditionChanges);
+            Condition?.InitializeTree();
+            Condition?.OnChanged.RemoveListener(ConditionChanges);
+            Condition?.OnChanged.AddListener(ConditionChanges);
         }
 
         public override void EnterClip(Playable playable, FrameData info, DialogueSystemBinder binder)
@@ -88,6 +85,16 @@ namespace Celezt.DialogueSystem
         }
 
         public override void ProcessFrame(Playable playable, FrameData info, DialogueSystemBinder binder)
+        {
+            ProcessVisibility();
+        }
+
+        public override void ExitClip(Playable playable, FrameData info, DialogueSystemBinder binder)
+        {
+            Hide();
+        }
+
+        private void ProcessVisibility()
         {
             if (_button != null && _isActive.Value)
             {
@@ -118,16 +125,10 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public override void ExitClip(Playable playable, FrameData info, DialogueSystemBinder binder)
-        {
-            Hide();
-        }
-
         private void Hide()
         {
             if (_button != null)
             {
-                _oldAlpha = _canvasGroup.alpha;
                 _canvasGroup.alpha = 0;
                 _canvasGroup.interactable = false;
             }
@@ -137,14 +138,14 @@ namespace Celezt.DialogueSystem
         {
             if (_button != null)
             {
-                _canvasGroup.alpha = _oldAlpha;
+                ProcessVisibility();
                 _canvasGroup.interactable = true;
             }
         }
 
         private void ConditionChanges()
         {
-            _isActive.Value = (bool)Condition.GetValue(0);
+            _isActive.Value =  Convert.ToBoolean(Condition.GetValue(0));
 
             if (_isActive == false)
                 Hide();
