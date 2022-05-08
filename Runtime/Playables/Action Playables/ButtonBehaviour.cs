@@ -22,6 +22,7 @@ namespace Celezt.DialogueSystem
         private TextMeshProUGUI _textMesh;
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
 
+        [SerializeField, HideInInspector]
         private Ref<bool> _isActive = new Ref<bool>();
 
         public override void OnCreateClip()

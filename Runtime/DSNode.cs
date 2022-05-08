@@ -91,15 +91,15 @@ namespace Celezt.DialogueSystem
             return true;
         }
 
-        private bool InternalTryGetAllProcessors(List<AssetProcessor> processors, out AssetProcessor processor)
+        private bool InternalTryGetAllProcessors(List<AssetProcessor> processors, out AssetProcessor currentProcessor)
         {
-            processor = null;
+            currentProcessor = null;
 
             if (!IsProcessor)
                 return false;
 
-            processor = (AssetProcessor)ScriptableObject.CreateInstance(_assetType);
-            processors.Add(processor);
+            currentProcessor = (AssetProcessor)ScriptableObject.CreateInstance(_assetType);
+            processors.Add(currentProcessor);
 
             foreach (var (index, input) in _inputs)
             {
@@ -111,10 +111,10 @@ namespace Celezt.DialogueSystem
                 if (!childNode.InternalTryGetAllProcessors(processors, out var childProcessor))
                     throw new Exception("Child was not a processor");
 
-                for (int i = processor._inputs.Count; i <= index; i++)  // Currently does not support vertical input.
-                    processor._inputs.Add(null);
+                for (int i = currentProcessor._inputs.Count; i <= index; i++)  // Currently does not support vertical input.
+                    currentProcessor._inputs.Add(null);
 
-                processor._inputs.Insert(index, childProcessor);
+                currentProcessor._inputs.Insert(index, childProcessor);
             }
 
             return true;

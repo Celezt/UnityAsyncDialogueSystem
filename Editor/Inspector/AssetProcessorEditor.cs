@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem.Editor
 {
     [CustomEditor(typeof(AssetProcessor), true), CanEditMultipleObjects]
-    public class NodeAssetEditor : UnityEditor.Editor
+    public class AssetProcessorEditor : UnityEditor.Editor
     {
         public virtual void BuildInspector() { }
 
