@@ -7,7 +7,7 @@ using System;
 namespace Celezt.DialogueSystem
 {
     [CreateAssetMenu(fileName = "Value Asset", menuName = "Dialogue/Assets/Value Asset")]
-    public class ValueAsset : ProcessAsset, ISerializationCallbackReceiver
+    public class ValueProcessor : AssetProcessor, ISerializationCallbackReceiver
     {
         public object Value
         {

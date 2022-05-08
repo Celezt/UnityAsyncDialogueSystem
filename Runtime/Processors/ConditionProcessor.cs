@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [CreateAssetMenu(fileName = "Condition Asset", menuName = "Dialogue/Assets/Condition Asset")]
-    public class ConditionAsset : ProcessAsset
+    public class ConditionProcessor : AssetProcessor
     {
         public Comparisons _comparison = Comparisons.Equal;
 

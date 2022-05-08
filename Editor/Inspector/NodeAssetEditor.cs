@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomEditor(typeof(ProcessAsset), true), CanEditMultipleObjects]
+    [CustomEditor(typeof(AssetProcessor), true), CanEditMultipleObjects]
     public class NodeAssetEditor : UnityEditor.Editor
     {
         public virtual void BuildInspector() { }
@@ -42,7 +42,7 @@ namespace Celezt.DialogueSystem.Editor
 
             if (EditorGUI.EndChangeCheck())
             {
-               var asset = target as ProcessAsset;
+               var asset = target as AssetProcessor;
                asset.IsDirty();
             }
         }

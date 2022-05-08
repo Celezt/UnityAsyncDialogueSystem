@@ -9,9 +9,9 @@ namespace Celezt.DialogueSystem
     /// <summary>
     /// Process logic connected to behaviours.
     /// </summary>
-    public abstract class ProcessAsset : ScriptableObject, IDSAsset
+    public abstract class AssetProcessor : ScriptableObject, IDSAsset
     {
-        public IEnumerable<ProcessAsset> Inputs => _inputs;
+        public IEnumerable<AssetProcessor> Inputs => _inputs;
         public IEnumerable<int> InputPortNumber => _inputPortNumbers;
 
         /// <summary>
@@ -49,9 +49,9 @@ namespace Celezt.DialogueSystem
         public UnityEvent OnChanged;
 
         [SerializeField, HideInInspector]
-        private List<ProcessAsset> _inputs = new List<ProcessAsset>();
+        internal List<AssetProcessor> _inputs = new List<AssetProcessor>();
         [SerializeField, HideInInspector]
-        private List<int> _inputPortNumbers = new List<int>();
+        internal List<int> _inputPortNumbers = new List<int>();
 
         private int _inputCount;
         private bool _initialized;

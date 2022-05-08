@@ -14,7 +14,7 @@ namespace Celezt.DialogueSystem
     {
         public ExposedReference<Button> ButtonReference;
         public string Text;
-        public ProcessAsset Condition;
+        public AssetProcessor Condition;
         public ActionPlayableSettings Settings;
 
         private Button _button;

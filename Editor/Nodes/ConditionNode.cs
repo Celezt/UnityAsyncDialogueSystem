@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [AssetBinder(typeof(ConditionAsset))]
+    [AssetBinder(typeof(ConditionProcessor))]
     [CreateNode("Process/Condition", "Condition")]
     public class ConditionNode : DGNode
     {

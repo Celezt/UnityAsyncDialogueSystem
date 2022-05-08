@@ -30,8 +30,8 @@ namespace Celezt.DialogueSystem.Editor
 
         internal Dictionary<Type, NodeTraits> NodeTypeDictionary { get; private set; } = new Dictionary<Type, NodeTraits>()
         {
-            {typeof(PropertyNode), new NodeTraits{ AssetBinder = typeof(ValueAsset) } },
-            {typeof(BasicNode), new NodeTraits{ AssetBinder = typeof(ValueAsset) } },
+            {typeof(PropertyNode), new NodeTraits{ AssetBinder = typeof(ValueProcessor) } },
+            {typeof(BasicNode), new NodeTraits{ AssetBinder = typeof(ValueProcessor) } },
         };
         internal Dictionary<Guid, DGNode> NodeDictionary { get; private set; } = new Dictionary<Guid, DGNode>();
 

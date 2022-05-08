@@ -5,12 +5,12 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomEditor(typeof(ValueAsset), true), CanEditMultipleObjects]
+    [CustomEditor(typeof(ValueProcessor), true), CanEditMultipleObjects]
     public class BasicAssetEditor : NodeAssetEditor
     {
         public override void BuildInspector()
         {
-            var asset = target as ValueAsset;
+            var asset = target as ValueProcessor;
 
             switch (asset.Value)
             {

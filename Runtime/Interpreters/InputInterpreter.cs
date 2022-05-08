@@ -15,7 +15,14 @@ namespace Celezt.DialogueSystem
             if (nextNode == null)
                 return;
 
-            
+            if (nextNode.TryGetInterpreter(out var interpreter))
+            {
+                interpreter.OnImport(node, timeline);
+            }
+            else if (nextNode.TryGetAllProcessors(out var processor))
+            {
+
+            }
         }
     }
 }
