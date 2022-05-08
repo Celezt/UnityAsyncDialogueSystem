@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [CreateAssetMenu(fileName = "Condition Asset", menuName = "Dialogue/Assets/Condition Asset")]
-    public class ConditionAsset : NodeAsset
+    public class ConditionAsset : ProcessAsset
     {
         public Comparisons _comparison = Comparisons.Equal;
 
@@ -30,7 +30,7 @@ namespace Celezt.DialogueSystem
 
         protected override object Process(object[] inputs, int outputIndex)
         {
-            return CompareValues(_comparison, (float)inputs[0], (float)inputs[1]);
+            return CompareValues(_comparison, Convert.ToSingle(inputs[0] ?? 0.0f), Convert.ToSingle(inputs[1] ?? 0.0f));
         }
 
         private static bool CompareValues(Comparisons comparison, float first, float second) => comparison switch

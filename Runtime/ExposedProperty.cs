@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem
 {
@@ -16,25 +18,25 @@ namespace Celezt.DialogueSystem
             {
                 if (!value.Equals(_value))
                 {
-                    OnValueChanged.Invoke(_value, value);
+                    OnValueChanged.Invoke(ChangeEvent<object>.GetPooled(_value, value));
                     _value = value;
                 }
             }
         }
 
-        public event ValueChanged OnValueChanged;
+        public EventCallback<ChangeEvent<object>> OnValueChanged;
 
         private readonly Guid _id;
 
         private string _name;
         private object _value;
 
+        public ExposedProperty(string name, object value) : this(name, value, Guid.NewGuid()) { }
         public ExposedProperty(string name, object value, Guid id)
         {
             _id = id;
             _name = name;
             _value = value;
-
             OnValueChanged = delegate { };
         }
 
@@ -44,9 +46,10 @@ namespace Celezt.DialogueSystem
         public bool Equals(ExposedProperty other) => _id == other._id;
         public override bool Equals(object obj) => obj is ExposedProperty exposed && Equals(exposed);
         public override int GetHashCode() => _id.GetHashCode();
-        public override string ToString() => _name;
+        public override string ToString() => $"{_name}: {{{_value}}}";
 
-        public delegate void ValueChanged(object oldValue, object newValue);
+        public static bool operator ==(ExposedProperty lhs, ExposedProperty rhs) => lhs.Value.Equals(rhs.Value);
+        public static bool operator !=(ExposedProperty lhs, ExposedProperty rhs) => !(lhs == rhs);
     }
 
 }

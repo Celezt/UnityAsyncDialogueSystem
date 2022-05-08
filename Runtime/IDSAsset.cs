@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Celezt.DialogueSystem.Editor
+namespace Celezt.DialogueSystem
 {
-    public class Dialogue : ScriptableObject
+    public interface IDSAsset
     {
 
     }

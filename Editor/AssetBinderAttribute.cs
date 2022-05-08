@@ -8,11 +8,11 @@ namespace Celezt.DialogueSystem
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class AssetBinderAttribute : Attribute
     {
-        internal Type AssetType { get; private set; }
+        internal Type AssetBinder { get; private set; }
 
         public AssetBinderAttribute(Type assetType)
         {
-            AssetType = assetType;
+            AssetBinder = assetType;
         }
     }
 }

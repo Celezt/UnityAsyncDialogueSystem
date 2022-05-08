@@ -9,6 +9,6 @@ namespace Celezt.DialogueSystem.Editor
     {
         public string MenuName;
         public string NodeTitle;
-        public Type AssetType;
+        public Type AssetBinder;
     }
 }

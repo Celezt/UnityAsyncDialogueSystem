@@ -6,6 +6,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    [AssetBinder(typeof(InputInterpreter))]
     [CreateNode("Connection/Input", "Input")]
     public class InputNode : DGNode
     {
@@ -22,6 +23,7 @@ namespace Celezt.DialogueSystem.Editor
 
             TextField outputTextField = new TextField()
             {
+                name = "Identity",
                 value = _id,
             };
             outputTextField.RegisterValueChangedCallback(callback =>

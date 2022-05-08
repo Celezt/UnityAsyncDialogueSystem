@@ -8,6 +8,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    [AssetBinder(typeof(DialogueInterpreter))]
     [CreateNode("Behaviour/Dialogue", "Dialogue")]
     public class DialogueNode : DGNode
     {

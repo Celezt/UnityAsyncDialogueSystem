@@ -6,9 +6,12 @@ using UnityEngine.Events;
 
 namespace Celezt.DialogueSystem
 {
-    public abstract class NodeAsset : ScriptableObject
+    /// <summary>
+    /// Process logic connected to behaviours.
+    /// </summary>
+    public abstract class ProcessAsset : ScriptableObject, IDSAsset
     {
-        public IEnumerable<NodeAsset> Inputs => _inputs;
+        public IEnumerable<ProcessAsset> Inputs => _inputs;
         public IEnumerable<int> InputPortNumber => _inputPortNumbers;
 
         /// <summary>
@@ -46,7 +49,7 @@ namespace Celezt.DialogueSystem
         public UnityEvent OnChanged;
 
         [SerializeField, HideInInspector]
-        private List<NodeAsset> _inputs = new List<NodeAsset>();
+        private List<ProcessAsset> _inputs = new List<ProcessAsset>();
         [SerializeField, HideInInspector]
         private List<int> _inputPortNumbers = new List<int>();
 

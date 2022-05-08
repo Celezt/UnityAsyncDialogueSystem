@@ -22,6 +22,7 @@ namespace Celezt.DialogueSystem.Editor
 
             TextField inputTextField = new TextField()
             {
+                name = "Identity",
                 value = _id,
             };
             inputTextField.RegisterValueChangedCallback(callback =>

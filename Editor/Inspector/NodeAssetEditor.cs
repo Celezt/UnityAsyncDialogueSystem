@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomEditor(typeof(NodeAsset), true), CanEditMultipleObjects]
+    [CustomEditor(typeof(ProcessAsset), true), CanEditMultipleObjects]
     public class NodeAssetEditor : UnityEditor.Editor
     {
         public virtual void BuildInspector() { }
@@ -14,9 +14,11 @@ namespace Celezt.DialogueSystem.Editor
         public sealed override void OnInspectorGUI()
         {
             serializedObject.Update();
-            EditorGUI.BeginChangeCheck();
 
             BuildInspector();
+
+            EditorGUI.BeginChangeCheck();
+
             DrawPropertiesExcluding(serializedObject, "m_Script");
 
             SerializedProperty inputArray = serializedObject.FindProperty("_inputs");
@@ -40,7 +42,7 @@ namespace Celezt.DialogueSystem.Editor
 
             if (EditorGUI.EndChangeCheck())
             {
-               var asset = target as NodeAsset;
+               var asset = target as ProcessAsset;
                asset.IsDirty();
             }
         }

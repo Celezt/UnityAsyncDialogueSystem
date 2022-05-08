@@ -7,6 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
+    [AssetBinder(typeof(BlendInterpreter))]
     [CreateNode("Behaviour/Action", "Action")]
     public class ActionNode : DGNode
     {

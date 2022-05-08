@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
+using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
@@ -12,19 +13,62 @@ namespace Celezt.DialogueSystem
     public class DialogueSystem : ScriptableObject
     {
         private static List<DialogueSystem> _instances = new List<DialogueSystem>();
-        
+
+        public GameObject Object
+        {
+            get
+            {
+                if (_object == null)
+                {
+                    _object = new GameObject()
+                    {
+                        name = $"Dialogue System {_instances.IndexOf(this) + 1} (Instanced)",
+                    };
+                }
+
+                return _object;
+            }
+        }
+
         public PlayableDirector Director
         {
             get
             {
                 if (_director == null)
-                    _director = CreateDirector();
+                {
+                    _director = Object.GetComponent<PlayableDirector>();
+
+                    if (_director == null)   // If not already exist.
+                        _director = Object.AddComponent<PlayableDirector>();
+                }
 
                 return _director;
             }
         }
 
+        public DialogueSystemBinder Binder
+        {
+            get
+            {
+                if (_binder == null)
+                {
+                    _binder = Object.GetComponent<DialogueSystemBinder>();
+
+                    if (_binder == null)
+                        _binder = Director.gameObject.AddComponent<DialogueSystemBinder>();
+                }
+
+                return _binder;
+            }
+        }
+
+        [SerializeField]
+        private Dialogue _dialogue;
+
+
+        private GameObject _object;
         private PlayableDirector _director;
+        private DialogueSystemBinder _binder;
 
         #region Awake
         private void OnEnable()
@@ -57,17 +101,24 @@ namespace Celezt.DialogueSystem
 
         private void OnLoadScene(Scene scene, LoadSceneMode mode)
         {
-            
+            if (Binder != null)
+            {
+                DSNode inputNode = _dialogue.Graph.GetInputNode("ID");
+                TimelineAsset timeline = DSUtility.CreateTimeline(inputNode);
+
+                for (int i = 0; i < 2; i++)
+                    timeline.CreateTrack<DialogueTrack>();
+
+                for (int i = 0; i < 6; i++)
+                    timeline.CreateTrack<ActionTrack>();
+
+                Director.playableAsset = timeline;
+            }
         }
 
-        private PlayableDirector CreateDirector()
+        private void OnDestroy()
         {
-            GameObject gameObject = new GameObject()
-            {
-                name = $"Dialogue System {_instances.IndexOf(this) + 1} (Instanced)",
-            };
-
-            return gameObject.AddComponent<PlayableDirector>();
+            Destroy(_object);
         }
     }
 }

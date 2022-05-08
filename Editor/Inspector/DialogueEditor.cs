@@ -12,7 +12,13 @@ namespace Celezt.DialogueSystem.Editor
         {
             serializedObject.Update();
             EditorGUI.BeginChangeCheck();
+
+            Dialogue dialogue = (Dialogue)target;
+
+            //EditorGUILayout.LabelField("Dialogue Graph Version: " + dialogue.Content.DGVersion);
+
             DrawPropertiesExcluding(serializedObject, "m_Script");
+
             if (EditorGUI.EndChangeCheck())
                 serializedObject.ApplyModifiedProperties();
         }

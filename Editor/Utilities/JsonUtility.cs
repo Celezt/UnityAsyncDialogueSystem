@@ -58,7 +58,7 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         ID = dgNode.ID.ToString("N"),
                         Type = dgNode.GetType().FullName,
-                        Binder = graphView.NodeTypeDictionary[dgNode.GetType()].AssetType?.FullName ?? "",
+                        Binder = graphView.NodeTypeDictionary[dgNode.GetType()].AssetBinder?.FullName ?? "",
                     });;
                 }
             });

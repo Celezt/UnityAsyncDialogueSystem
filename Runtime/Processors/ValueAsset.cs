@@ -6,8 +6,8 @@ using System;
 
 namespace Celezt.DialogueSystem
 {
-    [CreateAssetMenu(fileName = "Basic Asset", menuName = "Dialogue/Assets/Basic Asset")]
-    public class BasicAsset : NodeAsset, ISerializationCallbackReceiver
+    [CreateAssetMenu(fileName = "Value Asset", menuName = "Dialogue/Assets/Value Asset")]
+    public class ValueAsset : ProcessAsset, ISerializationCallbackReceiver
     {
         public object Value
         {
@@ -20,6 +20,8 @@ namespace Celezt.DialogueSystem
                         _value = Convert.ToSingle(value);
                     else
                         _value = value;
+
+                    IsDirty();
                 }
             }
         }

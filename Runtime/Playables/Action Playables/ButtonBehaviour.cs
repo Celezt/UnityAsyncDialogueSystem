@@ -14,7 +14,7 @@ namespace Celezt.DialogueSystem
     {
         public ExposedReference<Button> ButtonReference;
         public string Text;
-        public NodeAsset Condition;
+        public ProcessAsset Condition;
         public ActionPlayableSettings Settings;
 
         private Button _button;
@@ -114,7 +114,7 @@ namespace Celezt.DialogueSystem
                     {
                         _blendCurve.MoveKey(0, new Keyframe(0, Settings.StartFade.length > 0 ? Settings.StartFade.keys.Last().value : 1));
                         _blendCurve.MoveKey(1, new Keyframe(1, Settings.EndFade.length > 0 ? Settings.EndFade.keys.First().value : 1));
-
+                        // Blend the first and last point in start and end curve.
                         _canvasGroup.alpha = _blendCurve.Evaluate(Mathf.Clamp01((float)((time - startTime - startTimeLength) / (endTime - startTime - endTimeLength))));
                     }
                 }
