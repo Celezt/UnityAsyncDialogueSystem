@@ -10,6 +10,8 @@ namespace Celezt.DialogueSystem
     {
         public Comparisons _comparison = Comparisons.Equal;
 
+        public override int InputCount => 2; 
+
         public enum Comparisons
         {
             Equal,
@@ -22,8 +24,6 @@ namespace Celezt.DialogueSystem
 
         protected override void OnCreateAsset(IReadOnlyDictionary<string, object> values)
         {
-            InputCount = 2;
-
             if (values != null)
                 _comparison = (Comparisons)values["currentComparison"];
         }

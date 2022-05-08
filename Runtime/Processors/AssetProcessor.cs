@@ -17,34 +17,8 @@ namespace Celezt.DialogueSystem
         /// <summary>
         /// How many input port sockets it supports.
         /// </summary>
-        public int InputCount
-        {
-            get => _inputCount;
-            set
-            {
-                _inputCount = value;
-                if (_inputs.Count != _inputCount)
-                {
-                    if (_inputCount > _inputs.Count)
-                    {
-                        for (int i = _inputs.Count; i < _inputCount; i++)
-                        {
-                            _inputs.Add(null);
-                            _inputPortNumbers.Add(0);
-                        }
-                    }
-                    else
-                    {
-                        for (int i = _inputs.Count; i >= _inputCount; i--)
-                        {
-                            _inputs.RemoveAt(i);
-                            _inputPortNumbers.RemoveAt(i);
-                        }
-                    }
-                }
-            }
-        }
-
+        public virtual int InputCount => 0;
+        
         [HideInInspector]
         public UnityEvent OnChanged;
 
@@ -53,7 +27,6 @@ namespace Celezt.DialogueSystem
         [SerializeField, HideInInspector]
         internal List<int> _inputPortNumbers = new List<int>();
 
-        private int _inputCount;
         private bool _initialized;
 
         /// <summary>
@@ -118,6 +91,30 @@ namespace Celezt.DialogueSystem
         /// <param name="outputIndex">Parent node output connection.</param>
         /// <returns>Return value.</returns>
         protected abstract object Process(object[] inputs, int outputIndex);
+
+        private void Awake()
+        {
+            if (_inputs.Count != InputCount)
+            {
+                if (InputCount > _inputs.Count)
+                {
+                    for (int i = _inputs.Count; i < InputCount; i++)
+                    {
+                        _inputs.Add(null);
+                        _inputPortNumbers.Add(0);
+                    }
+                }
+                else
+                {
+                    for (int i = _inputs.Count; i >= InputCount; i--)
+                    {
+                        _inputs.RemoveAt(i);
+                        _inputPortNumbers.RemoveAt(i);
+                    }
+
+                }
+            }
+        }
 
         private void OnDestroy()
         {
