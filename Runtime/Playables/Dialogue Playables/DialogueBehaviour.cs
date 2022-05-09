@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
         [TextArea(10, int.MaxValue)]
         public string Text;
 
-        public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount, TimelineClip clip)
+        public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
             if (!string.IsNullOrWhiteSpace(Text))
                 clip.displayName = Text;

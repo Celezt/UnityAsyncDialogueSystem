@@ -22,7 +22,7 @@ namespace Celezt.DialogueSystem.Editor
             DrawPropertiesExcluding(serializedObject, "m_Script");
 
             SerializedProperty inputArray = serializedObject.FindProperty("_inputs");
-            SerializedProperty inputPortNumberArray = serializedObject.FindProperty("_inputPortNumbers");
+            SerializedProperty inputPortNumberArray = serializedObject.FindProperty("_outputPortNumbers");
 
             if (inputArray.arraySize > 0)
             {

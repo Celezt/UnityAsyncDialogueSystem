@@ -27,30 +27,7 @@ namespace Celezt.DialogueSystem
 
             foreach (TimelineClip clip in GetClips())
             {
-                if (clip.asset is DSPlayableAsset)
-                {
-                    DSPlayableAsset asset = clip.asset as DSPlayableAsset;
-
-                    DSPlayableBehaviour behaviour = null;
-                    if (asset.BehaviourReference == null)
-                        behaviour = asset.Initialization(graph, go);
-                    else
-                        behaviour = asset.BehaviourReference;
-
-                    behaviour.Director = _director;
-                    behaviour.Asset = asset;
-                    behaviour.Clip = clip;
-
-                    clip.displayName = asset.name;
-
-                    behaviour.OnCreateTrackMixer(graph, go, inputCount, clip);
-
-                    if (_pendingOnCreate.Contains(asset))
-                    {
-                        behaviour.OnCreateClip();
-                        _pendingOnCreate.Remove(asset);
-                    }
-                }
+                UpdateClip(graph, clip);
             }
 
             return ScriptPlayable<DSMixerBehaviour>.Create(graph, template, inputCount);
@@ -60,6 +37,35 @@ namespace Celezt.DialogueSystem
         {
             if (clip.asset is DSPlayableAsset asset)    // Waiting on being created.
                 _pendingOnCreate.Add(asset);
+        }
+
+        public void UpdateClip(TimelineClip clip) => UpdateClip(_director.playableGraph, clip);
+        public void UpdateClip(PlayableGraph graph, TimelineClip clip)
+        {
+            if (clip.asset is DSPlayableAsset)
+            {
+                DSPlayableAsset asset = clip.asset as DSPlayableAsset;
+                
+                DSPlayableBehaviour behaviour = null;
+                if (asset.BehaviourReference == null)
+                    behaviour = asset.Initialization(graph, _director.gameObject);
+                else
+                    behaviour = asset.BehaviourReference;
+
+                behaviour.Director = _director;
+                behaviour.Asset = asset;
+                behaviour.Clip = clip;
+
+                clip.displayName = asset.name;
+
+                behaviour.OnCreateTrackMixer(graph, _director.gameObject, clip);
+
+                if (_pendingOnCreate.Contains(asset))
+                {
+                    behaviour.OnCreateClip();
+                    _pendingOnCreate.Remove(asset);
+                }
+            }
         }
     }
 }

@@ -8,27 +8,24 @@ namespace Celezt.DialogueSystem
 {
     public class DSNode
     {
-        public IReadOnlyDictionary<string, object> LocalValues => _localValues;
+        public IReadOnlyDictionary<string, object> Values => _values;
         public IReadOnlyDictionary<int, DSPort> Inputs => _inputs;
         public IReadOnlyDictionary<int, DSPort> Outputs => _outputs;
 
         public bool IsInterpreter => typeof(AssetInterpreter).IsAssignableFrom(_assetType);
         public bool IsProcessor => typeof(AssetProcessor).IsAssignableFrom(_assetType);
-
-        public bool IsCreated
-        {
-            get => _created;
-            set => _created = value;
-        }
+        public bool IsInstanced => _instance != null;
 
         public Type AssetType => _assetType;
 
-        private Dictionary<string, object> _localValues;
+        public object Instance => _instance;
+
+        private Dictionary<string, object> _values;
         private Dictionary<int, DSPort> _inputs = new Dictionary<int, DSPort>();
         private Dictionary<int, DSPort> _outputs = new Dictionary<int, DSPort>();
 
+        private object _instance;
         private Type _assetType;
-        private bool _created;
 
         public DSNode(Type assetType, Dictionary<string, object> localValues)
         {
@@ -36,7 +33,7 @@ namespace Celezt.DialogueSystem
                 throw new ArgumentException($"{assetType.FullName} does not inherit {nameof(IDSAsset)}", assetType.FullName);
 
             _assetType = assetType;
-            _localValues = localValues;
+            _values = localValues;
         }
 
         /// <summary>
@@ -47,7 +44,7 @@ namespace Celezt.DialogueSystem
         /// <returns>Inserted port.</returns>
         public DSPort InsertPort(int index, DSPort.Direction direction)
         {
-            DSPort port = new DSPort(this, direction);
+            DSPort port = new DSPort(this, index, direction);
 
             if (direction == DSPort.Direction.Input)
                 _inputs[index] = port;
@@ -70,6 +67,8 @@ namespace Celezt.DialogueSystem
                 return false;
 
             interpreter = (AssetInterpreter)Activator.CreateInstance(_assetType);
+            interpreter._node = this;
+            _instance = interpreter;
 
             return true;
         }
@@ -95,26 +94,48 @@ namespace Celezt.DialogueSystem
         {
             currentProcessor = null;
 
+            bool alreadyExist = false;
+
             if (!IsProcessor)
                 return false;
 
-            currentProcessor = (AssetProcessor)ScriptableObject.CreateInstance(_assetType);
+            if (IsInstanced)
+            {
+                currentProcessor = (AssetProcessor)_instance;
+                alreadyExist = true;
+            }
+            else
+            {
+                currentProcessor = (AssetProcessor)ScriptableObject.CreateInstance(_assetType);
+                currentProcessor._node = this;
+                _instance = currentProcessor;   // Set as instance.
+            }
+
             processors.Add(currentProcessor);
 
             foreach (var (index, input) in _inputs)
             {
-                DSNode childNode = input.Connections.FirstOrDefault()?.Output.Node; // Can only have one edge connected to input.
+                DSPort childOutput = input.Connections.FirstOrDefault()?.Output;    // Can only have one edge connected to input.
 
-                if (childNode == null)
+                if (childOutput == null)
                     continue;
 
+                DSNode childNode = childOutput.Node;
+
                 if (!childNode.InternalTryGetAllProcessors(processors, out var childProcessor))
-                    throw new Exception("Child was not a processor");
+                    continue;
 
-                for (int i = currentProcessor._inputs.Count; i <= index; i++)  // Currently does not support vertical input.
-                    currentProcessor._inputs.Add(null);
+                if (alreadyExist == false)
+                {
+                    for (int i = currentProcessor._inputs.Count; i <= index; i++)  // Currently does not support vertical input.
+                    {
+                        currentProcessor._outputPortNumbers.Add(0);
+                        currentProcessor._inputs.Add(null);
+                    }
 
-                currentProcessor._inputs.Insert(index, childProcessor);
+                    currentProcessor._inputs.Insert(index, childProcessor);
+                    currentProcessor._outputPortNumbers.Insert(index, childOutput.Index);
+                }
             }
 
             return true;

@@ -49,8 +49,8 @@ namespace Celezt.DialogueSystem
 
         protected override void OnCreateAsset(IReadOnlyDictionary<string, object> values)
         {
-            if (values != null)
-                Value = values["_value"];
+            if (values.TryGetValue("_value", out var value))
+                Value = value;
         }
 
         protected override object Process(object[] inputs, int outputIndex)

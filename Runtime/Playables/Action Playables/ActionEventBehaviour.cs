@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
@@ -11,13 +12,35 @@ namespace Celezt.DialogueSystem
     {
         public ActionReceiver Receiver => _receiver;
 
+        public UnityEvent OnEnter
+        {
+            get
+            {
+                if (_receiver.ActionBinderDictionary.TryGetValue(Asset, out var value))
+                    return value.OnEnter;
+
+                return null; 
+            }
+        }
+
+        public UnityEvent OnExit
+        {
+            get
+            {
+                if (_receiver.ActionBinderDictionary.TryGetValue(Asset, out var value))
+                    return value.OnExit;
+
+                return null;
+            }
+        }
+
         ActionReceiver _receiver;
 
-        public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount, TimelineClip clip)
+        public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
             GetReceiver(graph);
             if (!_receiver.ActionBinderDictionary.ContainsKey(Asset))
-                _receiver.ActionBinderDictionary[Asset] = new ActionReceiver.ActionBinder { };  
+                _receiver.ActionBinderDictionary[Asset] = new ActionReceiver.ActionBinder { OnEnter = new UnityEvent(), OnExit = new UnityEvent()};  
         }
 
         public override void EnterClip(Playable playable, FrameData info, DialogueSystemBinder binder)

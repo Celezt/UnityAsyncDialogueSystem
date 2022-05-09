@@ -2,26 +2,29 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
     public class InputInterpreter : AssetInterpreter
     {
-        public override void OnImport(DSNode node, TimelineAsset timeline)
+        protected override void OnInterpret(DSNode node, DialogueSystem system, PlayableDirector director, TimelineAsset timeline)
         {
-            DSNode nextNode = node.Outputs[0].Connections.FirstOrDefault()?.Output.Node;
+            for (int i = 0; i < 2; i++)
+                timeline.CreateTrack<DialogueTrack>();
+
+            for (int i = 0; i < 6; i++)
+                timeline.CreateTrack<ActionTrack>();
+
+            DSNode nextNode = node.Outputs[0].Connections.FirstOrDefault()?.Input.Node;
 
             if (nextNode == null)
                 return;
 
             if (nextNode.TryGetInterpreter(out var interpreter))
             {
-                interpreter.OnImport(node, timeline);
-            }
-            else if (nextNode.TryGetAllProcessors(out var processor))
-            {
-
+                interpreter.OnInterpret(system);
             }
         }
     }

@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
     public abstract class AssetProcessor : ScriptableObject, IDSAsset
     {
         public IEnumerable<AssetProcessor> Inputs => _inputs;
-        public IEnumerable<int> InputPortNumber => _inputPortNumbers;
+        public IEnumerable<int> OutputPortNumbers => _outputPortNumbers;
 
         /// <summary>
         /// How many input port sockets it supports.
@@ -25,7 +25,9 @@ namespace Celezt.DialogueSystem
         [SerializeField, HideInInspector]
         internal List<AssetProcessor> _inputs = new List<AssetProcessor>();
         [SerializeField, HideInInspector]
-        internal List<int> _inputPortNumbers = new List<int>();
+        internal List<int> _outputPortNumbers = new List<int>();
+
+        internal DSNode _node;
 
         private bool _initialized;
 
@@ -51,7 +53,7 @@ namespace Celezt.DialogueSystem
                 if (_inputs[i] == null)
                     continue;
 
-                inputs[i] = _inputs[i].GetValue(_inputPortNumbers[i]);
+                inputs[i] = _inputs[i].GetValue(_outputPortNumbers[i]);
             }
 
             return Process(inputs, portNumber);
@@ -74,7 +76,7 @@ namespace Celezt.DialogueSystem
             }
 
             if (_initialized == false)
-                OnCreateAsset(null);
+                OnCreateAsset(_node?.Values ?? new Dictionary<string, object>());
 
             _initialized = true;
         }
@@ -101,7 +103,7 @@ namespace Celezt.DialogueSystem
                     for (int i = _inputs.Count; i < InputCount; i++)
                     {
                         _inputs.Add(null);
-                        _inputPortNumbers.Add(0);
+                        _outputPortNumbers.Add(0);
                     }
                 }
                 else
@@ -109,7 +111,7 @@ namespace Celezt.DialogueSystem
                     for (int i = _inputs.Count; i >= InputCount; i--)
                     {
                         _inputs.RemoveAt(i);
-                        _inputPortNumbers.RemoveAt(i);
+                        _outputPortNumbers.RemoveAt(i);
                     }
 
                 }

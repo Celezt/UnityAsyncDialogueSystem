@@ -61,9 +61,8 @@ namespace Celezt.DialogueSystem
         /// </summary>
         /// <param name="graph">The Graph that owns the current PlayableBehaviour.</param>
         /// <param name="go">The GameObject that the graph is connected to.</param>
-        /// <param name="inputCount">Input count.</param>
         /// <param name="clip">The TimelineClip that owns the current PlayableBehaviour.</param>
-        public virtual void OnCreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount, TimelineClip clip) { }
+        public virtual void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip) { }
         /// <summary>
         /// This function is called during the ExitClip phase of the PlayableGraph.
         /// </summary>

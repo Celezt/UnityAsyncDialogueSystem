@@ -23,10 +23,12 @@ namespace Celezt.DialogueSystem
 
             GraphSerialized graphData = DeserializeGraph(content);
 
+            //
+            // Nodes.
+            //
             for (int i = 0; i < graphData.Nodes.Count; i++)
             {
                 NodeSerialized nodeData = graphData.Nodes[i];
-
                 JObject specialData = graphData.Specialization[i] as JObject;
 
                 if (!Guid.TryParseExact(nodeData.ID, "N", out Guid id))
@@ -65,6 +67,9 @@ namespace Celezt.DialogueSystem
                     throw new NullReferenceException("Asset type binder was not found");
             }
 
+            //
+            //  Edges and Ports.
+            //
             for (int i = 0; i < graphData.Edges.Count; i++)
             {
                 EdgeSerialized edgeData = graphData.Edges[i];
@@ -92,13 +97,22 @@ namespace Celezt.DialogueSystem
             return new DSGraph(_inputs);
         }
 
-        public static TimelineAsset CreateTimeline(DSNode inputNode)
+        public static TimelineAsset CreateTimeline(DialogueSystem system, DSNode inputNode)
         {
             if (inputNode.AssetType != typeof(InputInterpreter))
                 throw new Exception($"{inputNode.AssetType} is not {nameof(InputInterpreter)}");
 
             TimelineAsset timeline = ScriptableObject.CreateInstance<TimelineAsset>();
-            timeline.name = $"Dialogue - {inputNode.LocalValues["_id"]}";
+            timeline.name = $"Dialogue - {inputNode.Values["_id"]}";
+
+            system.Director.playableAsset = timeline;
+
+            if (inputNode.TryGetInterpreter(out var interpreter))
+            {
+                interpreter.OnInterpret(system);
+            }
+
+            system.Director.Evaluate();
 
             return timeline;
         }

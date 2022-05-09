@@ -8,6 +8,7 @@ namespace Celezt.DialogueSystem
     {
         public IEnumerable<DSEdge> Connections => _edges;
         public DSNode Node => _node;
+        public int Index => _index;
         public Direction PortDirection => _direction;
 
         private List<DSEdge> _edges = new List<DSEdge>();
@@ -15,15 +16,18 @@ namespace Celezt.DialogueSystem
         private DSNode _node;
         private Direction _direction;
 
+        private int _index;
+
         public enum Direction
         {
             Input,
             Output,
         }
 
-        public DSPort(DSNode parent, Direction direction)
+        public DSPort(DSNode parent, int index, Direction direction)
         {
             _node = parent;
+            _index = index;
             _direction = direction;
         }
 

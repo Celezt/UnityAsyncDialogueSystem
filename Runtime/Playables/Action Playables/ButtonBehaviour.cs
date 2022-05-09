@@ -55,7 +55,7 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount, TimelineClip clip)
+        public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
             _button = ButtonReference.Resolve(graph.GetResolver());
 

@@ -104,15 +104,7 @@ namespace Celezt.DialogueSystem
             if (Binder != null)
             {
                 DSNode inputNode = _dialogue.Graph.GetInputNode("ID");
-                TimelineAsset timeline = DSUtility.CreateTimeline(inputNode);
-
-                for (int i = 0; i < 2; i++)
-                    timeline.CreateTrack<DialogueTrack>();
-
-                for (int i = 0; i < 6; i++)
-                    timeline.CreateTrack<ActionTrack>();
-
-                Director.playableAsset = timeline;
+                TimelineAsset timeline = DSUtility.CreateTimeline(this, inputNode);
             }
         }
 

@@ -22,9 +22,9 @@ namespace Celezt.DialogueSystem
             internal set => _director = value;
         }
 
-        public UnityEvent<Callback> OnEnterClip;
-        public UnityEvent<Callback> OnExitClip;
-        public UnityEvent<Callback> OnProcessClip;
+        public UnityEvent<Callback> OnEnterClip = new UnityEvent<Callback>();
+        public UnityEvent<Callback> OnExitClip = new UnityEvent<Callback>();
+        public UnityEvent<Callback> OnProcessClip = new UnityEvent<Callback>();
 
         private List<DialogueTrack> _dialogueTracks = new List<DialogueTrack>();
         private Dictionary<DSTrack, TrackProperties> _trackProperties = new Dictionary<DSTrack, TrackProperties>();
