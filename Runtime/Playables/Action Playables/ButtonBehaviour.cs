@@ -12,11 +12,6 @@ namespace Celezt.DialogueSystem
 {
     public class ButtonBehaviour : DSPlayableBehaviour
     {
-        public ExposedReference<Button> ButtonReference;
-        public string Text;
-        public AssetProcessor Condition;
-        public ActionPlayableSettings Settings;
-
         private Button _button;
         private CanvasGroup _canvasGroup;
         private TextMeshProUGUI _textMesh;
@@ -27,7 +22,8 @@ namespace Celezt.DialogueSystem
 
         public override void OnCreateClip()
         {
-            if (Settings == null)   // Get previous clip's setting if it exist.
+            ButtonAsset asset = Asset as ButtonAsset;
+            if (asset.Settings == null)   // Get previous clip's setting if it exist.
             {
                 ButtonAsset previousAsset = null;
                 foreach (var clip in Clip.GetParentTrack().GetClips())
@@ -39,7 +35,7 @@ namespace Celezt.DialogueSystem
 #if UNITY_EDITOR
                             UnityEditor.EditorGUI.BeginChangeCheck();
 #endif
-                            Settings = (previousAsset.BehaviourReference as ButtonBehaviour).Settings;
+                            asset.Settings = previousAsset.Settings;
 #if UNITY_EDITOR
                             UnityEditor.EditorGUI.EndChangeCheck();
 #endif
@@ -57,7 +53,8 @@ namespace Celezt.DialogueSystem
 
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
-            _button = ButtonReference.Resolve(graph.GetResolver());
+            ButtonAsset asset = Asset as ButtonAsset;
+            _button = asset.ButtonReference.Resolve(graph.GetResolver());
 
             if (_button != null)
             {
@@ -65,23 +62,31 @@ namespace Celezt.DialogueSystem
                 _textMesh = _button.GetComponentInChildren<TextMeshProUGUI>();
             }
 
-            if (!string.IsNullOrWhiteSpace(Text))
-                clip.displayName = Text;
+            if (!string.IsNullOrWhiteSpace(asset.Text))
+                clip.displayName = asset.Text;
 
             Hide();
 
-            Condition?.InitializeTree();
-            Condition?.OnChanged.RemoveListener(ConditionChanges);
-            Condition?.OnChanged.AddListener(ConditionChanges);
+            if (asset.Condition != null)
+            {
+                asset.Condition.InitializeTree();
+                asset.Condition.OnChanged.RemoveListener(ConditionChanges);
+                asset.Condition.OnChanged.AddListener(ConditionChanges);
+                ConditionChanges();
+            }
+            else
+                _isActive.Value = true;
         }
 
         public override void EnterClip(Playable playable, FrameData info, DialogueSystemBinder binder)
         {
+            ButtonAsset asset = Asset as ButtonAsset;
+
             if (_button != null)
             {
                 _canvasGroup.interactable = true;
                 if (_textMesh != null)
-                    _textMesh.text = Text;
+                    _textMesh.text = asset.Text;
             }
         }
 
@@ -97,24 +102,26 @@ namespace Celezt.DialogueSystem
 
         private void ProcessVisibility()
         {
+            ButtonAsset asset = Asset as ButtonAsset;
+
             if (_button != null && _isActive.Value)
             {
-                if (Settings != null)
+                if (asset.Settings != null)
                 {
                     double startTime = Clip.start;
                     double endTime = Clip.end;
                     double time = Director.time;
-                    double startTimeLength = Settings.StartTimeOffset;
-                    double endTimeLength = Settings.EndTimeOffset;
+                    double startTimeLength = asset.Settings.StartTimeOffset;
+                    double endTimeLength = asset.Settings.EndTimeOffset;
 
                     if (time <= startTime + startTimeLength)
-                        _canvasGroup.alpha = Settings.StartFade.Evaluate((float)(time - startTime));
+                        _canvasGroup.alpha = asset.Settings.StartFade.Evaluate((float)(time - startTime));
                     else if (time > endTime - endTimeLength)
-                        _canvasGroup.alpha = Settings.EndFade.Evaluate((float)(time - endTime + endTimeLength));
+                        _canvasGroup.alpha = asset.Settings.EndFade.Evaluate((float)(time - endTime + endTimeLength));
                     else
                     {
-                        _blendCurve.MoveKey(0, new Keyframe(0, Settings.StartFade.length > 0 ? Settings.StartFade.keys.Last().value : 1));
-                        _blendCurve.MoveKey(1, new Keyframe(1, Settings.EndFade.length > 0 ? Settings.EndFade.keys.First().value : 1));
+                        _blendCurve.MoveKey(0, new Keyframe(0, asset.Settings.StartFade.length > 0 ? asset.Settings.StartFade.keys.Last().value : 1));
+                        _blendCurve.MoveKey(1, new Keyframe(1, asset.Settings.EndFade.length > 0 ? asset.Settings.EndFade.keys.First().value : 1));
                         // Blend the first and last point in start and end curve.
                         _canvasGroup.alpha = _blendCurve.Evaluate(Mathf.Clamp01((float)((time - startTime - startTimeLength) / (endTime - startTime - endTimeLength))));
                     }
@@ -146,7 +153,9 @@ namespace Celezt.DialogueSystem
 
         private void ConditionChanges()
         {
-            _isActive.Value =  Convert.ToBoolean(Condition.GetValue(0));
+            ButtonAsset asset = Asset as ButtonAsset;
+
+            _isActive.Value =  Convert.ToBoolean(asset.Condition.GetValue(0));
 
             if (_isActive == false)
                 Hide();

@@ -14,6 +14,9 @@ namespace Celezt.DialogueSystem
         public new virtual string name => GetType().Name.Replace("Asset", "");
         public virtual ClipCaps clipCaps => ClipCaps.None;
 
+        public TimelineClip Clip { get; internal set; }
+        public PlayableDirector Director { get; internal set; }
+
         public DSPlayableBehaviour BehaviourReference => _template;
 
         [SerializeReference, HideInInspector]

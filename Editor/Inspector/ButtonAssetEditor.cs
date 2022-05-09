@@ -12,10 +12,10 @@ namespace Celezt.DialogueSystem.Editor
     {
         public override void BuildInspector()
         {
-            DSPlayableAsset asset = serializedObject.targetObject as DSPlayableAsset;
-            ButtonBehaviour behaviour = asset.BehaviourReference as ButtonBehaviour;
+            var asset = serializedObject.targetObject as ButtonAsset;
+            var behaviour = asset.BehaviourReference as ButtonBehaviour;
 
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.ButtonReference"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("ButtonReference"));
 
             // Hide if no button is found.
             object button = GetValue(behaviour, "_button");
@@ -26,23 +26,23 @@ namespace Celezt.DialogueSystem.Editor
                 if (textMesh != null)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.Text"));
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("Text"));
                     EditorGUI.indentLevel--;
                 }
             }
 
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.Condition"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_template.Settings"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Condition"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Settings"));
 
-            if (behaviour.Settings != null)
+            if (asset.Settings != null)
             {
-                SerializedObject serializedSettings = new SerializedObject(behaviour.Settings);
+                SerializedObject serializedSettings = new SerializedObject(asset.Settings);
 
                 serializedSettings.Update();
                 EditorGUI.indentLevel++;
 
                 IEnumerable<SerializedProperty> serializedProperties =
-                    from s in behaviour.Settings.GetType()
+                    from s in asset.Settings.GetType()
                         .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                         .Select(x => serializedSettings.FindProperty(x.Name))
                     where s != null

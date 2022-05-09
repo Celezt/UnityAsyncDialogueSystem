@@ -8,14 +8,11 @@ namespace Celezt.DialogueSystem
 {
     public class DialogueBehaviour : DSPlayableBehaviour
     {
-        public string Actor;
-        [TextArea(10, int.MaxValue)]
-        public string Text;
-
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
-            if (!string.IsNullOrWhiteSpace(Text))
-                clip.displayName = Text;
+            DialogueAsset asset = Asset as DialogueAsset;
+            if (!string.IsNullOrWhiteSpace(asset.Text))
+                clip.displayName = asset.Text;
         }
 
     }

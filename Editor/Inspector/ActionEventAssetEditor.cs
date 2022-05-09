@@ -7,17 +7,16 @@ using UnityEngine;
 namespace Celezt.DialogueSystem.Editor
 {
     [CustomEditor(typeof(ActionEventAsset), true)]
-    public class ActionAssetEditor : DSPlayableAssetEditor
+    public class ActionEventAssetEditor : DSPlayableAssetEditor
     {
         public override void BuildInspector()
         {
-            var asset = serializedObject.targetObject as DSPlayableAsset;
-            var behaviour = asset.BehaviourReference as ActionEventBehaviour;
+            var asset = serializedObject.targetObject as ActionEventAsset;
 
-            if (behaviour.Receiver == null)
-                behaviour.Director.RebuildGraph();
+            if (asset.Receiver == null)
+                asset.Director.RebuildGraph();
 
-            ActionReceiver reciver = behaviour.Receiver;
+            ActionReceiver reciver = asset.Receiver;
            
             SerializedObject serializedBinder = new SerializedObject(reciver);
 
@@ -35,8 +34,6 @@ namespace Celezt.DialogueSystem.Editor
 
                 serializedBinder.ApplyModifiedProperties();
             }
-
-            SerializeAllPropertyFields();
         }
     }
 }

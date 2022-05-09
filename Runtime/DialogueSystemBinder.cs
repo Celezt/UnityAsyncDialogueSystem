@@ -76,6 +76,7 @@ namespace Celezt.DialogueSystem
                 set => Binder._trackProperties[Track].UserData = value;
             }
             public DialogueSystemBinder Binder { get; internal set; }
+            public DSPlayableAsset Asset { get; internal set; }
             public DSPlayableBehaviour Behaviour { get; internal set; }
             public DialogueTrack Track { get; internal set; }
             public TimelineClip Clip => Behaviour.Clip;

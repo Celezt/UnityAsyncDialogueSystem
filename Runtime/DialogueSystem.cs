@@ -101,7 +101,7 @@ namespace Celezt.DialogueSystem
 
         private void OnLoadScene(Scene scene, LoadSceneMode mode)
         {
-            if (Binder != null)
+            if (_dialogue != null && Binder != null)
             {
                 DSNode inputNode = _dialogue.Graph.GetInputNode("ID");
                 TimelineAsset timeline = DSUtility.CreateTimeline(this, inputNode);

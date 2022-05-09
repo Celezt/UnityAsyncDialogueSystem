@@ -32,10 +32,6 @@ namespace Celezt.DialogueSystem
             TimelineClip dialogueClip = dialogueTrack.CreateClip<DialogueAsset>();
             TimelineClip actionEventClip = actionTrack.CreateClip<ActionEventAsset>();
 
-            director.Stop();
-            director.RebuildGraph();
-            director.Play();
-
             dialogueClip.start = start;
             dialogueClip.duration = duration;
 
@@ -44,15 +40,13 @@ namespace Celezt.DialogueSystem
 
             {
                 var asset = dialogueClip.asset as DialogueAsset;
-                var behaviour = asset.BehaviourReference as DialogueBehaviour;
 
-                behaviour.Text = text;
-                behaviour.Actor = actorID;
+                asset.Text = text;
+                asset.Actor = actorID;
             }
 
             {
                 var asset = actionEventClip.asset as ActionEventAsset;
-                var behaviour = asset.BehaviourReference as ActionEventBehaviour;
 
                 void OnContinue()
                 {
@@ -63,10 +57,10 @@ namespace Celezt.DialogueSystem
                         interpreter.OnInterpret(system);
                     }
 
-                    behaviour.OnExit.RemoveListener(OnContinue);
+                    asset.OnExit.RemoveListener(OnContinue);
                 }
 
-                behaviour.OnExit.AddListener(OnContinue);
+                asset.OnExit.AddListener(OnContinue);
 
             }
         }
