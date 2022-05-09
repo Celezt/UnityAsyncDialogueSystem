@@ -29,18 +29,18 @@ namespace Celezt.DialogueSystem.Editor
         {
             get
             {
-                ReadOnlySpan<char> currentSerializedJson = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
+                ReadOnlySpan<char> currentSerializedJson = JsonUtility.SerializeGraph(DG_VERSION, _selectedGuid, _graphView);
                 return !MemoryExtensions.Equals(currentSerializedJson, _lastSerializedContent, StringComparison.Ordinal);
             }
         }
 
         internal bool HasAssetFileChanged => !ReadAssetFile().Equals(_lastSerializedContent, StringComparison.Ordinal);
 
-        internal bool AssetFileExist => File.Exists(AssetDatabase.GUIDToAssetPath(SelectedGuid));
+        internal bool AssetFileExist => File.Exists(AssetDatabase.GUIDToAssetPath(_selectedGuid));
 
         private string SaveChangeMessage =>
             "Do you want to save the changes you made in the Dialogue Graph?\n\n" +
-            AssetDatabase.GUIDToAssetPath(SelectedGuid.ToString()) +
+            AssetDatabase.GUIDToAssetPath(_selectedGuid.ToString()) +
             "\n\nYour changes will be lost if you don't save them.";
 
         [SerializeField] private GUID _selectedGuid;
@@ -74,14 +74,14 @@ namespace Celezt.DialogueSystem.Editor
             if (!EditorUtility.IsPersistent(asset))
                 return this;
 
-            if (SelectedGuid == assetGuid)
+            if (_selectedGuid == assetGuid)
                 return this;
 
             string theme = EditorGUIUtility.isProSkin ? "_dark" : "_light";
             Texture2D icon = Resources.Load<Texture2D>("Icons/dg_graph_icon_gray" + theme);
             titleContent.image = icon;
 
-            SelectedGuid = assetGuid;
+            _selectedGuid = assetGuid;
 
             // Add graph view.
             {
@@ -125,7 +125,7 @@ namespace Celezt.DialogueSystem.Editor
 
         public void UpdateTitle()
         {
-            ReadOnlySpan<char> assetPath = AssetDatabase.GUIDToAssetPath(SelectedGuid);
+            ReadOnlySpan<char> assetPath = AssetDatabase.GUIDToAssetPath(_selectedGuid);
             ReadOnlySpan<char> title = Path.GetFileNameWithoutExtension(assetPath);
 
             if (HasChangesSinceLastSerialization)
@@ -176,7 +176,7 @@ namespace Celezt.DialogueSystem.Editor
 
                     if (EditorUtility.DisplayDialog(
                         "Graph has changed in file",
-                        AssetDatabase.GUIDToAssetPath(SelectedGuid) + "\n\n" +
+                        AssetDatabase.GUIDToAssetPath(_selectedGuid) + "\n\n" +
                         (graphChanged ? "Do you want to reload it and lose the changes made in the graph?" : "Do you want to reload it?"),
                         graphChanged ? "Discard Changes and Reload" : "Reload",
                         "Don't Reload"))
@@ -195,10 +195,10 @@ namespace Celezt.DialogueSystem.Editor
                 _isProTheme = EditorGUIUtility.isProSkin;
             }
 
-            if (_graphView == null && !SelectedGuid.Empty())    // Trigger reload if no graph exist but still selected.
+            if (_graphView == null && !_selectedGuid.Empty())    // Trigger reload if no graph exist but still selected.
             {
-                GUID guid = SelectedGuid;
-                SelectedGuid = new GUID();
+                GUID guid = _selectedGuid;
+                _selectedGuid = new GUID();
                 Initialize(guid);
             }
 
@@ -249,7 +249,7 @@ namespace Celezt.DialogueSystem.Editor
                 int option = EditorUtility.DisplayDialogComplex(
                             "Graph removed from project",
                             "The file has been deleted or removed from the project folder\n\n" +
-                            AssetDatabase.GUIDToAssetPath(SelectedGuid) +
+                            AssetDatabase.GUIDToAssetPath(_selectedGuid) +
                             "\n\nWould you like to save your Graph Asset?",
                             "Save As...", "Cancel", "Discard Graph and Close Window");
                 if (option == 0)
@@ -258,7 +258,7 @@ namespace Celezt.DialogueSystem.Editor
                     if (!savePath.IsEmpty)
                     {
                         save = true;
-                        SelectedGuid = reopen ? AssetDatabase.GUIDFromAssetPath(savePath.ToString()) : new GUID();
+                        _selectedGuid = reopen ? AssetDatabase.GUIDFromAssetPath(savePath.ToString()) : new GUID();
                         break;
                     }
                 }
@@ -269,7 +269,7 @@ namespace Celezt.DialogueSystem.Editor
                 else if (option == 2)
                 {
                     close = true;
-                    SelectedGuid = new GUID();
+                    _selectedGuid = new GUID();
                     break;
                 }
             }
@@ -298,6 +298,8 @@ namespace Celezt.DialogueSystem.Editor
             ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
             DialogueGraphCreator.Overwrite(FilePath, serializedJSON);
             base.hasUnsavedChanges = false;
+
+            AssetDatabase.ImportAsset(FilePath.ToString());    // Reimport.
 
             return true;
         }
