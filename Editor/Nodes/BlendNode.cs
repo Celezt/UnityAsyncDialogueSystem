@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 namespace Celezt.DialogueSystem.Editor
 {
     [AssetBinder(typeof(BlendInterpreter))]
-    [CreateNode("Process/Blend", "Blend")]
+    [CreateNode("Behaviour/Blend", "Blend")]
     public class BlendNode : DGNode
     {
         protected override void Awake()

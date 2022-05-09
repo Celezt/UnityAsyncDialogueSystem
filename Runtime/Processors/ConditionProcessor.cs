@@ -25,7 +25,7 @@ namespace Celezt.DialogueSystem
         protected override void OnCreateAsset(IReadOnlyDictionary<string, object> values)
         {
             if (values.TryGetValue("currentComparison", out var value))
-                _comparison = (Comparisons)value;
+                _comparison = (Comparisons)Enum.ToObject(typeof(Comparisons), value);
         }
 
         protected override object Process(object[] inputs, int outputIndex)
