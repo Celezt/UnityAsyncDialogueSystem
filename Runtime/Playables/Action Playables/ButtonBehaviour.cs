@@ -20,6 +20,24 @@ namespace Celezt.DialogueSystem
         [SerializeField, HideInInspector]
         private Ref<bool> _isActive = new Ref<bool>();
 
+        public void Hide()
+        {
+            if (_button != null)
+            {
+                _canvasGroup.alpha = 0;
+                _canvasGroup.interactable = false;
+            }
+        }
+
+        public void Show()
+        {
+            if (_button != null)
+            {
+                ProcessVisibility();
+                _canvasGroup.interactable = true;
+            }
+        }
+
         public override void OnCreateClip()
         {
             ButtonAsset asset = Asset as ButtonAsset;
@@ -130,24 +148,6 @@ namespace Celezt.DialogueSystem
                 {
                     _canvasGroup.alpha = 1; // Default variant.
                 }
-            }
-        }
-
-        private void Hide()
-        {
-            if (_button != null)
-            {
-                _canvasGroup.alpha = 0;
-                _canvasGroup.interactable = false;
-            }
-        }
-
-        private void Show()
-        {
-            if (_button != null)
-            {
-                ProcessVisibility();
-                _canvasGroup.interactable = true;
             }
         }
 

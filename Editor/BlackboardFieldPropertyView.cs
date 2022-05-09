@@ -13,23 +13,7 @@ namespace Celezt.DialogueSystem.Editor
         {
             _property = property;
 
-            AddRow("Value", _property.BuildController());
-        }
-
-        private VisualElement AddRow(string labelText, VisualElement control)
-        {
-            VisualElement rowView = new VisualElement();
-            rowView.AddToClassList("row-view");
-
-            Label label = new Label(labelText);
-            label.AddToClassList("row-view-label");
-            rowView.Add(label);
-
-            control.AddToClassList("row-view-control");
-            rowView.Add(control);
-            Add(rowView);
-
-            return rowView;
+            Add(UIElementUtility.ControlRow("Value", _property.BuildController()));
         }
     }
 }

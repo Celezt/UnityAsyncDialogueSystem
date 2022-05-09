@@ -13,7 +13,7 @@ namespace Celezt.DialogueSystem
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
             ActionEventAsset asset = Asset as ActionEventAsset;
-            if (!asset.Receiver.ActionBinderDictionary.ContainsKey(Asset))
+            if (!asset.Receiver.ActionBinderDictionary.ContainsKey(asset))
                 asset.Receiver.ActionBinderDictionary[Asset] = new ActionReceiver.ActionBinder { OnEnter = new UnityEvent(), OnExit = new UnityEvent()};  
         }
 

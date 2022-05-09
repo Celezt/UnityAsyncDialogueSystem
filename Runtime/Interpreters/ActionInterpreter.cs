@@ -8,7 +8,7 @@ namespace Celezt.DialogueSystem
 {
     public class ActionInterpreter : AssetInterpreter
     {
-        protected override void OnInterpret(DSNode node, DialogueSystem system, PlayableDirector director, TimelineAsset timeline)
+        protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             throw new System.NotImplementedException();
         }

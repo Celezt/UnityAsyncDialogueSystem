@@ -36,8 +36,6 @@ namespace Celezt.DialogueSystem.Editor
         {
             _graphView = graphView;
 
-            this.AddStyleSheet(StyleUtility.STYLE_PATH + "DGBlackboard");
-
             SetPosition(new Rect(10, 30, 250, 400));
             ReflectBlackboardProperties();
 

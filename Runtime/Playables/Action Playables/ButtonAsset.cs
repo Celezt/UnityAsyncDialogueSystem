@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Timeline;
 using UnityEngine.UI;
 
 namespace Celezt.DialogueSystem
@@ -16,6 +17,12 @@ namespace Celezt.DialogueSystem
         protected override DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner)
         {
             return new ButtonBehaviour();
+        }
+
+        private void OnDestroy()
+        {
+            if (BehaviourReference != null)
+                ((ButtonBehaviour)BehaviourReference).Hide();
         }
     }
 }

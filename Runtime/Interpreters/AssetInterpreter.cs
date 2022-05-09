@@ -13,11 +13,12 @@ namespace Celezt.DialogueSystem
     {
         internal DSNode _node;
 
-        protected abstract void OnInterpret(DSNode node, DialogueSystem system, PlayableDirector director, TimelineAsset timeline);
+        protected abstract void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline);
 
         public void OnInterpret(DialogueSystem system)
         {
-            OnInterpret(_node, system, system.Director, (TimelineAsset)system.Director.playableAsset);
+            system._previousNodes.Add(_node);
+            OnInterpret(_node, system._previousNodes, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
     }
 }

@@ -19,6 +19,7 @@ namespace Celezt.DialogueSystem.Editor
             ReadOnlySpan<char> content = File.ReadAllText(ctx.assetPath);
 
             Dialogue mainObject = ScriptableObject.CreateInstance<Dialogue>().Initialize(content);
+            mainObject.name = Path.GetFileNameWithoutExtension(ctx.assetPath);
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(DIALOGUE_GRAPH_ICON_PATH);
             ctx.AddObjectToAsset("MainAsset", mainObject, texture);
             ctx.SetMainObject(mainObject);

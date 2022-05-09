@@ -62,13 +62,82 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        [SerializeField]
-        private Dialogue _dialogue;
+        internal List<DSNode> _previousNodes = new List<DSNode>();
 
+        public Dialogue CurrentDialogue => _currentDialogue;
 
         private GameObject _object;
         private PlayableDirector _director;
         private DialogueSystemBinder _binder;
+        private Dialogue _currentDialogue;
+
+        /// <summary>
+        /// Instatiates a Playable using the provided PlayableAsset and starts playback.
+        /// </summary>
+        /// <returns></returns>
+        public bool Play()
+        {
+            if (Director.playableAsset == null)
+                return false;
+
+            Director.Play();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Stops playback of the current Playable and destroys the corresponding graph.
+        /// </summary>
+        /// <returns></returns>
+        public bool Stop()
+        {
+            if (Director.playableAsset == null)
+                return false;
+
+            Director.Stop();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Pauses playback of the currently running playable.
+        /// </summary>
+        /// <returns></returns>
+        public bool Pause()
+        {
+            if (Director.playableAsset == null)
+                return false;
+
+            Director.Pause();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Resume playing a paused playable.
+        /// </summary>
+        /// <returns></returns>
+        public bool Resume()
+        {
+            if (Director.playableAsset == null)
+                return false;
+
+            Director.Resume();
+
+            return true;
+        }
+
+        public TimelineAsset CreateDialogue(Dialogue dialogue, string inputID)
+        {
+            _previousNodes.Clear();
+            _currentDialogue = dialogue;
+
+            TimelineAsset timeline = DSUtility.CreateDialogue(this, dialogue, inputID);
+
+            Director.playableAsset = timeline;
+
+            return timeline;
+        }
 
         #region Awake
         private void OnEnable()
@@ -101,16 +170,13 @@ namespace Celezt.DialogueSystem
 
         private void OnLoadScene(Scene scene, LoadSceneMode mode)
         {
-            if (_dialogue != null && Binder != null)
-            {
-                DSNode inputNode = _dialogue.Graph.GetInputNode("ID");
-                TimelineAsset timeline = DSUtility.CreateTimeline(this, inputNode);
-            }
+
         }
 
         private void OnDestroy()
         {
-            Destroy(_object);
+            if (_object != null)
+                Destroy(_object);
         }
     }
 }

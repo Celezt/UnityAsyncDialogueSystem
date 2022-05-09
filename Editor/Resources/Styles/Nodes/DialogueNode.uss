@@ -1,5 +1,5 @@
 #controls {
-	background-color: var(--dg-color-dark);
+	
 }
 
 #actor {
@@ -35,14 +35,18 @@
 }
 
 #text {
-	margin-left: 5px;
-	margin-right: 5px;
-	margin-bottom: 5px;
+	background-color: var(--dg-color-dark);
+	margin-top: 4px;
+	margin-left: -4px;
+	margin-right: -4px;
+	margin-bottom: -4px;
 }
 
 #text > Foldout {
-	margin-left: -4px;
+	margin-left: 4px;
+	margin-right: 4px;
 	margin-top: 4px;
+	margin-bottom: 4px;
 }
 
 #text > Foldout > TextField {

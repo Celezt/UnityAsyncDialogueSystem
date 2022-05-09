@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,6 +16,8 @@ namespace Celezt.DialogueSystem.Editor
         [SerializeField] private string _actorID = "actor_id";
         [SerializeField] private string _text = "Dialogue text.";
         [SerializeField] private List<Choice> _choices = new List<Choice>();
+        [SerializeField] private float _speed = 2;
+        [SerializeField] private float _endOffset = 1;
 
         [Serializable]
         public struct Choice
@@ -87,6 +90,30 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Contol Container.
             //
+            FloatField speedField = new FloatField()
+            {
+                value = _speed,
+            };
+            speedField.RegisterValueChangedCallback(callback =>
+            {
+                var target = callback.target as FloatField;
+                _speed = target.value;
+            });
+
+            controlContainer.Add(UIElementUtility.ControlRow("Speed", speedField));
+
+            FloatField endOffsetField = new FloatField()
+            {
+                value = _endOffset,
+            };
+            endOffsetField.RegisterValueChangedCallback(callback =>
+            {
+                var target = callback.target as FloatField;
+                _endOffset = target.value;
+            });
+
+            controlContainer.Add(UIElementUtility.ControlRow("End Offset", endOffsetField));
+
             VisualElement textContainer = new VisualElement()
             {
                 name = "text"
@@ -105,7 +132,7 @@ namespace Celezt.DialogueSystem.Editor
             };
             textTextField.RegisterValueChangedCallback(callback =>
             {
-                TextField target = callback.target as TextField;
+                var target = callback.target as TextField;
                 _text = target.value;
             });
 

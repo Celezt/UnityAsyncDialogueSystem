@@ -1,7 +1,3 @@
-.blackboard {
-
-}
-
 .row-view {
 	flex-direction: row;
 	margin-left: 15px;

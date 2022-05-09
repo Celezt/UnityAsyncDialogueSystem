@@ -12,7 +12,10 @@ namespace Celezt.DialogueSystem
         public ActionReceiver Receiver
         {
             get
-            {          
+            {
+                if (Director == null)    // Director does not exist.
+                    return null;
+
                 if (_receiver == null) 
                     _receiver = Director.GetGenericBinding(Clip.GetParentTrack()) as ActionReceiver;
 

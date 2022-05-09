@@ -97,13 +97,16 @@ namespace Celezt.DialogueSystem
             return new DSGraph(_inputs);
         }
 
-        public static TimelineAsset CreateTimeline(DialogueSystem system, DSNode inputNode)
+        public static TimelineAsset CreateDialogue(DialogueSystem system, Dialogue dialogue, string inputID)
         {
+            if (!dialogue.Graph.InputNodes.TryGetValue(inputID, out DSNode inputNode))
+                throw new Exception($"Input ID: \"{inputID}\" does not exist in {dialogue.name}");
+
             if (inputNode.AssetType != typeof(InputInterpreter))
                 throw new Exception($"{inputNode.AssetType} is not {nameof(InputInterpreter)}");
 
             TimelineAsset timeline = ScriptableObject.CreateInstance<TimelineAsset>();
-            timeline.name = $"Dialogue - {inputNode.Values["_id"]}";
+            timeline.name = $"Dialogue - {dialogue.name}: {inputNode.Values["_id"]}";
 
             system.Director.playableAsset = timeline;
 
@@ -112,7 +115,7 @@ namespace Celezt.DialogueSystem
                 interpreter.OnInterpret(system);
             }
 
-            system.Director.Evaluate();
+            system.Director.RebuildGraph();
 
             return timeline;
         }

@@ -11,6 +11,8 @@ namespace Celezt.DialogueSystem
         public string Actor;
         [TextArea(10, int.MaxValue)]
         public string Text;
+        public float Speed = 2.0f;
+        public float EndOffset = 1.0f;
 
         protected override DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner)
         {
