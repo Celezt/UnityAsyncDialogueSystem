@@ -16,7 +16,7 @@ namespace Celezt.DialogueSystem.Editor
         [SerializeField] private string _actorID = "actor_id";
         [SerializeField] private string _text = "Dialogue text.";
         [SerializeField] private List<Choice> _choices = new List<Choice>();
-        [SerializeField] private float _speed = 2;
+        [SerializeField] private float _speed = 1;
         [SerializeField] private float _endOffset = 1;
 
         [Serializable]
@@ -77,6 +77,8 @@ namespace Celezt.DialogueSystem.Editor
 
             Button addChoiceButton = new Button(() =>
             {
+                hasUnsavedChanges = true;
+
                 AddNewChoicePort(new Choice { Text = "New Choice" });
                 _choices.Add(new Choice { Text = "New Choice" });
             })
@@ -98,6 +100,7 @@ namespace Celezt.DialogueSystem.Editor
             {
                 var target = callback.target as FloatField;
                 _speed = target.value;
+                hasUnsavedChanges = true;
             });
 
             controlContainer.Add(UIElementUtility.ControlRow("Speed", speedField));
@@ -110,6 +113,7 @@ namespace Celezt.DialogueSystem.Editor
             {
                 var target = callback.target as FloatField;
                 _endOffset = target.value;
+                hasUnsavedChanges = true;
             });
 
             controlContainer.Add(UIElementUtility.ControlRow("End Offset", endOffsetField));
@@ -147,8 +151,6 @@ namespace Celezt.DialogueSystem.Editor
 
         private void AddNewChoicePort(Choice choiceData)
         {
-            hasUnsavedChanges = true;
-
             Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
 
             Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionPortType));

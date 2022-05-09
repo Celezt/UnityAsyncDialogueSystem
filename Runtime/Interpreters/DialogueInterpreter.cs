@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,6 +11,11 @@ namespace Celezt.DialogueSystem
 {
     public class DialogueInterpreter : AssetInterpreter
     {
+        private struct Choice
+        {
+            string Text;
+        }
+
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             DSNode previousNode = previousNodes.Last();
@@ -33,6 +39,9 @@ namespace Celezt.DialogueSystem
 
             string text = (string)currentNode.Values["_text"];
             string actorID = (string)currentNode.Values["_actorID"];
+            float speed = Convert.ToSingle(currentNode.Values["_speed"]);
+            float endOffset = Convert.ToSingle(currentNode.Values["_endOffset"]);
+            var choices = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => x.Value<Choice>());
 
             double start = previousClip?.end ?? 0;
             double duration = text.Length;
@@ -42,11 +51,12 @@ namespace Celezt.DialogueSystem
 
                 asset.Text = text;
                 asset.Actor = actorID;
+                asset.Speed = speed;
+                asset.EndOffset = endOffset;
 
-                duration *= asset.Speed * 0.1f;
-                duration += asset.EndOffset;
+                duration *= speed * 0.04f;
+                duration += endOffset;
             }
-
 
             dialogueClip.start = start;
             dialogueClip.duration = duration;
@@ -62,6 +72,7 @@ namespace Celezt.DialogueSystem
                     interpreter.OnInterpret(system);
                 }
             }
+
 
             //{
             //    var asset = actionEventClip.asset as ActionEventAsset;
