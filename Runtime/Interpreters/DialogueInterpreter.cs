@@ -46,7 +46,7 @@ namespace Celezt.DialogueSystem
                 asset.Speed = speed;
                 asset.EndOffset = endOffset;
 
-                duration *= speed * 0.04f;
+                duration *= 1 / (speed * 15f);
                 duration += endOffset;
             }
 
