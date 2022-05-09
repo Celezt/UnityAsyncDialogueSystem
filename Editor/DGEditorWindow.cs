@@ -300,6 +300,7 @@ namespace Celezt.DialogueSystem.Editor
             base.hasUnsavedChanges = false;
 
             AssetDatabase.ImportAsset(FilePath.ToString());    // Reimport.
+            _lastSerializedContent = ReadAssetFile().ToString();
 
             return true;
         }
