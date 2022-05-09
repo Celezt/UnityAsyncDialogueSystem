@@ -63,13 +63,27 @@ namespace Celezt.DialogueSystem
             }
         }
 
+        public Dialogue CurrentDialogue => _currentDialogue;
+        public List<Button> Buttons => _buttons;
+        public List<ActionPlayableSettings> ActionOverrideSettings => _actionOverrideSettings;
+
+
+        /// <summary>
+        /// Trail of the current dialogue graph.
+        /// </summary>
         internal List<DSNode> _previousNodes = new List<DSNode>();
 
-        public Dialogue CurrentDialogue => _currentDialogue;
-
+        [SerializeField]
+        private List<ActionPlayableSettings> _actionOverrideSettings = new List<ActionPlayableSettings>();
+        [SerializeField, HideInInspector]
+        private List<Button> _buttons = new List<Button>();
+        [SerializeField, HideInInspector]
         private GameObject _object;
+        [SerializeField, HideInInspector]
         private PlayableDirector _director;
+        [SerializeField, HideInInspector]
         private DialogueSystemBinder _binder;
+        [SerializeField, HideInInspector]
         private Dialogue _currentDialogue;
 
         /// <summary>
@@ -134,8 +148,6 @@ namespace Celezt.DialogueSystem
             _currentDialogue = dialogue;
 
             TimelineAsset timeline = DSUtility.CreateDialogue(this, dialogue, inputID);
-
-            Director.playableAsset = timeline;
 
             return timeline;
         }

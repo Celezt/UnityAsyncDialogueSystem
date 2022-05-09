@@ -68,13 +68,19 @@ namespace Celezt.DialogueSystem
             int index = 0;
             foreach (string choiceText in choiceTexts)
             {
-                var buttonClip = actionTracks[index].CreateClip<ButtonAsset>();
+                var track = actionTracks[index];
+                var buttonClip = track.CreateClip<ButtonAsset>();
                 var asset = buttonClip.asset as ButtonAsset;
 
                 buttonClip.start = start;
                 buttonClip.duration = duration;
 
+                asset.ButtonReference.exposedName = Guid.NewGuid().ToString();
+                system.Director.SetReferenceValue(asset.ButtonReference.exposedName, system.Buttons[index]);
                 asset.Text = choiceText;
+
+                if (system.ActionOverrideSettings.Count >= index)
+                    asset.Settings = system.ActionOverrideSettings[index];
 
                 ++index;
             }
