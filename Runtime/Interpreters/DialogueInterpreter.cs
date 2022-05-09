@@ -53,18 +53,6 @@ namespace Celezt.DialogueSystem
             dialogueClip.start = start;
             dialogueClip.duration = duration;
 
-            DSNode nextNode = null;
-            if (currentNode.Outputs.TryGetValue(0, out DSPort outPort))
-                nextNode = outPort.Connections.FirstOrDefault()?.Input.Node;
-
-            if (nextNode != null)
-            {
-                if (nextNode.TryGetInterpreter(out var interpreter))
-                {
-                    interpreter.OnInterpret(system);
-                }
-            }
-
             int index = 0;
             foreach (string choiceText in choiceTexts)
             {
@@ -82,27 +70,27 @@ namespace Celezt.DialogueSystem
                 if (system.ActionOverrideSettings.Count >= index)
                     asset.Settings = system.ActionOverrideSettings[index];
 
+                DSNode conditionNode = currentNode.Inputs[index + 1].Connections.FirstOrDefault()?.Output.Node;
+
+                if (conditionNode.TryGetAllProcessors(out var processors))
+                {
+                    asset.Condition = processors.First();
+                }
+
                 ++index;
             }
 
-            //{
-            //    var asset = actionEventClip.asset as ActionEventAsset;
+            DSNode nextNode = null;
+            if (currentNode.Outputs.TryGetValue(0, out DSPort outPort))
+                nextNode = outPort.Connections.FirstOrDefault()?.Input.Node;
 
-            //    void OnContinue()
-            //    {
-            //        DSNode nextNode = node.Outputs[0].Connections.FirstOrDefault()?.Input.Node; // Continue.
-
-            //        if (nextNode.TryGetInterpreter(out var interpreter))
-            //        {
-            //            interpreter.OnInterpret(system);
-            //        }
-
-            //        asset.OnExit.RemoveListener(OnContinue);
-            //    }
-
-            //    asset.OnExit.AddListener(OnContinue);
-
-            //}
+            if (nextNode != null)
+            {
+                if (nextNode.TryGetInterpreter(out var interpreter))
+                {
+                    interpreter.OnInterpret(system);
+                }
+            }
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Celezt.DialogueSystem
         public virtual int InputCount => 0;
         
         [HideInInspector]
-        public UnityEvent OnChanged;
+        public UnityEvent OnChanged = new UnityEvent();
 
         [SerializeField, HideInInspector]
         internal List<AssetProcessor> _inputs = new List<AssetProcessor>();

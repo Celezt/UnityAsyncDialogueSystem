@@ -86,6 +86,8 @@ namespace Celezt.DialogueSystem
             {
                 processor.InitializeTree(); // Initialize all processors.
             }
+            else
+                return false;
 
             return true;
         }
