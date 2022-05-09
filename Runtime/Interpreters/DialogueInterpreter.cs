@@ -11,11 +11,6 @@ namespace Celezt.DialogueSystem
 {
     public class DialogueInterpreter : AssetInterpreter
     {
-        private struct Choice
-        {
-            public string Text;
-        }
-
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             DSNode previousNode = previousNodes.Last();
@@ -38,7 +33,7 @@ namespace Celezt.DialogueSystem
             string actorID = (string)currentNode.Values["_actorID"];
             float speed = Convert.ToSingle(currentNode.Values["_speed"]);
             float endOffset = Convert.ToSingle(currentNode.Values["_endOffset"]);
-            IEnumerable<Choice> choices = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => x.Value<Choice>());
+            IEnumerable<string> choiceTexts = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => (string)((JProperty)x).Value);
 
             double start = previousClip?.end ?? 0;
             double duration = text.Length;
@@ -71,13 +66,15 @@ namespace Celezt.DialogueSystem
             }
 
             int index = 0;
-            foreach (var choice in choices)
+            foreach (string choiceText in choiceTexts)
             {
                 var buttonClip = actionTracks[index].CreateClip<ButtonAsset>();
                 var asset = buttonClip.asset as ButtonAsset;
 
                 buttonClip.start = start;
                 buttonClip.duration = duration;
+
+                asset.Text = choiceText;
 
                 ++index;
             }

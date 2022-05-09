@@ -19,8 +19,7 @@ namespace Celezt.DialogueSystem.Editor
         [SerializeField] private float _speed = 1;
         [SerializeField] private float _endOffset = 1;
 
-        [Serializable]
-        public struct Choice
+        public class Choice
         {
             public string Text;
         }
