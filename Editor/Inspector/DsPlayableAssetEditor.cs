@@ -16,7 +16,10 @@ namespace Celezt.DialogueSystem.Editor
         {
             serializedObject.Update();
 
-            BuildInspector();         
+            BuildInspector();
+
+            if (GetType() == typeof(DSPlayableAssetEditor))             // If not inherited.
+                DrawPropertiesExcluding(serializedObject, "m_Script");
 
             serializedObject.ApplyModifiedProperties();
         }

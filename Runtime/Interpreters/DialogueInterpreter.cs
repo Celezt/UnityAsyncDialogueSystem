@@ -13,35 +13,32 @@ namespace Celezt.DialogueSystem
     {
         private struct Choice
         {
-            string Text;
+            public string Text;
         }
 
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             DSNode previousNode = previousNodes.Last();
 
-            DialogueTrack dialogueTrack = null;
-            ActionTrack actionTrack = null;
+            List<DialogueTrack> dialogueTracks = new List<DialogueTrack>();
+            List<ActionTrack> actionTracks = new List<ActionTrack>();
 
             foreach (var track in timeline.GetOutputTracks())
             {
-                if (dialogueTrack == null && track is DialogueTrack)
-                    dialogueTrack = (DialogueTrack)track;
-                else if (actionTrack == null && track is ActionTrack)
-                    actionTrack = (ActionTrack)track;
-
-                if (dialogueTrack != null && actionTrack != null)
-                    break;
+                if (track is DialogueTrack)
+                    dialogueTracks.Add((DialogueTrack)track);
+                else if (track is ActionTrack)
+                    actionTracks.Add((ActionTrack)track);
             }
 
-            TimelineClip previousClip = dialogueTrack.GetClips().LastOrDefault();
-            TimelineClip dialogueClip = dialogueTrack.CreateClip<DialogueAsset>();
+            TimelineClip previousClip = dialogueTracks.First().GetClips().LastOrDefault();
+            TimelineClip dialogueClip = dialogueTracks.First().CreateClip<DialogueAsset>();
 
             string text = (string)currentNode.Values["_text"];
             string actorID = (string)currentNode.Values["_actorID"];
             float speed = Convert.ToSingle(currentNode.Values["_speed"]);
             float endOffset = Convert.ToSingle(currentNode.Values["_endOffset"]);
-            var choices = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => x.Value<Choice>());
+            IEnumerable<Choice> choices = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => x.Value<Choice>());
 
             double start = previousClip?.end ?? 0;
             double duration = text.Length;
@@ -73,6 +70,17 @@ namespace Celezt.DialogueSystem
                 }
             }
 
+            int index = 0;
+            foreach (var choice in choices)
+            {
+                var buttonClip = actionTracks[index].CreateClip<ButtonAsset>();
+                var asset = buttonClip.asset as ButtonAsset;
+
+                buttonClip.start = start;
+                buttonClip.duration = duration;
+
+                ++index;
+            }
 
             //{
             //    var asset = actionEventClip.asset as ActionEventAsset;
