@@ -10,8 +10,19 @@ namespace Celezt.DialogueSystem
 {
     public class BlendInterpreter : AssetInterpreter
     {
-        private AssetInterpreter _interpreter;
-        private List<(DialogueTrack track, double end)> _availableTracks;
+        private DialogueInterpreter _interpreter;
+        private List<SnappedTrack> _availableDialogueTracks;
+        private List<SnappedTrack> _availableActionTracks;
+
+        private struct SnappedTrack : IEquatable<SnappedTrack>
+        {
+            public TrackAsset Track;
+            public double End;
+
+            public bool Equals(SnappedTrack other) => other.Track == Track;
+
+            public static implicit operator SnappedTrack(TrackAsset track) => new SnappedTrack { Track = track };
+        }
 
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
@@ -24,18 +35,38 @@ namespace Celezt.DialogueSystem
             if (nextNode == null)
                 return;
 
-            _availableTracks = new List<(DialogueTrack track, double end)>();
+            _availableDialogueTracks = new List<SnappedTrack>();
+            _availableActionTracks = new List<SnappedTrack>();
             foreach (var track in timeline.GetOutputTracks())
             {
-                if (track is DialogueTrack dialogueTrack)
-                    _availableTracks.Add((dialogueTrack, track.end));   // preload before creating next clip.
+                // Preload before creating next clip.
+                if (track is DialogueTrack)
+                    _availableDialogueTracks.Add(new SnappedTrack { Track = track, End = track.end }); 
+                else if (track is ActionTrack)
+                    _availableActionTracks.Add(new SnappedTrack { Track = track, End = track.end });
             }
 
-            if (nextNode.TryGetInterpreter(out _interpreter))
+            if (nextNode.TryGetInterpreter(out var interpreter))
             {
-                if (_interpreter.GetType() == typeof(DialogueInterpreter))
+                if (interpreter is DialogueInterpreter dialogueInterpreter)
                 {
+                    _interpreter = dialogueInterpreter;
                     _interpreter.OnInterpret(system);
+                }
+            }
+
+            foreach (var track in timeline.GetOutputTracks())
+            {
+                // Add new created tracks.
+                if (track is DialogueTrack)
+                {
+                    if (!_availableDialogueTracks.Contains(track))
+                        _availableDialogueTracks.Add(track);
+                }
+                else if (track is ActionTrack)
+                {
+                    if (!_availableActionTracks.Contains(track))
+                        _availableActionTracks.Add(track);
                 }
             }
         }
@@ -56,17 +87,39 @@ namespace Celezt.DialogueSystem
 
             if (_interpreter != null)
             {
-                if (_interpreter is DialogueInterpreter dialogueInterpreter)
+                //
+                // Offset dialogue clip.
+                //
                 {
-                    DialogueTrack blendTrack = _availableTracks.FirstOrDefault(x => x.end <= dialogueInterpreter.DialogueClip.start - offsetBlend).track;  // Find valid from before clip.
+                    TrackAsset blendTrack = _availableDialogueTracks.FirstOrDefault(x => x.End <= _interpreter.DialogueClip.start - offsetBlend).Track;  // Find valid from before clip.
+                    _availableDialogueTracks.Remove(blendTrack);   // Remove available if found.
 
                     if (blendTrack == null)
                         blendTrack = timeline.CreateTrack<DialogueTrack>();
 
-                    if (dialogueInterpreter.DialogueClip.GetParentTrack() != blendTrack)
-                        dialogueInterpreter.DialogueClip.MoveToTrack(blendTrack);
+                    if (_interpreter.DialogueClip.GetParentTrack() != blendTrack)
+                        _interpreter.DialogueClip.MoveToTrack(blendTrack);
 
-                    dialogueInterpreter.DialogueClip.start -= offsetBlend;  // Set blend offset.
+                    _interpreter.DialogueClip.start -= offsetBlend;  // Set blend offset.
+                }
+
+                //
+                // Offset action clips.
+                //
+                {
+                    foreach (var clip in _interpreter.ActionClips)
+                    {
+                        TrackAsset blendTrack = _availableActionTracks.FirstOrDefault(x => x.End <= clip.start - offsetBlend).Track;  // Find valid from before clip.
+                        _availableActionTracks.Remove(blendTrack);   // Remove available if found.
+
+                        if (blendTrack == null)
+                            blendTrack = timeline.CreateTrack<ActionTrack>();
+
+                        if (clip.GetParentTrack() != blendTrack)
+                            clip.MoveToTrack(blendTrack);
+
+                        clip.start -= offsetBlend;  // Set blend offset.
+                    }
                 }
 
                 _interpreter.OnNext(system);

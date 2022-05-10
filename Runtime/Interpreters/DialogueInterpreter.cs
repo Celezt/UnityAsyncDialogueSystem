@@ -12,8 +12,10 @@ namespace Celezt.DialogueSystem
     public class DialogueInterpreter : AssetInterpreter
     {
         public TimelineClip DialogueClip => _dialogueClip;
+        public List<TimelineClip> ActionClips => _actionClips;
 
-        public TimelineClip _dialogueClip;
+        private TimelineClip _dialogueClip;
+        private List<TimelineClip> _actionClips;
 
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
@@ -49,20 +51,21 @@ namespace Celezt.DialogueSystem
 
             _dialogueClip.start = start;
             _dialogueClip.duration = duration;
-           
+
 
             //
             // Create choice actions.
             //
+            _actionClips = new List<TimelineClip>();
             int index = 0;  // Input index.
             foreach (string choiceText in choiceTexts)
             {
                 var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
-                var buttonClip = track.CreateClip<ButtonAsset>();
-                var asset = buttonClip.asset as ButtonAsset;
+                var clip = track.CreateClip<ButtonAsset>();
+                var asset = clip.asset as ButtonAsset;
 
-                buttonClip.start = start;
-                buttonClip.duration = duration;
+                clip.start = start;
+                clip.duration = duration;
 
                 asset.ButtonReference.exposedName = Guid.NewGuid().ToString();
                 system.Director.SetReferenceValue(asset.ButtonReference.exposedName, system.Buttons[index]);
@@ -80,6 +83,8 @@ namespace Celezt.DialogueSystem
                         asset.Condition = processors.First();
                     }
                 }
+
+                _actionClips.Add(clip);
 
                 ++index;
             }
