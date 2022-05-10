@@ -10,10 +10,8 @@ namespace Celezt.DialogueSystem
 {
     public class BlendInterpreter : AssetInterpreter
     {
-        private List<DialogueTrack> _dialogueTracks = new List<DialogueTrack>();
-
         private AssetInterpreter _interpreter;
-        private TimelineClip _previousClipFirst;
+        private IEnumerable<(double end, DialogueTrack track)> _availableTracks;
 
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
@@ -26,13 +24,7 @@ namespace Celezt.DialogueSystem
             if (nextNode == null)
                 return;
 
-            foreach (var track in timeline.GetOutputTracks())
-            {
-                if (track is DialogueTrack)
-                    _dialogueTracks.Add((DialogueTrack)track);
-            }
-
-            _previousClipFirst = _dialogueTracks[0].GetClips().LastOrDefault();
+            _availableTracks = timeline.GetOutputTracks().OfType<DialogueTrack>().Select(x => (x.end, x));  // preload before creating next clip.
 
             if (nextNode.TryGetInterpreter(out _interpreter))
             {
@@ -61,24 +53,7 @@ namespace Celezt.DialogueSystem
             {
                 if (_interpreter is DialogueInterpreter dialogueInterpreter)
                 {
-                    TrackAsset blendTrack = null;
-                    {
-                        if (_previousClipFirst != null)  
-                        {
-                            if (_previousClipFirst.end <= dialogueInterpreter.DialogueClip.start - offsetBlend)  // If clip can fit with the offset.
-                            {
-                                blendTrack = _dialogueTracks[0];
-                            }
-                            else    // Use track 1 if nothing else works.
-                            {
-                                blendTrack = _dialogueTracks[1]; 
-                            }
-                        }
-                        else
-                        {
-                            blendTrack = _dialogueTracks[0]; // Prioritize track 0 if empty.
-                        }
-                    }
+                    TrackAsset blendTrack = _availableTracks.FirstOrDefault(x => x.end <= dialogueInterpreter.DialogueClip.start - offsetBlend).track;  // Find valid from before clip.
 
                     if (blendTrack != null && dialogueInterpreter.DialogueClip.GetParentTrack() != blendTrack)
                         dialogueInterpreter.DialogueClip.MoveToTrack(blendTrack);

@@ -6,22 +6,35 @@ using Newtonsoft.Json;
 using UnityEngine.Timeline;
 using UnityEngine.Playables;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 
 namespace Celezt.DialogueSystem
 {
     public static class DSUtility
     {
-        public static GraphSerialized DeserializeGraph(ReadOnlySpan<char> content)
+        /// <summary>
+        /// Deserialize JSON content. Graph can be serialized.
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public static GraphSerialized DeserializeJSONContent(ReadOnlySpan<char> content)
         {
             return JsonConvert.DeserializeObject<GraphSerialized>(content.ToString());
         }
 
-        public static DSGraph CreateRuntimeGraph(ReadOnlySpan<char> content)
+        /// <summary>
+        /// Create dialogue system graph from JSON content for runtime use. Graph can NOT be serialized.
+        /// </summary>
+        /// <param name="content">JSON content.</param>
+        /// <returns></returns>
+        /// <exception cref="DeserializeExpection"></exception>
+        /// <exception cref="NullReferenceException"></exception>
+        public static DSGraph CreateDSGraph(ReadOnlySpan<char> content)
         {
             Dictionary<Guid, DSNode> _assets = new Dictionary<Guid, DSNode>();
             Dictionary<string, DSNode> _inputs = new Dictionary<string, DSNode>();
 
-            GraphSerialized graphData = DeserializeGraph(content);
+            GraphSerialized graphData = DeserializeJSONContent(content);
 
             //
             // Nodes.
@@ -32,7 +45,7 @@ namespace Celezt.DialogueSystem
                 JObject specialData = graphData.Specialization[i] as JObject;
 
                 if (!Guid.TryParseExact(nodeData.ID, "N", out Guid id))
-                    throw new Exception(nodeData.ID + " is invalid GUID");
+                    throw new DeserializeExpection(nodeData.ID + " is invalid GUID");
 
                 Type assetType = Type.GetType(nodeData.Binder);
                 if (assetType != null)
@@ -47,7 +60,7 @@ namespace Celezt.DialogueSystem
                             else if (property.Value is JArray)
                                 specialValues.Add(property.Name, ((JArray)property.Value).Values());
                             else
-                                throw new Exception(property.Value.Type + " is not supported");
+                                throw new DeserializeExpection(property.Value.Type + " is not supported");
                         }
 
                         DSNode node = new DSNode(assetType, specialValues);
@@ -57,7 +70,7 @@ namespace Celezt.DialogueSystem
                             if (specialData.TryGetValue("_id", out JToken token))
                                 _inputs.Add(token.ToObject<string>(), node);
                             else
-                                throw new Exception("\"_id\" not found.");
+                                throw new DeserializeExpection("\"_id\" not found.");
                         }
 
                         _assets.Add(id, node);
@@ -97,13 +110,21 @@ namespace Celezt.DialogueSystem
             return new DSGraph(_inputs);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="system"></param>
+        /// <param name="dialogue"></param>
+        /// <param name="inputID"></param>
+        /// <returns></returns>
+        /// <exception cref="DeserializeExpection"></exception>
         public static TimelineAsset CreateDialogue(DialogueSystem system, Dialogue dialogue, string inputID)
         {
             if (!dialogue.Graph.InputNodes.TryGetValue(inputID, out DSNode inputNode))
-                throw new Exception($"Input ID: \"{inputID}\" does not exist in {dialogue.name}");
+                throw new DeserializeExpection($"Input ID: \"{inputID}\" does not exist in {dialogue.name}");
 
             if (inputNode.AssetType != typeof(InputInterpreter))
-                throw new Exception($"{inputNode.AssetType} is not {nameof(InputInterpreter)}");
+                throw new DeserializeExpection($"{inputNode.AssetType} is not {nameof(InputInterpreter)}");
 
             TimelineAsset timeline = ScriptableObject.CreateInstance<TimelineAsset>();
             timeline.name = $"Dialogue - {dialogue.name}: {inputNode.Values["_id"]}";
@@ -119,6 +140,66 @@ namespace Celezt.DialogueSystem
             system.Director.RebuildGraph();
 
             return timeline;
+        }
+
+#nullable enable
+        /// <summary>
+        /// Find track with available space.
+        /// </summary>
+        /// <typeparam name="T">Track type.</typeparam>
+        /// <param name="timeline">Find in timeline.</param>
+        /// <param name="start">Minimum position.</param>
+        /// <param name="reversed">If searching for the last track.</param>
+        /// <returns>The available track. If not, return null.</returns>
+        public static T? FindTrackSpace<T>(this TimelineAsset timeline, double start, bool reversed = false) where T : TrackAsset, new()
+            => FindTrackSpace<T>(timeline.GetOutputTracks().OfType<T>(), start, reversed);
+
+        /// <summary>
+        /// Find track with available space.
+        /// </summary>
+        /// <typeparam name="T">Track type.</typeparam>
+        /// <param name="tracks">Find in tracks.</param>
+        /// <param name="start">Minimum position.</param>
+        /// <param name="reversed">If searching for the last track.</param>
+        /// <returns>The available track. If not, return null.</returns>
+        public static T? FindTrackSpace<T>(IEnumerable<T> tracks, double start, bool reversed = false) where T : TrackAsset, new()
+        {
+            return reversed ? tracks.LastOrDefault(x => x.end <= start) : tracks.FirstOrDefault(x => x.end <= start); // Get the first or last instance.
+        }
+
+        /// <summary>
+        /// Find track with available space or allocate new track of that type.
+        /// </summary>
+        /// <typeparam name="T">Track type.</typeparam>
+        /// <param name="timeline">Find in timeline.</param>
+        /// <param name="start">Minimum position.</param>
+        /// <param name="reversed">If searching for the last track.</param>
+        /// <returns>The available track.</returns>
+        public static T FindOrAllocateTrackSpace<T>(this TimelineAsset timeline, double start, bool reversed = false) where T : TrackAsset, new()
+        {
+            T? track = FindTrackSpace<T>(timeline, start, reversed);
+
+            if (track == null)
+                track = timeline.CreateTrack<T>();
+
+            return track;
+        }
+
+        /// <summary>
+        /// Find the index.
+        /// </summary>
+        /// <param name="timeline">Find in timeline.</param>
+        /// <param name="track">Track to find the index for.</param>
+        /// <returns>Index. -1 if not found.</returns>
+        public static int IndexOf(this TimelineAsset timeline, TrackAsset track)
+        {
+            return timeline.GetOutputTracks().IndexOf(track);
+        }
+
+        public class DeserializeExpection : Exception
+        {
+            public DeserializeExpection() { }
+            public DeserializeExpection(string message) : base(message) { }
         }
     }
 }

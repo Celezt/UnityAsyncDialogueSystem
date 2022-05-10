@@ -14,7 +14,7 @@ namespace Celezt.DialogueSystem
             {
                 if (_graph == null)
                 {
-                    _graph = DSUtility.CreateRuntimeGraph(_content);
+                    _graph = DSUtility.CreateDSGraph(_content);
                 }
 
                 return _graph;

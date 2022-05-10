@@ -13,9 +13,6 @@ namespace Celezt.DialogueSystem
         {
             for (int i = 0; i < 2; i++)
                 timeline.CreateTrack<DialogueTrack>();
-
-            for (int i = 0; i < 6; i++)
-                timeline.CreateTrack<ActionTrack>();
         }
 
         protected override void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)

@@ -75,10 +75,10 @@ namespace Celezt.DialogueSystem
             //
             // Create choice actions.
             //
-            int index = 0;
+            int index = 0;  // Input index.
             foreach (string choiceText in choiceTexts)
             {
-                var track = actionTracks[index];
+                var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
                 var buttonClip = track.CreateClip<ButtonAsset>();
                 var asset = buttonClip.asset as ButtonAsset;
 
@@ -92,11 +92,14 @@ namespace Celezt.DialogueSystem
                 if (system.ActionOverrideSettings.Count >= index)
                     asset.Settings = system.ActionOverrideSettings[index];
 
-                DSNode conditionNode = currentNode.Inputs[index + 1].Connections.First().Output.Node;
-
-                if (conditionNode.TryGetAllProcessors(out var processors))
+                if (currentNode.Inputs.TryGetValue(index + 1, out DSPort conditionInputPort))   // Index 0 is "Connections".
                 {
-                    asset.Condition = processors.First();
+                    DSNode conditionNode = conditionInputPort.Connections.First().Output.Node;
+
+                    if (conditionNode.TryGetAllProcessors(out var processors))
+                    {
+                        asset.Condition = processors.First();
+                    }
                 }
 
                 ++index;
