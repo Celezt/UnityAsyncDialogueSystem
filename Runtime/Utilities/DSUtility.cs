@@ -129,6 +129,9 @@ namespace Celezt.DialogueSystem
             TimelineAsset timeline = ScriptableObject.CreateInstance<TimelineAsset>();
             timeline.name = $"Dialogue - {dialogue.name}: {inputNode.Values["_id"]}";
 
+            timeline.CreateTrack<DialogueTrack>();
+            timeline.CreateTrack<DialogueTrack>();
+
             system.Director.playableAsset = timeline;
 
             if (inputNode.TryGetInterpreter(out var interpreter))

@@ -24,7 +24,6 @@ namespace Celezt.DialogueSystem
 
         public void OnNext(DialogueSystem system)
         {
-            system._previousNodes.Add(_node);
             OnNext(_node, system._previousNodes, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
     }

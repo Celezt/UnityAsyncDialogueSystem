@@ -13,8 +13,7 @@ namespace Celezt.DialogueSystem.Editor
     {
         [SerializeField] private List<Choice> _choices = new List<Choice>();
 
-        [Serializable]
-        public struct Choice
+        public class Choice
         {
             public string Text;
         }

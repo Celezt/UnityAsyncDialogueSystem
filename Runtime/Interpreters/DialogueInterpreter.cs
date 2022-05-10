@@ -17,36 +17,8 @@ namespace Celezt.DialogueSystem
 
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
-            DSNode previousNode = previousNodes.Last();
-
-            List<DialogueTrack> dialogueTracks = new List<DialogueTrack>();
-            List<ActionTrack> actionTracks = new List<ActionTrack>();
-
-            foreach (var track in timeline.GetOutputTracks())
-            {
-                if (track is DialogueTrack)
-                    dialogueTracks.Add((DialogueTrack)track);
-                else if (track is ActionTrack)
-                    actionTracks.Add((ActionTrack)track);
-            }
-
-            TimelineClip previousClip = null;
-            {
-                TimelineClip previousClipFirst = dialogueTracks[0].GetClips().LastOrDefault();
-                TimelineClip previousClipSecond = dialogueTracks[1].GetClips().LastOrDefault();
-
-                if (previousClipFirst != null)
-                {
-                    if (previousClipSecond != null)
-                    {
-                        previousClip = previousClipFirst.end > previousClipSecond.end ? previousClipFirst : previousClipSecond;
-                    }
-                    else
-                        previousClip = previousClipFirst;
-                }
-            }
-
-            _dialogueClip = dialogueTracks.First().CreateClip<DialogueAsset>();
+            if (timeline.GetOutputTracks().OfType<DialogueTrack>().Count() <= 0)
+                timeline.CreateTrack<DialogueTrack>();
 
             string text = (string)currentNode.Values["_text"];
             string actorID = (string)currentNode.Values["_actorID"];
@@ -54,8 +26,14 @@ namespace Celezt.DialogueSystem
             float endOffset = Convert.ToSingle(currentNode.Values["_endOffset"]);
             IEnumerable<string> choiceTexts = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => (string)((JProperty)x).Value);
 
-            double start = previousClip?.end ?? 0;
+            IEnumerable<DialogueTrack> dialogueTracks = timeline.GetOutputTracks().OfType<DialogueTrack>();
+            TrackAsset dialogueTrack = dialogueTracks.First();
+            double maxEnd = dialogueTracks.Max(x => x.end);
+
             double duration = text.Length;
+            double start = maxEnd; // Get max end before new clip.
+
+            _dialogueClip = dialogueTrack.CreateClip<DialogueAsset>();
 
             {
                 var asset = _dialogueClip.asset as DialogueAsset;
@@ -71,6 +49,7 @@ namespace Celezt.DialogueSystem
 
             _dialogueClip.start = start;
             _dialogueClip.duration = duration;
+           
 
             //
             // Create choice actions.

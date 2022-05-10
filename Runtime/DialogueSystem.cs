@@ -85,6 +85,8 @@ namespace Celezt.DialogueSystem
         private DialogueSystemBinder _binder;
         [SerializeField, HideInInspector]
         private Dialogue _currentDialogue;
+        [SerializeField, HideInInspector]
+        private string _currentInputID;
 
         /// <summary>
         /// Instatiates a Playable using the provided PlayableAsset and starts playback.

@@ -11,7 +11,7 @@ namespace Celezt.DialogueSystem
     public class BlendInterpreter : AssetInterpreter
     {
         private AssetInterpreter _interpreter;
-        private IEnumerable<(double end, DialogueTrack track)> _availableTracks;
+        private List<(DialogueTrack track, double end)> _availableTracks;
 
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
@@ -24,7 +24,12 @@ namespace Celezt.DialogueSystem
             if (nextNode == null)
                 return;
 
-            _availableTracks = timeline.GetOutputTracks().OfType<DialogueTrack>().Select(x => (x.end, x));  // preload before creating next clip.
+            _availableTracks = new List<(DialogueTrack track, double end)>();
+            foreach (var track in timeline.GetOutputTracks())
+            {
+                if (track is DialogueTrack dialogueTrack)
+                    _availableTracks.Add((dialogueTrack, track.end));   // preload before creating next clip.
+            }
 
             if (nextNode.TryGetInterpreter(out _interpreter))
             {
@@ -53,12 +58,15 @@ namespace Celezt.DialogueSystem
             {
                 if (_interpreter is DialogueInterpreter dialogueInterpreter)
                 {
-                    TrackAsset blendTrack = _availableTracks.FirstOrDefault(x => x.end <= dialogueInterpreter.DialogueClip.start - offsetBlend).track;  // Find valid from before clip.
+                    DialogueTrack blendTrack = _availableTracks.FirstOrDefault(x => x.end <= dialogueInterpreter.DialogueClip.start - offsetBlend).track;  // Find valid from before clip.
 
-                    if (blendTrack != null && dialogueInterpreter.DialogueClip.GetParentTrack() != blendTrack)
+                    if (blendTrack == null)
+                        blendTrack = timeline.CreateTrack<DialogueTrack>();
+
+                    if (dialogueInterpreter.DialogueClip.GetParentTrack() != blendTrack)
                         dialogueInterpreter.DialogueClip.MoveToTrack(blendTrack);
 
-                    dialogueInterpreter.DialogueClip.start -= offsetBlend;
+                    dialogueInterpreter.DialogueClip.start -= offsetBlend;  // Set blend offset.
                 }
 
                 _interpreter.OnNext(system);

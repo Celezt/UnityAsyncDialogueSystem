@@ -12,13 +12,14 @@ namespace Celezt.DialogueSystem.Editor
     public class DGImporter : ScriptedImporter
     {
         public const string FILE_EXTENSION = ".dialoguegraph";
-
         private const string DIALOGUE_GRAPH_ICON_PATH = "Packages/com.celezt.asyncdialogue/Editor/Resources/Icons/dg_graph_icon.png";
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
             ReadOnlySpan<char> content = File.ReadAllText(ctx.assetPath);
 
             Dialogue mainObject = ScriptableObject.CreateInstance<Dialogue>().Initialize(content);
+
             mainObject.name = Path.GetFileNameWithoutExtension(ctx.assetPath);
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(DIALOGUE_GRAPH_ICON_PATH);
             ctx.AddObjectToAsset("MainAsset", mainObject, texture);
