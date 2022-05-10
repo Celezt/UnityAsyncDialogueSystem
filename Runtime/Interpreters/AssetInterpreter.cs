@@ -14,11 +14,18 @@ namespace Celezt.DialogueSystem
         internal DSNode _node;
 
         protected abstract void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline);
+        protected abstract void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline);
 
         public void OnInterpret(DialogueSystem system)
         {
             system._previousNodes.Add(_node);
             OnInterpret(_node, system._previousNodes, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
+        }
+
+        public void OnNext(DialogueSystem system)
+        {
+            system._previousNodes.Add(_node);
+            OnNext(_node, system._previousNodes, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
     }
 }

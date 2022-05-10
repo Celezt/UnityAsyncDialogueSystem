@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Celezt.DialogueSystem
 {
@@ -20,14 +21,24 @@ namespace Celezt.DialogueSystem
             }
         }
 
+        public UnityEvent<DSGraph> OnChanged => _onChanged;
+
         private DSGraph _graph;
+
+        private UnityEvent<DSGraph> _onChanged = new UnityEvent<DSGraph>();
 
         [SerializeField, HideInInspector]
         private string _content;
 
         public Dialogue Initialize(ReadOnlySpan<char> content) 
         {
-            _content = content.ToString();
+            if (!MemoryExtensions.Equals(_content, content, StringComparison.Ordinal))
+            {
+                _content = content.ToString();
+                _onChanged.Invoke(Graph);
+            }
+            else
+                _content = content.ToString();
 
             return this;
         }

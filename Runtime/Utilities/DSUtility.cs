@@ -113,6 +113,7 @@ namespace Celezt.DialogueSystem
             if (inputNode.TryGetInterpreter(out var interpreter))
             {
                 interpreter.OnInterpret(system);
+                interpreter.OnNext(system);
             }
 
             system.Director.RebuildGraph();

@@ -16,10 +16,13 @@ namespace Celezt.DialogueSystem
 
             for (int i = 0; i < 6; i++)
                 timeline.CreateTrack<ActionTrack>();
+        }
 
+        protected override void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        {
             DSNode nextNode = null;
             if (currentNode.Outputs.TryGetValue(0, out DSPort outPort))
-                nextNode = outPort.Connections.FirstOrDefault()?.Input.Node;
+                nextNode = outPort.Connections.First().Input.Node;
 
             if (nextNode == null)
                 return;
@@ -27,6 +30,7 @@ namespace Celezt.DialogueSystem
             if (nextNode.TryGetInterpreter(out var interpreter))
             {
                 interpreter.OnInterpret(system);
+                interpreter.OnNext(system);
             }
         }
     }

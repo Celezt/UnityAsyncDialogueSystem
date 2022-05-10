@@ -11,6 +11,10 @@ namespace Celezt.DialogueSystem
 {
     public class DialogueInterpreter : AssetInterpreter
     {
+        public TimelineClip DialogueClip => _dialogueClip;
+
+        public TimelineClip _dialogueClip;
+
         protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             DSNode previousNode = previousNodes.Last();
@@ -26,8 +30,23 @@ namespace Celezt.DialogueSystem
                     actionTracks.Add((ActionTrack)track);
             }
 
-            TimelineClip previousClip = dialogueTracks.First().GetClips().LastOrDefault();
-            TimelineClip dialogueClip = dialogueTracks.First().CreateClip<DialogueAsset>();
+            TimelineClip previousClip = null;
+            {
+                TimelineClip previousClipFirst = dialogueTracks[0].GetClips().LastOrDefault();
+                TimelineClip previousClipSecond = dialogueTracks[1].GetClips().LastOrDefault();
+
+                if (previousClipFirst != null)
+                {
+                    if (previousClipSecond != null)
+                    {
+                        previousClip = previousClipFirst.end > previousClipSecond.end ? previousClipFirst : previousClipSecond;
+                    }
+                    else
+                        previousClip = previousClipFirst;
+                }
+            }
+
+            _dialogueClip = dialogueTracks.First().CreateClip<DialogueAsset>();
 
             string text = (string)currentNode.Values["_text"];
             string actorID = (string)currentNode.Values["_actorID"];
@@ -39,7 +58,7 @@ namespace Celezt.DialogueSystem
             double duration = text.Length;
 
             {
-                var asset = dialogueClip.asset as DialogueAsset;
+                var asset = _dialogueClip.asset as DialogueAsset;
 
                 asset.Text = text;
                 asset.Actor = actorID;
@@ -50,9 +69,12 @@ namespace Celezt.DialogueSystem
                 duration += endOffset;
             }
 
-            dialogueClip.start = start;
-            dialogueClip.duration = duration;
+            _dialogueClip.start = start;
+            _dialogueClip.duration = duration;
 
+            //
+            // Create choice actions.
+            //
             int index = 0;
             foreach (string choiceText in choiceTexts)
             {
@@ -70,7 +92,7 @@ namespace Celezt.DialogueSystem
                 if (system.ActionOverrideSettings.Count >= index)
                     asset.Settings = system.ActionOverrideSettings[index];
 
-                DSNode conditionNode = currentNode.Inputs[index + 1].Connections.FirstOrDefault()?.Output.Node;
+                DSNode conditionNode = currentNode.Inputs[index + 1].Connections.First().Output.Node;
 
                 if (conditionNode.TryGetAllProcessors(out var processors))
                 {
@@ -79,16 +101,20 @@ namespace Celezt.DialogueSystem
 
                 ++index;
             }
+        }
 
+        protected override void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        {
             DSNode nextNode = null;
             if (currentNode.Outputs.TryGetValue(0, out DSPort outPort))
-                nextNode = outPort.Connections.FirstOrDefault()?.Input.Node;
+                nextNode = outPort.Connections.First().Input.Node;
 
             if (nextNode != null)
             {
                 if (nextNode.TryGetInterpreter(out var interpreter))
                 {
                     interpreter.OnInterpret(system);
+                    interpreter.OnNext(system);
                 }
             }
         }

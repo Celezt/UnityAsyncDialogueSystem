@@ -12,5 +12,10 @@ namespace Celezt.DialogueSystem
         {
             throw new System.NotImplementedException();
         }
+
+        protected override void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
