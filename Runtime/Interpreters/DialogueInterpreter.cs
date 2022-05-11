@@ -57,6 +57,7 @@ namespace Celezt.DialogueSystem
             //
             if (currentNode.Outputs.TryGetValue(-2, out DSPort verticalOutPort))
             {
+                //Debug.Log(verticalOutPort.Connections.Count());
                 foreach (DSEdge edge in verticalOutPort.Connections)
                 {
                     if (edge.Input.Node.TryGetInterpreter(out var interpreter))

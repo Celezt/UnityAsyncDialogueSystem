@@ -34,8 +34,9 @@ namespace Celezt.DialogueSystem.Editor
 
             Button addChoiceButton = new Button(() =>
             {
-                AddNewChoicePort(new Choice { Text = "New Choice" });
-                _choices.Add(new Choice { Text = "New Choice" });
+                Choice choice = new Choice { Text = "New Choice" };
+                AddNewChoicePort(choice);
+                _choices.Add(choice);
             })
             {
                 text = "Add Choice",
