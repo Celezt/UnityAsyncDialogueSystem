@@ -133,6 +133,7 @@ namespace Celezt.DialogueSystem
             timeline.CreateTrack<DialogueTrack>();
 
             system.Director.playableAsset = timeline;
+            system.Director.extrapolationMode = DirectorWrapMode.Hold;
 
             if (inputNode.TryGetInterpreter(out var interpreter))
             {

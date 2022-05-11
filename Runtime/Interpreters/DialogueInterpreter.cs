@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
     public class DialogueInterpreter : AssetInterpreter
     {
         public TimelineClip DialogueClip => _dialogueClip;
-        public List<TimelineClip> ActionClips => _actionClips;
+        public IReadOnlyList<TimelineClip> ActionClips => _actionClips;
 
         private TimelineClip _dialogueClip;
         private List<TimelineClip> _actionClips;

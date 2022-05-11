@@ -104,6 +104,38 @@ namespace Celezt.DialogueSystem
                 }
 
                 //
+                // Offset external action clips.
+                //
+                if (_interpreter.Node.Outputs.TryGetValue(-2, out DSPort verticalOutputPort))
+                {
+                    foreach (DSEdge edge in verticalOutputPort.Connections)
+                    {
+                        if (edge.Input.Node.TryGetInterpreter(out var interpreter))
+                        {
+                            if (interpreter is ActionInterpreter actionInterpreter)
+                            {
+                                foreach (var clip in actionInterpreter.ActionClips.Last())
+                                {
+                                    TrackAsset blendTrack = _availableActionTracks.FirstOrDefault(x => x.End <= clip.start - offsetBlend).Track;  // Find valid from before clip.
+                                    _availableActionTracks.Remove(blendTrack);   // Remove available if found.
+
+                                    if (blendTrack == null)
+                                        blendTrack = timeline.CreateTrack<ActionTrack>();
+
+                                    if (clip.GetParentTrack() != blendTrack)
+                                        clip.MoveToTrack(blendTrack);
+
+                                    if (actionInterpreter.ActionGroupCounts.Last() == 1)         // Move start if only one in the group.
+                                        clip.start -= offsetBlend;      // Set blend offset.
+                                    else                                 
+                                        clip.duration -= offsetBlend;   // Set blend offset on duration if group.
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //
                 // Offset action clips.
                 //
                 {
