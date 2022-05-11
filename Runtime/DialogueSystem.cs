@@ -65,10 +65,10 @@ namespace Celezt.DialogueSystem
         }
 
         public Dialogue CurrentDialogue => _currentDialogue;
-        public List<ActionPlayableSettings> ActionOverrideSettings => _actionOverrideSettings;
+        public List<SerializableDictionary<string, ActionPlayableSettings>> ActionOverrideSettings => _actionOverrideSettings;
 
         [SerializeField]
-        private List<ActionPlayableSettings> _actionOverrideSettings = new List<ActionPlayableSettings>();
+        private List<SerializableDictionary<string, ActionPlayableSettings>> _actionOverrideSettings = new List<SerializableDictionary<string, ActionPlayableSettings>>();
         [SerializeField, HideInInspector]
         private GameObject _object;
         [SerializeField, HideInInspector]
@@ -101,12 +101,15 @@ namespace Celezt.DialogueSystem
             return _buttons.FirstOrDefault(x => x.Borrow(owner));
         }
 
-        public ActionPlayableSettings GetActionSettings(ButtonBinder button)
+        public ActionPlayableSettings GetActionSettings(ButtonBinder button, string name)
         {
             int index = _buttons.IndexOf(button);
 
             if (index != -1 && _actionOverrideSettings.Count > index)
-                return _actionOverrideSettings[index];
+            {
+                if (_actionOverrideSettings[index].TryGetValue(name, out var settings))
+                    return settings;
+            }
 
             return null;
         }

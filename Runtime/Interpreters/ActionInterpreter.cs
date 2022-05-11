@@ -44,6 +44,10 @@ namespace Celezt.DialogueSystem
             if (dialogueInterpreter == null)
                 return;
 
+            string overrideSettingName = "default";
+            if (!previousNode.Outputs.TryGetValue(0, out DSPort continueOutput)) // If continue port does not exist.
+                overrideSettingName = "end";
+
             // 
             //  If previously connected.
             //
@@ -57,6 +61,7 @@ namespace Celezt.DialogueSystem
                     if (Math.Abs(action.end - dialogueInterpreter.DialogueClip.start) < 0.01) // Compare with tolerance
                     {
                         action.duration = dialogueInterpreter.DialogueClip.end - action.start;
+                        ((ButtonAsset)action.asset).OverrideSettingName = overrideSettingName;
                         _actionGroupCounts[_currnetActionGroups]++;
                     }
                     else
@@ -72,6 +77,7 @@ namespace Celezt.DialogueSystem
                         asset.Text = ((ButtonAsset)action.asset).Text;              // Reuse the same text.
                         asset.System = system;
                         asset.Condition = ((ButtonAsset)action.asset).Condition;    // Reuse the same condition.
+                        asset.OverrideSettingName = overrideSettingName;
 
                         newActions.Add(clip);
                     }
@@ -102,6 +108,7 @@ namespace Celezt.DialogueSystem
                     clip.duration = duration;
                     asset.Text = choiceText;
                     asset.System = system;
+                    asset.OverrideSettingName = overrideSettingName;
 
                     if (currentNode.Inputs.TryGetValue(index, out DSPort conditionInputPort))
                     {

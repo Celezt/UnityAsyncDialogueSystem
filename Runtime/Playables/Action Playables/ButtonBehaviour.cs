@@ -180,7 +180,7 @@ namespace Celezt.DialogueSystem
                 {
                     asset.ButtonReference.exposedName = Guid.NewGuid().ToString();
                     Director.SetReferenceValue(asset.ButtonReference.exposedName, _button);
-                    asset.Settings = asset.System.GetActionSettings(_button);
+                    asset.Settings = asset.System.GetActionSettings(_button, asset.OverrideSettingName);
 
                     _canvasGroup = _button.GetComponentInChildren<CanvasGroup>();
                     _textMesh = _button.GetComponentInChildren<TextMeshProUGUI>();

@@ -11,6 +11,8 @@ namespace Celezt.DialogueSystem
     {
         [HideInInspector]
         public DialogueSystem System;
+        [HideInInspector]
+        public string OverrideSettingName;
         public ExposedReference<ButtonBinder> ButtonReference;
         public string Text;
         public AssetProcessor Condition;

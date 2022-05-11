@@ -70,33 +70,42 @@ namespace Celezt.DialogueSystem
             //
             // Create choice actions.
             //
-            _actionClips = new List<TimelineClip>();
-            int index = 1;  // Input index. Index 0 is "Connections".
-            foreach (string choiceText in choiceTexts)
             {
-                var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
-                var clip = track.CreateClip<ButtonAsset>();
-                var asset = clip.asset as ButtonAsset;
-
-                clip.start = start;
-                clip.duration = duration;
-                asset.Text = choiceText;
-                asset.System = system;
-
-                if (currentNode.Inputs.TryGetValue(index, out DSPort conditionInputPort))   
+                string overrideSettingName = "default";
+                if (!currentNode.Outputs.TryGetValue(0, out DSPort continueOutput)) // If continue port does not exist.
                 {
-                    DSNode conditionNode = conditionInputPort.Connections.First().Output.Node;
-
-                    if (conditionNode.TryGetAllProcessors(out var processors))
-                    {
-                        asset.Condition = processors.First();
-                    }
+                    overrideSettingName = "end";
                 }
 
-                _actionClips.Add(clip);
+                _actionClips = new List<TimelineClip>();
+                int index = 1;  // Input index. Index 0 is "Connections".
+                foreach (string choiceText in choiceTexts)
+                {
+                    var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
+                    var clip = track.CreateClip<ButtonAsset>();
+                    var asset = clip.asset as ButtonAsset;
 
-                ++index;
-            }
+                    clip.start = start;
+                    clip.duration = duration;
+                    asset.Text = choiceText;
+                    asset.System = system;
+                    asset.OverrideSettingName = overrideSettingName;
+
+                    if (currentNode.Inputs.TryGetValue(index, out DSPort conditionInputPort))
+                    {
+                        DSNode conditionNode = conditionInputPort.Connections.First().Output.Node;
+
+                        if (conditionNode.TryGetAllProcessors(out var processors))
+                        {
+                            asset.Condition = processors.First();
+                        }
+                    }
+
+                    _actionClips.Add(clip);
+
+                    ++index;
+                }
+            }            
         }
 
         protected override void OnNext(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
