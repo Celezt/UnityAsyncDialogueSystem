@@ -9,12 +9,12 @@ namespace Celezt.DialogueSystem
 {
     public class InputInterpreter : AssetInterpreter
     {
-        protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        protected override void OnInterpret(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
 
         }
 
-        protected override void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        protected override void OnNext(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             DSNode nextNode = null;
             if (currentNode.Outputs.TryGetValue(0, out DSPort outPort))
@@ -25,7 +25,7 @@ namespace Celezt.DialogueSystem
 
             if (nextNode.TryGetInterpreter(out var interpreter))
             {
-                interpreter.OnInterpret(system);
+                interpreter.OnInterpret(system, this);
                 interpreter.OnNext(system);
             }
         }

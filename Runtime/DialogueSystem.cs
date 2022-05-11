@@ -67,12 +67,6 @@ namespace Celezt.DialogueSystem
         public Dialogue CurrentDialogue => _currentDialogue;
         public List<ActionPlayableSettings> ActionOverrideSettings => _actionOverrideSettings;
 
-
-        /// <summary>
-        /// Trail of the current dialogue graph.
-        /// </summary>
-        internal List<DSNode> _previousNodes = new List<DSNode>();
-
         [SerializeField]
         private List<ActionPlayableSettings> _actionOverrideSettings = new List<ActionPlayableSettings>();
         [SerializeField, HideInInspector]
@@ -175,7 +169,6 @@ namespace Celezt.DialogueSystem
 
         public TimelineAsset CreateDialogue(Dialogue dialogue, string inputID)
         {
-            _previousNodes.Clear();
             _currentDialogue = dialogue;
 
             TimelineAsset timeline = DSUtility.CreateDialogue(this, dialogue, inputID);

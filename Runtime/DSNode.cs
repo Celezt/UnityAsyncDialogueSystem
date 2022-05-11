@@ -44,7 +44,20 @@ namespace Celezt.DialogueSystem
         /// <returns>Inserted port.</returns>
         public DSPort InsertPort(int index, DSPort.Direction direction)
         {
-            DSPort port = new DSPort(this, index, direction);
+            DSPort port = null;
+            // If it already exist.
+            if (direction == DSPort.Direction.Input)
+            {
+                if (_inputs.TryGetValue(index, out port))
+                    return port;
+            }
+            else
+            {
+                if (_outputs.TryGetValue(index, out port))
+                    return port;
+            }
+
+            port = new DSPort(this, index, direction);
 
             if (direction == DSPort.Direction.Input)
                 _inputs[index] = port;

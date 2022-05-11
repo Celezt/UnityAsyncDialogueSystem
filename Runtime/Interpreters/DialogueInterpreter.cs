@@ -17,7 +17,7 @@ namespace Celezt.DialogueSystem
         private TimelineClip _dialogueClip;
         private List<TimelineClip> _actionClips;
 
-        protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        protected override void OnInterpret(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             if (timeline.GetOutputTracks().OfType<DialogueTrack>().Count() <= 0)
                 timeline.CreateTrack<DialogueTrack>();
@@ -57,12 +57,11 @@ namespace Celezt.DialogueSystem
             //
             if (currentNode.Outputs.TryGetValue(-2, out DSPort verticalOutPort))
             {
-                //Debug.Log(verticalOutPort.Connections.Count());
                 foreach (DSEdge edge in verticalOutPort.Connections)
                 {
                     if (edge.Input.Node.TryGetInterpreter(out var interpreter))
                     {
-                        interpreter.OnInterpret(system);
+                        interpreter.OnInterpret(system, this);
                         interpreter.OnNext(system);
                     }
                 }
@@ -100,7 +99,7 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        protected override void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        protected override void OnNext(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             DSNode nextNode = null;
             if (currentNode.Outputs.TryGetValue(0, out DSPort outPort))
@@ -110,7 +109,7 @@ namespace Celezt.DialogueSystem
             {
                 if (nextNode.TryGetInterpreter(out var interpreter))
                 {
-                    interpreter.OnInterpret(system);
+                    interpreter.OnInterpret(system, this);
                     interpreter.OnNext(system);
                 }
             }

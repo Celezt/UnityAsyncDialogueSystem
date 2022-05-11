@@ -19,16 +19,16 @@ namespace Celezt.DialogueSystem
 
         private int _currnetActionGroups;
 
-        protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        protected override void OnInterpret(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             IEnumerable<string> choiceTexts = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => (string)((JProperty)x).Value);
-            
+
             double start = default;
             double duration = default;
 
             DialogueInterpreter dialogueInterpreter = null;
             {
-                if (previousNodes.Last().TryGetInterpreter(out var interpreter))    // Connected node.
+                if (previousNode.TryGetInterpreter(out var interpreter))    // Connected node.
                 {
                     if (interpreter is DialogueInterpreter)
                     {
@@ -120,7 +120,7 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        protected override void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        protected override void OnNext(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             
         }

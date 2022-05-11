@@ -24,7 +24,7 @@ namespace Celezt.DialogueSystem
             public static implicit operator SnappedTrack(TrackAsset track) => new SnappedTrack { Track = track };
         }
 
-        protected override void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        protected override void OnInterpret(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             DSNode nextNode = null;
             if (currentNode.Outputs.TryGetValue(0, out DSPort port))
@@ -51,7 +51,7 @@ namespace Celezt.DialogueSystem
                 if (interpreter is DialogueInterpreter dialogueInterpreter)
                 {
                     _interpreter = dialogueInterpreter;
-                    _interpreter.OnInterpret(system);
+                    _interpreter.OnInterpret(system, this);
                 }
             }
 
@@ -71,7 +71,7 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        protected override void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
+        protected override void OnNext(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
             DSNode conditionNode = null;
             double offsetBlend = 0;

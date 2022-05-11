@@ -13,21 +13,26 @@ namespace Celezt.DialogueSystem
     public abstract class AssetInterpreter : IDSAsset
     {
         public DSNode Node => _node;
+        public DSNode PreviousNode => _previousNode;
 
         internal DSNode _node;
 
-        protected abstract void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline);
-        protected abstract void OnNext(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline);
+        private DSNode _previousNode;
 
-        public void OnInterpret(DialogueSystem system)
+        protected abstract void OnInterpret(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline);
+        protected abstract void OnNext(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline);
+
+        public void OnInterpret(DialogueSystem system, DSNode currentNode)
         {
-            system._previousNodes.Add(_node);
-            OnInterpret(_node, system._previousNodes.GetRange(0, system._previousNodes.Count - 1), system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
+            _previousNode = currentNode;
+            OnInterpret(_node, currentNode, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
 
         public void OnNext(DialogueSystem system)
         {
-            OnNext(_node, system._previousNodes.GetRange(0, system._previousNodes.Count - 1), system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
+            OnNext(_node, _previousNode, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
+
+        public static implicit operator DSNode(AssetInterpreter interpreter) => interpreter.Node;
     }
 }
