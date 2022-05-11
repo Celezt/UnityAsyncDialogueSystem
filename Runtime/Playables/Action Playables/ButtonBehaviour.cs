@@ -121,6 +121,13 @@ namespace Celezt.DialogueSystem
             BindButton();
         }
 
+        public override void OnDestroyClip()
+        {
+            ButtonAsset asset = Asset as ButtonAsset;
+
+            _button?.Released(asset);
+        }
+
         private void ProcessVisibility()
         {
             ButtonAsset asset = Asset as ButtonAsset;

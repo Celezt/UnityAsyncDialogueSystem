@@ -21,7 +21,7 @@ namespace Celezt.DialogueSystem
             return new ButtonBehaviour();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroyClip()
         {
             if (BehaviourReference != null)
                 ((ButtonBehaviour)BehaviourReference).Hide();

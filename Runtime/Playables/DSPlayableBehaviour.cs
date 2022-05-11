@@ -57,6 +57,10 @@ namespace Celezt.DialogueSystem
         /// </summary>
         public virtual void OnCreateClip() { }
         /// <summary>
+        /// When the clip is destroyed.
+        /// </summary>
+        public virtual void OnDestroyClip() { }
+        /// <summary>
         /// This function is called during the CreateTrackMixer phase of the PlayableGraph.
         /// </summary>
         /// <param name="graph">The Graph that owns the current PlayableBehaviour.</param>

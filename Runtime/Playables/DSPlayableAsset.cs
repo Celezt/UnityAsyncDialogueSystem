@@ -22,6 +22,7 @@ namespace Celezt.DialogueSystem
         [SerializeReference, HideInInspector]
         private DSPlayableBehaviour _template;
         
+        protected virtual void OnDestroyClip() { }
         protected abstract DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner);
          
         public sealed override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
@@ -33,6 +34,12 @@ namespace Celezt.DialogueSystem
         {
             _template = CreateBehaviour(graph, owner);
             return _template;
+        }
+
+        private void OnDestroy()
+        {
+            BehaviourReference?.OnDestroyClip();
+            OnDestroyClip();
         }
     }
 }

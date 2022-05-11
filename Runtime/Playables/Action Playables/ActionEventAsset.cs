@@ -52,7 +52,7 @@ namespace Celezt.DialogueSystem
             return new ActionEventBehaviour();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroyClip()
         {
             if (BehaviourReference != null)
                 Receiver?.ActionBinderDictionary.Remove(this);
