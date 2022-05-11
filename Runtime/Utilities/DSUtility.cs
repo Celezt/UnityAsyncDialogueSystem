@@ -111,12 +111,12 @@ namespace Celezt.DialogueSystem
         }
 
         /// <summary>
-        /// 
+        /// Create dialogue from input id.
         /// </summary>
-        /// <param name="system"></param>
-        /// <param name="dialogue"></param>
-        /// <param name="inputID"></param>
-        /// <returns></returns>
+        /// <param name="system">For dialogue system.</param>
+        /// <param name="dialogue">Dialogue used.</param>
+        /// <param name="inputID">Start position.</param>
+        /// <returns>Created <see cref="TimelineAsset"/></returns>
         /// <exception cref="DeserializeExpection"></exception>
         public static TimelineAsset CreateDialogue(DialogueSystem system, Dialogue dialogue, string inputID)
         {
@@ -142,6 +142,37 @@ namespace Celezt.DialogueSystem
             }
 
             system.Director.RebuildGraph();
+
+            return timeline;
+        }
+
+        /// <summary>
+        /// Rebuild timeline with the next node being start position.
+        /// </summary>
+        /// <param name="system">For dialogue system.</param>
+        /// <param name="nextNode">Start position.</param>
+        /// <returns>Created <see cref="TimelineAsset"/></returns>
+        public static TimelineAsset RebuildTimelineFromNode(this DSNode nextNode, DSNode previousNode, DialogueSystem system)
+        {
+            TimelineAsset timeline = ScriptableObject.CreateInstance<TimelineAsset>();
+            TimelineAsset oldTimeline = system.Director.playableAsset as TimelineAsset;
+            timeline.name = oldTimeline.name;
+
+            timeline.CreateTrack<DialogueTrack>();
+            timeline.CreateTrack<DialogueTrack>();
+
+            system.Director.playableAsset = timeline;
+            system.Director.extrapolationMode = DirectorWrapMode.Hold;
+            
+
+            if (nextNode.TryGetInterpreter(out var interpreter))
+            {
+                interpreter.OnInterpret(system, previousNode);
+                interpreter.OnNext(system);
+            }
+
+            system.Director.RebuildGraph();
+            system.Director.Play();
 
             return timeline;
         }

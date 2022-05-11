@@ -78,6 +78,7 @@ namespace Celezt.DialogueSystem
                         asset.System = system;
                         asset.Condition = ((ButtonAsset)action.asset).Condition;    // Reuse the same condition.
                         asset.OverrideSettingName = overrideSettingName;
+                        asset.OnClick += ((ButtonAsset)action.asset).OnClick;
 
                         newActions.Add(clip);
                     }
@@ -97,7 +98,7 @@ namespace Celezt.DialogueSystem
                 //
                 _actionGroupClips = new List<List<TimelineClip>>() { new List<TimelineClip>() };
                 _actionGroupCounts = new List<int> { 1 };
-                int index = 1;  // Input index. Index 0 is "Connections".
+                int index = 0; 
                 foreach (string choiceText in choiceTexts)
                 {
                     var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
@@ -109,6 +110,17 @@ namespace Celezt.DialogueSystem
                     asset.Text = choiceText;
                     asset.System = system;
                     asset.OverrideSettingName = overrideSettingName;
+
+                    int snappedIndex = index;
+                    asset.OnClick += () =>
+                    {
+                        if (currentNode.Outputs.TryGetValue(snappedIndex, out DSPort choiceOutputPort))
+                        {
+                            DSNode choiceNode = choiceOutputPort.Connections.First().Input.Node;
+
+                            choiceNode.RebuildTimelineFromNode(this, system);
+                        }
+                    };
 
                     if (currentNode.Inputs.TryGetValue(index, out DSPort conditionInputPort))
                     {

@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             int index = Binder.DialogueTracks.IndexOf(Track);
-            Binder.OnEnterClip.Invoke(new DialogueSystemBinder.Callback
+            Binder.OnEnterDialogueClip.Invoke(new DialogueSystemBinder.Callback
             {
                 Index = index,
                 Binder = Binder,
@@ -27,7 +27,7 @@ namespace Celezt.DialogueSystem
         protected override void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             int index = Binder.DialogueTracks.IndexOf(Track);
-            Binder.OnProcessClip.Invoke(new DialogueSystemBinder.Callback
+            Binder.OnProcessDialogueClip.Invoke(new DialogueSystemBinder.Callback
             {
                 Index = index,
                 Binder = Binder,
@@ -43,7 +43,7 @@ namespace Celezt.DialogueSystem
         protected override void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             int index = Binder.DialogueTracks.IndexOf(Track);
-            Binder.OnExitClip.Invoke(new DialogueSystemBinder.Callback
+            Binder.OnExitDialogueClip.Invoke(new DialogueSystemBinder.Callback
             {
                 Index = index,
                 Binder = Binder,
@@ -53,6 +53,11 @@ namespace Celezt.DialogueSystem
                 Info = info,
                 Playable = playable,
             });
+        }
+
+        public override void OnPlayableDestroy(Playable playable)
+        {
+            Binder.OnDeleteTimeline.Invoke();
         }
     }
 }

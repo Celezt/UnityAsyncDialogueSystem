@@ -78,7 +78,7 @@ namespace Celezt.DialogueSystem
                 }
 
                 _actionClips = new List<TimelineClip>();
-                int index = 1;  // Input index. Index 0 is "Connections".
+                int index = 1;  // Index 0 is "Continue" and "Connections".
                 foreach (string choiceText in choiceTexts)
                 {
                     var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
@@ -90,6 +90,17 @@ namespace Celezt.DialogueSystem
                     asset.Text = choiceText;
                     asset.System = system;
                     asset.OverrideSettingName = overrideSettingName;
+
+                    int snappedIndex = index;
+                    asset.OnClick += () =>
+                    {
+                        if (currentNode.Outputs.TryGetValue(snappedIndex, out DSPort choiceOutputPort))
+                        {
+                            DSNode choiceNode = choiceOutputPort.Connections.First().Input.Node;
+                            
+                            choiceNode.RebuildTimelineFromNode(this, system);
+                        }
+                    };              
 
                     if (currentNode.Inputs.TryGetValue(index, out DSPort conditionInputPort))
                     {

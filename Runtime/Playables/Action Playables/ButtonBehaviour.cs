@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
 {
     public class ButtonBehaviour : DSPlayableBehaviour
     {
-        private ButtonBinder _button;
+        private ButtonBinder _buttonBinder;
         private CanvasGroup _canvasGroup;
         private TextMeshProUGUI _textMesh;
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
@@ -22,7 +22,7 @@ namespace Celezt.DialogueSystem
 
         public void Hide()
         {
-            if (_button != null)
+            if (_buttonBinder != null)
             {
                 _canvasGroup.alpha = 0;
                 _canvasGroup.interactable = false;
@@ -31,7 +31,7 @@ namespace Celezt.DialogueSystem
 
         public void Show()
         {
-            if (_button != null)
+            if (_buttonBinder != null)
             {
                 ProcessVisibility();
                 _canvasGroup.interactable = true;
@@ -72,12 +72,12 @@ namespace Celezt.DialogueSystem
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
             ButtonAsset asset = Asset as ButtonAsset;
-            _button = asset.ButtonReference.Resolve(graph.GetResolver());
+            _buttonBinder = asset.ButtonReference.Resolve(graph.GetResolver());
 
-            if (_button != null)
+            if (_buttonBinder != null)
             {
-                _canvasGroup = _button.GetComponentInChildren<CanvasGroup>();
-                _textMesh = _button.GetComponentInChildren<TextMeshProUGUI>();
+                _canvasGroup = _buttonBinder.GetComponentInChildren<CanvasGroup>();
+                _textMesh = _buttonBinder.GetComponentInChildren<TextMeshProUGUI>();
             }
 
             if (!string.IsNullOrWhiteSpace(asset.Text))
@@ -102,7 +102,7 @@ namespace Celezt.DialogueSystem
 
             BindButton();
 
-            if (_button != null)
+            if (_buttonBinder != null)
             {
                 _canvasGroup.interactable = true;
                 if (_textMesh != null)
@@ -121,18 +121,20 @@ namespace Celezt.DialogueSystem
             BindButton();
         }
 
-        public override void OnDestroyClip()
+        public override void OnPlayableDestroy(Playable playable)
         {
             ButtonAsset asset = Asset as ButtonAsset;
 
-            _button?.Released(asset);
+            Hide();
+
+            _buttonBinder?.Released(asset);
         }
 
         private void ProcessVisibility()
         {
             ButtonAsset asset = Asset as ButtonAsset;
 
-            if (_button != null && _isActive.Value)
+            if (_buttonBinder != null && _isActive.Value)
             {
                 if (asset.Settings != null)
                 {
@@ -170,20 +172,23 @@ namespace Celezt.DialogueSystem
 
             if (asset.System != null)
             {
-                if (_button?.Released(asset) ?? false)
+                if (_buttonBinder?.Released(asset) ?? false)
                     return;
 
-                ButtonBinder oldButton = _button;  
-                _button = asset.System.BorrowFirstOrDefaultButton(asset);
+                ButtonBinder oldButton = _buttonBinder;  
+                _buttonBinder = asset.System.BorrowFirstOrDefaultButton(asset);
 
-                if (_button != null && _button != oldButton)
+                if (_buttonBinder != null && _buttonBinder != oldButton)
                 {
                     asset.ButtonReference.exposedName = Guid.NewGuid().ToString();
-                    Director.SetReferenceValue(asset.ButtonReference.exposedName, _button);
-                    asset.Settings = asset.System.GetActionSettings(_button, asset.OverrideSettingName);
+                    Director.SetReferenceValue(asset.ButtonReference.exposedName, _buttonBinder);
+                    asset.Settings = asset.System.GetActionSettings(_buttonBinder, asset.OverrideSettingName);
 
-                    _canvasGroup = _button.GetComponentInChildren<CanvasGroup>();
-                    _textMesh = _button.GetComponentInChildren<TextMeshProUGUI>();
+                    if (asset.OnClick != null)
+                        _buttonBinder.Button.onClick.AddListener(asset.OnClick);
+
+                    _canvasGroup = _buttonBinder.GetComponentInChildren<CanvasGroup>();
+                    _textMesh = _buttonBinder.GetComponentInChildren<TextMeshProUGUI>();
                 }
             }
         }

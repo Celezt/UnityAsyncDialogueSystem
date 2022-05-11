@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.UI;
@@ -13,6 +14,9 @@ namespace Celezt.DialogueSystem
         public DialogueSystem System;
         [HideInInspector]
         public string OverrideSettingName;
+        [HideInInspector]
+        public UnityAction OnClick;
+
         public ExposedReference<ButtonBinder> ButtonReference;
         public string Text;
         public AssetProcessor Condition;
@@ -23,7 +27,7 @@ namespace Celezt.DialogueSystem
             return new ButtonBehaviour();
         }
 
-        protected override void OnDestroyClip()
+        private void OnDestroy()
         {
             if (BehaviourReference != null)
                 ((ButtonBehaviour)BehaviourReference).Hide();

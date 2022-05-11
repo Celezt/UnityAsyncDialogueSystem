@@ -69,6 +69,7 @@ namespace Celezt.DialogueSystem
 
         [SerializeField]
         private List<SerializableDictionary<string, ActionPlayableSettings>> _actionOverrideSettings = new List<SerializableDictionary<string, ActionPlayableSettings>>();
+
         [SerializeField, HideInInspector]
         private GameObject _object;
         [SerializeField, HideInInspector]
