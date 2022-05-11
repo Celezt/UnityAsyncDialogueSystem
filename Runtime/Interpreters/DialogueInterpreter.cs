@@ -52,12 +52,26 @@ namespace Celezt.DialogueSystem
             _dialogueClip.start = start;
             _dialogueClip.duration = duration;
 
+            //
+            //  Call vertical output nodes.
+            //
+            if (currentNode.Outputs.TryGetValue(-2, out DSPort verticalOutPort))
+            {
+                foreach (DSEdge edge in verticalOutPort.Connections)
+                {
+                    if (edge.Input.Node.TryGetInterpreter(out var interpreter))
+                    {
+                        interpreter.OnInterpret(system);
+                        interpreter.OnNext(system);
+                    }
+                }
+            }
 
             //
             // Create choice actions.
             //
             _actionClips = new List<TimelineClip>();
-            int index = 0;  // Input index.
+            int index = 1;  // Input index. Index 0 is "Connections".
             foreach (string choiceText in choiceTexts)
             {
                 var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
@@ -66,15 +80,10 @@ namespace Celezt.DialogueSystem
 
                 clip.start = start;
                 clip.duration = duration;
-
-                asset.ButtonReference.exposedName = Guid.NewGuid().ToString();
-                system.Director.SetReferenceValue(asset.ButtonReference.exposedName, system.Buttons[index]);
                 asset.Text = choiceText;
+                asset.System = system;
 
-                if (system.ActionOverrideSettings.Count >= index)
-                    asset.Settings = system.ActionOverrideSettings[index];
-
-                if (currentNode.Inputs.TryGetValue(index + 1, out DSPort conditionInputPort))   // Index 0 is "Connections".
+                if (currentNode.Inputs.TryGetValue(index, out DSPort conditionInputPort))   
                 {
                     DSNode conditionNode = conditionInputPort.Connections.First().Output.Node;
 

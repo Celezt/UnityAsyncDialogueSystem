@@ -63,6 +63,12 @@ namespace Celezt.DialogueSystem
         {
             interpreter = null;
 
+            if (IsInstanced)
+            {
+                interpreter = (AssetInterpreter)_instance;
+                return true;
+            }
+
             if (!IsInterpreter)
                 return false;
 

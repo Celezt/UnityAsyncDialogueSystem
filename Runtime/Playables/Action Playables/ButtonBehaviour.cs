@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
 {
     public class ButtonBehaviour : DSPlayableBehaviour
     {
-        private Button _button;
+        private ButtonBinder _button;
         private CanvasGroup _canvasGroup;
         private TextMeshProUGUI _textMesh;
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
@@ -100,6 +100,8 @@ namespace Celezt.DialogueSystem
         {
             ButtonAsset asset = Asset as ButtonAsset;
 
+            BindButton();
+
             if (_button != null)
             {
                 _canvasGroup.interactable = true;
@@ -116,6 +118,7 @@ namespace Celezt.DialogueSystem
         public override void ExitClip(Playable playable, FrameData info, DialogueSystemBinder binder)
         {
             Hide();
+            BindButton();
         }
 
         private void ProcessVisibility()
@@ -147,6 +150,33 @@ namespace Celezt.DialogueSystem
                 else
                 {
                     _canvasGroup.alpha = 1; // Default variant.
+                }
+            }
+        }
+
+        private void BindButton()
+        {
+            ButtonAsset asset = Asset as ButtonAsset;
+
+            if (!_isActive.Value)
+                return;
+
+            if (asset.System != null)
+            {
+                if (_button?.Released(asset) ?? false)
+                    return;
+
+                ButtonBinder oldButton = _button;  
+                _button = asset.System.BorrowFirstOrDefaultButton(asset);
+
+                if (_button != null && _button != oldButton)
+                {
+                    asset.ButtonReference.exposedName = Guid.NewGuid().ToString();
+                    Director.SetReferenceValue(asset.ButtonReference.exposedName, _button);
+                    asset.Settings = asset.System.GetActionSettings(_button);
+
+                    _canvasGroup = _button.GetComponentInChildren<CanvasGroup>();
+                    _textMesh = _button.GetComponentInChildren<TextMeshProUGUI>();
                 }
             }
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
@@ -64,7 +65,6 @@ namespace Celezt.DialogueSystem
         }
 
         public Dialogue CurrentDialogue => _currentDialogue;
-        public List<Button> Buttons => _buttons;
         public List<ActionPlayableSettings> ActionOverrideSettings => _actionOverrideSettings;
 
 
@@ -76,8 +76,6 @@ namespace Celezt.DialogueSystem
         [SerializeField]
         private List<ActionPlayableSettings> _actionOverrideSettings = new List<ActionPlayableSettings>();
         [SerializeField, HideInInspector]
-        private List<Button> _buttons = new List<Button>();
-        [SerializeField, HideInInspector]
         private GameObject _object;
         [SerializeField, HideInInspector]
         private PlayableDirector _director;
@@ -87,6 +85,37 @@ namespace Celezt.DialogueSystem
         private Dialogue _currentDialogue;
         [SerializeField, HideInInspector]
         private string _currentInputID;
+
+        private HashSet<ButtonBinder> _buttons = new HashSet<ButtonBinder>();
+
+        public bool AddButtonRange(IEnumerable<ButtonBinder> buttons)
+        {
+            bool isAnyExisting = false;
+            foreach (var button in buttons)
+                isAnyExisting |= !AddButton(button);
+
+            return isAnyExisting;
+        }
+
+        public bool AddButton(ButtonBinder button)
+        {
+            return _buttons.Add(button);
+        }
+
+        public ButtonBinder BorrowFirstOrDefaultButton(UnityEngine.Object owner) 
+        {
+            return _buttons.FirstOrDefault(x => x.Borrow(owner));
+        }
+
+        public ActionPlayableSettings GetActionSettings(ButtonBinder button)
+        {
+            int index = _buttons.IndexOf(button);
+
+            if (index != -1 && _actionOverrideSettings.Count > index)
+                return _actionOverrideSettings[index];
+
+            return null;
+        }
 
         /// <summary>
         /// Instatiates a Playable using the provided PlayableAsset and starts playback.

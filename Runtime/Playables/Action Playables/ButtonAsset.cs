@@ -9,7 +9,9 @@ namespace Celezt.DialogueSystem
 {
     public class ButtonAsset : ActionAsset
     {
-        public ExposedReference<Button> ButtonReference;
+        [HideInInspector]
+        public DialogueSystem System;
+        public ExposedReference<ButtonBinder> ButtonReference;
         public string Text;
         public AssetProcessor Condition;
         public ActionPlayableSettings Settings;

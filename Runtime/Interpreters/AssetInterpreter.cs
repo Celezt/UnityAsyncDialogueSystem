@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,8 @@ namespace Celezt.DialogueSystem
     /// </summary>
     public abstract class AssetInterpreter : IDSAsset
     {
+        public DSNode Node => _node;
+
         internal DSNode _node;
 
         protected abstract void OnInterpret(DSNode currentNode, IReadOnlyList<DSNode> previousNodes, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline);
@@ -19,12 +22,12 @@ namespace Celezt.DialogueSystem
         public void OnInterpret(DialogueSystem system)
         {
             system._previousNodes.Add(_node);
-            OnInterpret(_node, system._previousNodes, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
+            OnInterpret(_node, system._previousNodes.GetRange(0, system._previousNodes.Count - 1), system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
 
         public void OnNext(DialogueSystem system)
         {
-            OnNext(_node, system._previousNodes, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
+            OnNext(_node, system._previousNodes.GetRange(0, system._previousNodes.Count - 1), system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
     }
 }
