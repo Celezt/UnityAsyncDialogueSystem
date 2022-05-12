@@ -31,10 +31,59 @@ namespace Celezt.DialogueSystem
         /// <exception cref="NullReferenceException"></exception>
         public static DSGraph CreateDSGraph(ReadOnlySpan<char> content)
         {
-            Dictionary<Guid, DSNode> _assets = new Dictionary<Guid, DSNode>();
-            Dictionary<string, DSNode> _inputs = new Dictionary<string, DSNode>();
+            Dictionary<Guid, (string name, object value)> properties = new Dictionary<Guid, (string name, object value)>();
+            Dictionary<Guid, DSNode> nodes = new Dictionary<Guid, DSNode>();
+            Dictionary<string, List<DSNode>> propertyNodes = new Dictionary<string, List<DSNode>>();
+            Dictionary<string, DSNode> inputNodes = new Dictionary<string, DSNode>();
 
             GraphSerialized graphData = DeserializeJSONContent(content);
+
+            //
+            // Properties
+            //
+            if (graphData.Properties != null)
+            {
+                for (int i = 0; i < graphData.Properties.Count; i++)
+                {
+                    JObject obj = graphData.Properties[i] as JObject;
+
+                    Guid id = Guid.Empty;
+                    {
+                        if (obj.TryGetValue("ID", out JToken token))
+                        {
+                            string guidString = token.ToObject<string>();
+                            if (!Guid.TryParseExact(guidString, "N", out id))
+                                throw new DeserializeExpection("Unable to parse Guid: " + guidString);
+                        }
+
+                        if (id == Guid.Empty)
+                            throw new DeserializeExpection("Unable to find blackboard property \"ID\"");
+                    }
+
+                    Type valueType = null;
+                    {
+                        if (obj.TryGetValue("Type", out JToken token))
+                            valueType = Type.GetType(token.ToObject<string>());
+
+                        if (valueType == null)
+                            throw new DeserializeExpection("Unable to find blackboard property \"Type\"");
+                    }
+
+                    string name = null;
+                    {
+                        if (obj.TryGetValue("Name", out JToken token))
+                            name = token.ToObject<string>();
+                    }
+
+                    object value = null;
+                    {
+                        if (obj.TryGetValue("Value", out JToken token))
+                            value = token.ToObject(valueType);
+                    }
+
+                    properties.Add(id, (name, value));
+                }
+            }
 
             //
             // Nodes.
@@ -65,15 +114,37 @@ namespace Celezt.DialogueSystem
 
                         DSNode node = new DSNode(assetType, specialValues);
 
+                        if (assetType == typeof(ValueProcessor))
+                        {
+                            // if exposed property.
+                            if (specialValues.TryGetValue("_propertyID", out object obj))
+                            {
+                                if (Guid.TryParseExact(obj as string, "N", out Guid propertyID))
+                                {
+                                    if (properties.TryGetValue(propertyID, out var property))
+                                    {
+                                        specialValues.Remove("_propertyID");
+                                        specialValues.Add("_name", property.name);
+                                        specialValues.Add("_value", property.value);
+
+                                        if (!propertyNodes.ContainsKey(property.name))
+                                            propertyNodes[property.name] = new List<DSNode>();
+
+                                        propertyNodes[property.name].Add(node);
+                                    }
+                                }
+                            }
+                        }
+
                         if (assetType == typeof(InputInterpreter))                                      // Find all inputs.
                         {
                             if (specialData.TryGetValue("_id", out JToken token))
-                                _inputs.Add(token.ToObject<string>(), node);
+                                inputNodes.Add(token.ToObject<string>(), node);
                             else
                                 throw new DeserializeExpection("\"_id\" not found.");
                         }
 
-                        _assets.Add(id, node);
+                        nodes.Add(id, node);
                     }
                 }
                 else
@@ -95,10 +166,10 @@ namespace Celezt.DialogueSystem
                 if (!Guid.TryParseExact(inData.NodeID, "N", out Guid inID))
                     throw new Exception(inData.NodeID + " is invalid GUID");
 
-                if (!_assets.TryGetValue(outID, out DSNode outNode))
+                if (!nodes.TryGetValue(outID, out DSNode outNode))
                     throw new Exception(outID + " was not found");
 
-                if (!_assets.TryGetValue(inID, out DSNode inNode))
+                if (!nodes.TryGetValue(inID, out DSNode inNode))
                     throw new Exception(inID + " was not found");
 
                 DSPort outPort = outNode.InsertPort(outData.PortNumber, DSPort.Direction.Output);
@@ -107,7 +178,18 @@ namespace Celezt.DialogueSystem
                 outPort.ConnectTo(inPort);
             }
 
-            return new DSGraph(_inputs);
+            Dictionary<string, object> simlipfiedProperties = new Dictionary<string, object>();
+            foreach (var property in properties.Values)
+                simlipfiedProperties.Add(property.name, property.value);
+
+            DSGraph graph = new DSGraph()
+            {
+                _inputNodes = inputNodes,
+                _properties = simlipfiedProperties,
+                _propertyNodes = propertyNodes,
+            };
+
+            return graph;
         }
 
         /// <summary>

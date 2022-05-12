@@ -25,12 +25,12 @@ namespace Celezt.DialogueSystem
         public void OnInterpret(DialogueSystem system, DSNode currentNode)
         {
             _previousNode = currentNode;
-            OnInterpret(_node, currentNode, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
+            OnInterpret(_node, currentNode, system.Dialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
 
         public void OnNext(DialogueSystem system)
         {
-            OnNext(_node, _previousNode, system.CurrentDialogue, system, (TimelineAsset)system.Director.playableAsset);
+            OnNext(_node, _previousNode, system.Dialogue, system, (TimelineAsset)system.Director.playableAsset);
         }
 
         public static implicit operator DSNode(AssetInterpreter interpreter) => interpreter.Node;

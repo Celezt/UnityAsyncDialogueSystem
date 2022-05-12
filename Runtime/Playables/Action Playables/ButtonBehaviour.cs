@@ -12,29 +12,29 @@ namespace Celezt.DialogueSystem
 {
     public class ButtonBehaviour : DSPlayableBehaviour
     {
-        private ButtonBinder _buttonBinder;
-        private CanvasGroup _canvasGroup;
-        private TextMeshProUGUI _textMesh;
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
 
         [SerializeField, HideInInspector]
         private Ref<bool> _isActive = new Ref<bool>();
+        private Ref<ButtonBinder> _buttonBinder = new Ref<ButtonBinder>();
+        private Ref<CanvasGroup> _canvasGroup = new Ref<CanvasGroup>();
+        private Ref<TextMeshProUGUI> _textMesh = new Ref<TextMeshProUGUI>();
 
         public void Hide()
         {
-            if (_buttonBinder != null)
+            if (_buttonBinder.Value != null)
             {
-                _canvasGroup.alpha = 0;
-                _canvasGroup.interactable = false;
+                _canvasGroup.Value.alpha = 0;
+                _canvasGroup.Value.interactable = false;
             }
         }
 
         public void Show()
         {
-            if (_buttonBinder != null)
+            if (_buttonBinder.Value != null)
             {
                 ProcessVisibility();
-                _canvasGroup.interactable = true;
+                _canvasGroup.Value.interactable = true;
             }
         }
 
@@ -72,12 +72,12 @@ namespace Celezt.DialogueSystem
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
             ButtonAsset asset = Asset as ButtonAsset;
-            _buttonBinder = asset.ButtonReference.Resolve(graph.GetResolver());
+            _buttonBinder.Value = asset.ButtonReference.Resolve(graph.GetResolver());
 
-            if (_buttonBinder != null)
+            if (_buttonBinder.Value != null)
             {
-                _canvasGroup = _buttonBinder.GetComponentInChildren<CanvasGroup>();
-                _textMesh = _buttonBinder.GetComponentInChildren<TextMeshProUGUI>();
+                _canvasGroup.Value = _buttonBinder.Value.GetComponentInChildren<CanvasGroup>();
+                _textMesh.Value = _buttonBinder.Value.GetComponentInChildren<TextMeshProUGUI>();
             }
 
             if (!string.IsNullOrWhiteSpace(asset.Text))
@@ -102,11 +102,11 @@ namespace Celezt.DialogueSystem
 
             BindButton();
 
-            if (_buttonBinder != null)
+            if (_buttonBinder.Value != null)
             {
-                _canvasGroup.interactable = true;
-                if (_textMesh != null)
-                    _textMesh.text = asset.Text;
+                _canvasGroup.Value.interactable = true;
+                if (_textMesh.Value != null)
+                    _textMesh.Value.text = asset.Text;
             }
         }
 
@@ -127,14 +127,14 @@ namespace Celezt.DialogueSystem
 
             Hide();
 
-            _buttonBinder?.Released(asset);
+            _buttonBinder.Value?.Released(asset);
         }
 
         private void ProcessVisibility()
         {
             ButtonAsset asset = Asset as ButtonAsset;
 
-            if (_buttonBinder != null && _isActive.Value)
+            if (_buttonBinder.Value != null && _isActive.Value)
             {
                 if (asset.Settings != null)
                 {
@@ -145,20 +145,20 @@ namespace Celezt.DialogueSystem
                     double endTimeLength = asset.Settings.EndTimeOffset;
 
                     if (time <= startTime + startTimeLength)
-                        _canvasGroup.alpha = asset.Settings.StartFade.Evaluate((float)(time - startTime));
+                        _canvasGroup.Value.alpha = asset.Settings.StartFade.Evaluate((float)(time - startTime));
                     else if (time > endTime - endTimeLength)
-                        _canvasGroup.alpha = asset.Settings.EndFade.Evaluate((float)(time - endTime + endTimeLength));
+                        _canvasGroup.Value.alpha = asset.Settings.EndFade.Evaluate((float)(time - endTime + endTimeLength));
                     else
                     {
                         _blendCurve.MoveKey(0, new Keyframe(0, asset.Settings.StartFade.length > 0 ? asset.Settings.StartFade.keys.Last().value : 1));
                         _blendCurve.MoveKey(1, new Keyframe(1, asset.Settings.EndFade.length > 0 ? asset.Settings.EndFade.keys.First().value : 1));
                         // Blend the first and last point in start and end curve.
-                        _canvasGroup.alpha = _blendCurve.Evaluate(Mathf.Clamp01((float)((time - startTime - startTimeLength) / (endTime - startTime - endTimeLength))));
+                        _canvasGroup.Value.alpha = _blendCurve.Evaluate(Mathf.Clamp01((float)((time - startTime - startTimeLength) / (endTime - startTime - endTimeLength))));
                     }
                 }
                 else
                 {
-                    _canvasGroup.alpha = 1; // Default variant.
+                    _canvasGroup.Value.alpha = 1; // Default variant.
                 }
             }
         }
@@ -172,23 +172,23 @@ namespace Celezt.DialogueSystem
 
             if (asset.System != null)
             {
-                if (_buttonBinder?.Released(asset) ?? false)
+                if (_buttonBinder.Value?.Released(asset) ?? false)
                     return;
 
                 ButtonBinder oldButton = _buttonBinder;  
-                _buttonBinder = asset.System.BorrowFirstOrDefaultButton(asset);
+                _buttonBinder.Value = asset.System.Buttons.FirstOrDefault(x => x.Borrow(asset));
 
-                if (_buttonBinder != null && _buttonBinder != oldButton)
+                if (_buttonBinder.Value != null && _buttonBinder.Value != oldButton)
                 {
                     asset.ButtonReference.exposedName = Guid.NewGuid().ToString();
                     Director.SetReferenceValue(asset.ButtonReference.exposedName, _buttonBinder);
                     asset.Settings = asset.System.GetActionSettings(_buttonBinder, asset.OverrideSettingName);
 
                     if (asset.OnClick != null)
-                        _buttonBinder.Button.onClick.AddListener(asset.OnClick);
+                        _buttonBinder.Value.Button.onClick.AddListener(asset.OnClick);
 
-                    _canvasGroup = _buttonBinder.GetComponentInChildren<CanvasGroup>();
-                    _textMesh = _buttonBinder.GetComponentInChildren<TextMeshProUGUI>();
+                    _canvasGroup.Value = _buttonBinder.Value.GetComponentInChildren<CanvasGroup>();
+                    _textMesh.Value = _buttonBinder.Value.GetComponentInChildren<TextMeshProUGUI>();
                 }
             }
         }

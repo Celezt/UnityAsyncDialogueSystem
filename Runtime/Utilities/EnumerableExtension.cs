@@ -16,5 +16,14 @@ namespace Celezt.DialogueSystem
                 .FirstOrDefault(x => comparer.Equals(x.a, value));
             return found == null ? -1 : found.i;
         }
+
+        public static bool AddRange<T>(this HashSet<T> obj, IEnumerable<T> elements)
+        {
+            bool isAnyExisting = false;
+            foreach (var element in elements)
+                isAnyExisting |= !obj.Add(element);
+
+            return isAnyExisting;
+        }
     }
 }

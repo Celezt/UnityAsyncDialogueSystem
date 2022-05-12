@@ -64,43 +64,21 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public Dialogue CurrentDialogue => _currentDialogue;
+        public IReadOnlyDictionary<string, ExposedProperty> ExposedProperties => _exposedProperties;
+        public HashSet<ButtonBinder> Buttons => _buttons;
+        public Dialogue Dialogue => _dialogue;
         public List<SerializableDictionary<string, ActionPlayableSettings>> ActionOverrideSettings => _actionOverrideSettings;
 
-        [SerializeField]
-        private List<SerializableDictionary<string, ActionPlayableSettings>> _actionOverrideSettings = new List<SerializableDictionary<string, ActionPlayableSettings>>();
+        [SerializeField] private List<SerializableDictionary<string, ActionPlayableSettings>> _actionOverrideSettings = new();
 
-        [SerializeField, HideInInspector]
-        private GameObject _object;
-        [SerializeField, HideInInspector]
-        private PlayableDirector _director;
-        [SerializeField, HideInInspector]
-        private DialogueSystemBinder _binder;
-        [SerializeField, HideInInspector]
-        private Dialogue _currentDialogue;
-        [SerializeField, HideInInspector]
-        private string _currentInputID;
+        [SerializeField, HideInInspector] private GameObject _object;
+        [SerializeField, HideInInspector] private PlayableDirector _director;
+        [SerializeField, HideInInspector] private DialogueSystemBinder _binder;
+        [SerializeField, HideInInspector] private Dialogue _dialogue;
+        [SerializeField, HideInInspector] private string _currentInputID;
 
         private HashSet<ButtonBinder> _buttons = new HashSet<ButtonBinder>();
-
-        public bool AddButtonRange(IEnumerable<ButtonBinder> buttons)
-        {
-            bool isAnyExisting = false;
-            foreach (var button in buttons)
-                isAnyExisting |= !AddButton(button);
-
-            return isAnyExisting;
-        }
-
-        public bool AddButton(ButtonBinder button)
-        {
-            return _buttons.Add(button);
-        }
-
-        public ButtonBinder BorrowFirstOrDefaultButton(UnityEngine.Object owner) 
-        {
-            return _buttons.FirstOrDefault(x => x.Borrow(owner));
-        }
+        private Dictionary<string, ExposedProperty> _exposedProperties;
 
         public ActionPlayableSettings GetActionSettings(ButtonBinder button, string name)
         {
@@ -173,9 +151,34 @@ namespace Celezt.DialogueSystem
 
         public TimelineAsset CreateDialogue(Dialogue dialogue, string inputID)
         {
-            _currentDialogue = dialogue;
+            _dialogue = dialogue;
 
             TimelineAsset timeline = DSUtility.CreateDialogue(this, dialogue, inputID);
+
+            // Set exposed properties.
+            {
+                _exposedProperties = new Dictionary<string, ExposedProperty>();
+                foreach (var (name, value) in dialogue.Graph.Properties)
+                {
+                    var exposedProperty = new ExposedProperty(name, value);
+
+                    if (!dialogue.Graph.PropertyNodes.TryGetValue(name, out List<DSNode> nodesOfProperty))
+                        continue;
+
+                    exposedProperty.OnValueChanged += callback =>
+                    {
+                        foreach (var node in nodesOfProperty)
+                        {
+                            if (node.Instance is ValueProcessor processor)
+                            {
+                                processor.Value = callback.newValue;
+                            }
+                        }
+                    };
+
+                    _exposedProperties.Add(name, exposedProperty);
+                }
+            }
 
             return timeline;
         }

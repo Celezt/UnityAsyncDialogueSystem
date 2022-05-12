@@ -8,12 +8,16 @@ namespace Celezt.DialogueSystem
     public class DSGraph
     {
         public IReadOnlyDictionary<string, DSNode> InputNodes => _inputNodes;
+        public IReadOnlyDictionary<string, List<DSNode>> PropertyNodes => _propertyNodes;
+        public IReadOnlyDictionary<string, object> Properties => _properties;
 
-        private Dictionary<string, DSNode> _inputNodes;
+        internal Dictionary<string, DSNode> _inputNodes;
+        internal Dictionary<string, List<DSNode>> _propertyNodes;
+        internal Dictionary<string, object> _properties;
 
-        public DSGraph(Dictionary<string, DSNode> inputNodes)
+        public DSGraph()
         {
-            _inputNodes = inputNodes;
+
         }
 
         public DSNode GetInputNode(string id)
