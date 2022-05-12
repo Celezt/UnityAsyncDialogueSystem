@@ -73,7 +73,7 @@ namespace Celezt.DialogueSystem.Editor
 
         public DGNode CopyNode(DGNode toCopy, Vector2 position)
         {
-            var node = CreateNode(toCopy.GetType(), position, Guid.NewGuid(), JsonUtility.GetFields(toCopy));
+            var node = CreateNode(toCopy.GetType(), position, Guid.NewGuid(), JsonUtility.GetFields(toCopy), toCopy.userData);
 
             return node;
         }
