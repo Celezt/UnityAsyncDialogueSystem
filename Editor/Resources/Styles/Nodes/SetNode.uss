@@ -1,0 +1,7 @@
+#node-border {
+	min-width: 150px;
+}
+
+DropdownField {
+	max-width: 100px;
+}

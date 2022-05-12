@@ -15,7 +15,10 @@ namespace Celezt.DialogueSystem.Editor
     {
         public IReadOnlyList<IBlackboardProperty> Properties => _properties;
         public IReadOnlyList<Type> PropertyTypes => _propertyTypes;
+        public IReadOnlyDictionary<string, IBlackboardProperty> PropertyNames => _propertyNames;
         public int TypeCount => _propertyTypes.Count;
+
+        public event EventCallback<ChangeEvent<string>> OnPropertyNameChange = delegate { };
 
         new internal DGView graphView => _graphView;
 
@@ -29,6 +32,7 @@ namespace Celezt.DialogueSystem.Editor
         private List<string> _valueTypeCustomName = new List<string>();
         private Dictionary<Guid, BlackboardRow> _propertyRows = new Dictionary<Guid, BlackboardRow>();
         private Dictionary<string, IBlackboardProperty> _propertyNames = new Dictionary<string, IBlackboardProperty>();
+
 
         private BlackboardSection _section;
 
@@ -123,8 +127,11 @@ namespace Celezt.DialogueSystem.Editor
                 int duplicateIndex = 0;
                 while (_propertyNames.ContainsKey(newPropertyName))
                     newPropertyName = $"{property.Name} {++duplicateIndex}";
+
                 property.Name = newPropertyName;
             }
+
+            OnPropertyNameChange.Invoke(ChangeEvent<string>.GetPooled("", property.Name));
 
             _propertyNames.Add(property.Name, property);
             _properties.Add(property);
@@ -204,7 +211,9 @@ namespace Celezt.DialogueSystem.Editor
                 IBlackboardProperty property = _propertyNames[oldPropertyName];
                 property.Name = newPropertyName;
                 field.text = newPropertyName;
-                
+
+                OnPropertyNameChange.Invoke(ChangeEvent<string>.GetPooled(oldPropertyName, newPropertyName));
+
                 _propertyNames.Remove(oldPropertyName);
                 _propertyNames.Add(newPropertyName, property);
                 
@@ -263,6 +272,7 @@ namespace Celezt.DialogueSystem.Editor
                     _propertyRows.Remove(property.ID);
                     _properties.Remove(property);
                     _propertyNames.Remove(property.Name);
+                    OnPropertyNameChange.Invoke(ChangeEvent<string>.GetPooled(property.Name, ""));
 
                     if (_properties.Count == 0) // No longer scrollable if no properties exist.
                         scrollable = false;

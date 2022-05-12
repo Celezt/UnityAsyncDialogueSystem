@@ -26,15 +26,6 @@ namespace Celezt.DialogueSystem
 
         protected override void OnInterpret(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
-            DSNode nextNode = null;
-            if (currentNode.Outputs.TryGetValue(0, out DSPort port))
-            {
-                nextNode = port.Connections.First().Input.Node;
-            }
-
-            if (nextNode == null)
-                return;
-
             _availableDialogueTracks = new List<SnappedTrack>();
             _availableActionTracks = new List<SnappedTrack>();
             foreach (var track in timeline.GetOutputTracks())
@@ -46,13 +37,28 @@ namespace Celezt.DialogueSystem
                     _availableActionTracks.Add(new SnappedTrack { Track = track, End = track.end });
             }
 
-            if (nextNode.TryGetInterpreter(out var interpreter))
+            DSNode node = currentNode;
+            while (true)
             {
-                if (interpreter is DialogueInterpreter dialogueInterpreter)
+                DSNode nextNode = null;
+                if (node.Outputs.TryGetValue(0, out DSPort port))
                 {
-                    _interpreter = dialogueInterpreter;
-                    _interpreter.OnInterpret(system, this);
+                    nextNode = port.Connections.First().Input.Node;
                 }
+
+                if (nextNode == null)
+                    break;
+                
+                if (nextNode.TryGetInterpreter(out var interpreter))
+                {
+                    if (interpreter is DialogueInterpreter dialogueInterpreter)
+                    {
+                        _interpreter = dialogueInterpreter;
+                        _interpreter.OnInterpret(system, this);
+                    }
+                }
+
+                node = nextNode;
             }
 
             foreach (var track in timeline.GetOutputTracks())

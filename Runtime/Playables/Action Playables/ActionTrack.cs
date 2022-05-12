@@ -29,12 +29,12 @@ namespace Celezt.DialogueSystem
             if (_director == null)
                 _director = graph.GetResolver() as PlayableDirector;
 
-            if (_director.GetGenericBinding(this) is ActionReceiver reciver)
-                _receiver = reciver;
-            else if (_director.TryGetComponent(out reciver))
+            if (_director.GetGenericBinding(this) is ActionReceiver receiver)
+                _receiver = receiver;
+            else if (_director.TryGetComponent(out receiver))
             {
-                _director.SetGenericBinding(this, reciver);
-                _receiver = reciver;
+                _director.SetGenericBinding(this, receiver);
+                _receiver = receiver;
             }
             else
             {

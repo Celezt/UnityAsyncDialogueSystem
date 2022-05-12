@@ -303,6 +303,17 @@ namespace Celezt.DialogueSystem
         }
 
         /// <summary>
+        /// Find track or create new track of that type.
+        /// </summary>
+        /// <typeparam name="T">Track type.</typeparam>
+        /// /// <param name="timeline">Find in timeline.</param>
+        /// <returns>The available track or new track</returns>
+        public static T? FindOrCreate<T>(this TimelineAsset timeline) where T : TrackAsset, new()
+        {
+            return timeline.GetOutputTracks().OfType<T>().FirstOrDefault() ?? timeline.CreateTrack<T>();
+        }
+
+        /// <summary>
         /// Find the index.
         /// </summary>
         /// <param name="timeline">Find in timeline.</param>

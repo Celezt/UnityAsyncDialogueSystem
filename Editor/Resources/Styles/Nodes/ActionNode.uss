@@ -3,6 +3,7 @@
 #node-border {
 	background-color: var(--dg-color-dark);
 	min-width: 220px;
+	max-width:300px;
 }
 
 #output > .port.output {
