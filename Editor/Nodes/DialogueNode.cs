@@ -63,7 +63,7 @@ namespace Celezt.DialogueSystem.Editor
             };
             actorIDTextField.RegisterValueChangedCallback(callback =>
             {
-                _actorID = (callback.target as TextField).value;
+                _actorID = (callback.target as TextField).value.Trim();
                 hasUnsavedChanges = true;
             });
 
