@@ -55,6 +55,7 @@ namespace Celezt.DialogueSystem
                     {
                         _interpreter = dialogueInterpreter;
                         _interpreter.OnInterpret(system, this);
+                        break;
                     }
                 }
 
