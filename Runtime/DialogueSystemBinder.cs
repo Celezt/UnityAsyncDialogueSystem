@@ -12,10 +12,6 @@ namespace Celezt.DialogueSystem
     [DisallowMultipleComponent]
     public class DialogueSystemBinder : MonoBehaviour
     {
-        public bool IsProcessing => _dialogueTracks.Any(x => x.Mixer.IsProcessing);
-        public IReadOnlyList<DialogueTrack> DialogueTracks => _dialogueTracks;
-        public int TrackCount => _dialogueTracks.Count;
-
         public PlayableDirector Director
         {
             get => _director;
@@ -27,30 +23,21 @@ namespace Celezt.DialogueSystem
         public UnityEvent<Callback> OnProcessDialogueClip = new UnityEvent<Callback>();
         public UnityEvent OnDeleteTimeline = new UnityEvent();
 
-        private List<DialogueTrack> _dialogueTracks = new List<DialogueTrack>();
         private Dictionary<DSTrack, TrackProperties> _trackProperties = new Dictionary<DSTrack, TrackProperties>();
 
         private PlayableDirector _director;
 
         internal DialogueSystemBinder Add(DialogueTrack track)
         {
-            if (_dialogueTracks.Contains(track))
-                return this;
-
-            _dialogueTracks.Add(track);
-
-            _trackProperties[track] = new TrackProperties();
+            if (!_trackProperties.ContainsKey(track))
+                _trackProperties[track] = new TrackProperties();
 
             return this;
         }
 
         internal bool Remove(DialogueTrack track)
         {
-            _dialogueTracks.Remove(track);
-
-            _trackProperties.Remove(track);
-
-            return true;
+            return _trackProperties.Remove(track);
         }
 
         [Serializable]
