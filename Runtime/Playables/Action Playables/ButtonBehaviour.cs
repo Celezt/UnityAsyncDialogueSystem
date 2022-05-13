@@ -31,10 +31,17 @@ namespace Celezt.DialogueSystem
 
         public void Show()
         {
+            ButtonAsset asset = Asset as ButtonAsset;
+
+            if (_buttonBinder.Value == null)
+                BindButton();
+
             if (_buttonBinder.Value != null)
             {
                 ProcessVisibility();
                 _canvasGroup.Value.interactable = true;
+                if (_textMesh.Value != null)
+                    _textMesh.Value.text = asset.Text;
             }
         }
 
