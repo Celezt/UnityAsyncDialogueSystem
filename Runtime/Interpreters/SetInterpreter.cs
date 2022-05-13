@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Timeline;
 using UnityEngine.Events;
+using System;
 
 namespace Celezt.DialogueSystem
 {
@@ -37,14 +38,75 @@ namespace Celezt.DialogueSystem
             UnityEvent newEvent = new UnityEvent();
             newEvent.AddListener(() =>
             {
-                if (system.ExposedProperties.TryGetValue((string)currentNode.Values["_propertyName"], out ExposedProperty property))
+                string propertyName = (string)currentNode.Values["_propertyName"];
+                string assignOption = (string)currentNode.Values["_assignOption"];
+                if (propertyName != "None")
                 {
-                    if (currentNode.Inputs.TryGetValue(1, out DSPort setInputPort))
+                    if (system.ExposedProperties.TryGetValue(propertyName, out ExposedProperty property))
                     {
-                        DSNode setNode = setInputPort.Connections.First().Output.Node;
-                        if (setNode.TryGetAllProcessors(out var processors))
+                        if (currentNode.Inputs.TryGetValue(1, out DSPort setInputPort))
                         {
-                            property.Value = processors.First().GetValue(0);
+                            DSNode setNode = setInputPort.Connections.First().Output.Node;
+                            if (setNode.TryGetAllProcessors(out var processors))
+                            {
+                                object value = processors.First().GetValue(0);
+                                switch (assignOption)
+                                {
+                                    case "Assign":
+                                        property.Value = value;
+                                        break;
+                                    case "PlusAssign":
+                                        try
+                                        {
+                                            property.Value =  Convert.ToSingle(property.Value) + Convert.ToSingle(value);
+                                        }
+                                        catch(Exception e)
+                                        {
+                                            Debug.LogError(e.Message);
+                                        }
+                                        break;
+                                    case "MinusAssign":
+                                        try
+                                        {
+                                            property.Value = Convert.ToSingle(property.Value) - Convert.ToSingle(value);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Debug.LogError(e.Message);
+                                        }
+                                        break;
+                                    case "MultiplyAssign":
+                                        try
+                                        {
+                                            property.Value = Convert.ToSingle(property.Value) * Convert.ToSingle(value);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Debug.LogError(e.Message);
+                                        }
+                                        break;
+                                    case "DivideAssign":
+                                        try
+                                        {
+                                            property.Value = Convert.ToSingle(property.Value) / Convert.ToSingle(value);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Debug.LogError(e.Message);
+                                        }
+                                        break;
+                                    case "ModAssign":
+                                        try
+                                        {
+                                            property.Value = Convert.ToSingle(property.Value) % Convert.ToSingle(value);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Debug.LogError(e.Message);
+                                        }
+                                        break;
+                                }
+                            }
                         }
                     }
                 }

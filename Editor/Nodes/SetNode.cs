@@ -16,13 +16,43 @@ namespace Celezt.DialogueSystem.Editor
     {
         [SerializeField]
         private string _propertyName = "None";
+        [SerializeField]
+        private string _assignOption = "Assign";
 
         protected override void Awake()
         {
             this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/SetNode");
 
             Port inputFlowPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(FlowPortType));
-            inputFlowPort.portName = "In";
+
+            List<string> setOption = new List<string>()
+            {
+                "Assign",
+                "PlusAssign",
+                "MinusAssign",
+                "MultiplyAssign",
+                "DivideAssign",
+                "ModAssign",
+            };
+            List<string> setNames = new List<string>()
+            {
+                "=",
+                "+=",
+                "-=",
+                "*=",
+                "/=",
+                "%=",
+            };
+
+            DropdownField assignmentField = new DropdownField(setOption, _assignOption, 
+            callback =>
+            {
+                _assignOption = callback;
+                hasUnsavedChanges = true;
+                return setNames[setOption.IndexOf(callback)];
+            });
+
+            inputFlowPort.Add(assignmentField);
             inputContainer.Add(inputFlowPort);
 
             Port inputSetPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(NumericPortType));
