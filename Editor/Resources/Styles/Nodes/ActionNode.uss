@@ -62,6 +62,7 @@
 
 .text-field__choice > .unity-text-field__input {
 	font-size: 11px;
+	min-width: 60px;
 	-unity-text-align: middle-right;
 	padding-right: 0px;
 	margin-left: 20px;

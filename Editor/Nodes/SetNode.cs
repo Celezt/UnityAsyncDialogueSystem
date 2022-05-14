@@ -55,7 +55,7 @@ namespace Celezt.DialogueSystem.Editor
             inputFlowPort.Add(assignmentField);
             inputContainer.Add(inputFlowPort);
 
-            Port inputSetPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(NumericPortType));
+            Port inputSetPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(NumericPortType));
 
             List<string> names = new List<string>() { "None" };
             names.AddRange(graphView.Blackboard.PropertyNames.Select(x => x.Key));
@@ -103,7 +103,7 @@ namespace Celezt.DialogueSystem.Editor
             inputSetPort.Add(propertyField);
             inputContainer.Add(inputSetPort);
 
-            Port outputFlowPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(FlowPortType));
+            Port outputFlowPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
             outputFlowPort.portName = "Out";
             outputContainer.Add(outputFlowPort);
 
