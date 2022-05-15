@@ -186,8 +186,9 @@ namespace Celezt.DialogueSystem
                     {
                         foreach (var node in nodesOfProperty)
                         {
-                            if (node.Instance is ValueProcessor processor)
+                            if (node.TryGetAllProcessors(out var processors))
                             {
+                                ValueProcessor processor = (ValueProcessor)processors[0];
                                 processor.Value = callback.newValue;
                             }
                         }

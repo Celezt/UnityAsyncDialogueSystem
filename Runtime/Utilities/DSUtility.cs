@@ -255,6 +255,7 @@ namespace Celezt.DialogueSystem
 
             system.Director.RebuildGraph();
             system.Director.Play();
+            system.Director.time = 0;
 
             return timeline;
         }
