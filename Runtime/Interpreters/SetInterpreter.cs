@@ -35,11 +35,12 @@ namespace Celezt.DialogueSystem
             SignalEmitter emitter = signalTrack.CreateMarker<SignalEmitter>(time);
             emitter.asset = ScriptableObject.CreateInstance<SignalAsset>();
 
+            string propertyName = (string)currentNode.Values["_propertyName"];
+            string assignOption = (string)currentNode.Values["_assignOption"];
+
             UnityEvent newEvent = new UnityEvent();
             newEvent.AddListener(() =>
             {
-                string propertyName = (string)currentNode.Values["_propertyName"];
-                string assignOption = (string)currentNode.Values["_assignOption"];
                 if (propertyName != "None")
                 {
                     if (system.ExposedProperties.TryGetValue(propertyName, out ExposedProperty property))

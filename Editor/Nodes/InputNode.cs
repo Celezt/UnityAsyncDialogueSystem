@@ -10,11 +10,11 @@ namespace Celezt.DialogueSystem.Editor
     [CreateNode("Connection/Input", "Input")]
     public class InputNode : DGNode
     {
-        [SerializeField] private string _id = "ID";
+        [SerializeField] private string _id = "default";
 
         protected override void Awake()
         {
-            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/ConnectionNode");
+            this.AddStyleSheet(StyleUtility.STYLE_PATH + "Nodes/InputNode");
 
             //
             // Output Container
@@ -31,9 +31,6 @@ namespace Celezt.DialogueSystem.Editor
                 _id = (callback.target as TextField).value;
                 hasUnsavedChanges = true;
             });
-
-            outputTextField.AddToClassList("dg-text-field__hidden");
-            outputTextField.AddToClassList("dg-text-field__wide");
 
             outputPort.Add(outputTextField);
             outputContainer.Add(outputPort);

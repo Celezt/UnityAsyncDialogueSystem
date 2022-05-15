@@ -79,6 +79,23 @@ namespace Celezt.DialogueSystem
 
         private HashSet<ButtonBinder> _buttons = new HashSet<ButtonBinder>();
         private Dictionary<string, ExposedProperty> _exposedProperties;
+        private Dictionary<string, UnityAction> _markerEvents = new Dictionary<string, UnityAction>();
+
+        public void GetEvent(string signalName, UnityAction action)
+        {
+            if (!_markerEvents.ContainsKey(signalName))
+                _markerEvents.Add(signalName, delegate { });
+
+            _markerEvents[signalName] += action;
+        }
+
+        public void InvokeEvent(string signalName)
+        {
+            if (!_markerEvents.ContainsKey(signalName))
+                _markerEvents.Add(signalName, delegate { });
+
+            _markerEvents[signalName].Invoke();
+        }
 
         public ActionPlayableSettings GetActionSettings(ButtonBinder button, string name)
         {
