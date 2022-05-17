@@ -18,12 +18,12 @@ namespace Celezt.DialogueSystem.Editor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("ButtonReference"));
 
             // Hide if no button is found.
-            object button = GetValue(behaviour, "_button");
-            if (button != null)
+            ExposedReference<ButtonBinder> button = (ExposedReference<ButtonBinder>)GetValue(asset, "ButtonReference");
+            if (button.exposedName != null)
             {
                 // Hide if no text mesh is found.
-                object textMesh = GetValue(behaviour, "_textMesh");
-                if (textMesh != null)
+                dynamic textMesh = GetValue(behaviour, "_textMesh");
+                if (textMesh.Value != null)
                 {
                     EditorGUI.indentLevel++;
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("Text"));
