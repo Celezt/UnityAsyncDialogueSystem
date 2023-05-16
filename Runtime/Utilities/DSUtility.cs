@@ -282,7 +282,7 @@ namespace Celezt.DialogueSystem
         /// <returns>The available track. If not, return null.</returns>
         public static T? FindTrackSpace<T>(IEnumerable<T> tracks, double start, bool reversed = false) where T : TrackAsset, new()
         {
-            return reversed ? tracks.LastOrDefault(x => x.end <= start) : tracks.FirstOrDefault(x => x.end <= start); // Get the first or last instance.
+            return reversed ? tracks.LastOrDefault(x => x.end < start) : tracks.FirstOrDefault(x => x.end < start); // Get the first or last instance.
         }
 
         /// <summary>
