@@ -2,10 +2,18 @@
 
 Unity Asynchronous Dialogue System is a dialogue system for unity that tries to solve non-sequence-based dialogue situations. It allows for multiple activations of dialogues in parallel. It also has support for traditional sequence-based conversations.
 
-It uses [Unity Timeline](https://docs.unity3d.com/Packages/com.unity.timeline@1.8/manual/index.html) and [Unity GraphView API](https://docs.unity3d.com/ScriptReference/Experimental.GraphView.GraphView.html) to display and create dialogues. GraphView is Unity's API for creating custom virtual graphs containing nodes, the successor used in Shader Graph. Unity Asynchronous Dialogue System has a custom file type, '.dialoguegraph', similar to '.shadergraph'; this is assignable as a reference of type 'Dialogue', which contains a constructed graph.
+It uses [Unity Timeline](https://docs.unity3d.com/Packages/com.unity.timeline@1.8/manual/index.html) and [Unity GraphView API](https://docs.unity3d.com/ScriptReference/Experimental.GraphView.GraphView.html) to display and create dialogues. GraphView is Unity's API for creating custom virtual graphs. Unity Asynchronous Dialogue System has a custom file type, '.dialoguegraph', which is under the hood a JSON file; this is assignable as a reference of type 'Dialogue', which contains a runtime graph.
 
-![dialogue window](https://github.com/Celezt/UnityAsyncDialogueSystem/assets/59172226/0a0db00f-d3f5-4214-bb8e-aa2037b165d5)
+![Graph](https://github.com/Celezt/UnityAsyncDialogueSystem/assets/59172226/33773da1-1278-45b6-aa50-b9bbd3b08cc6)
+![Blackboard](https://github.com/Celezt/UnityAsyncDialogueSystem/assets/59172226/66c7cefc-105f-42b7-afe7-6b96bef72797)
 
-'.dialoguegraph' is created from the dialogue window. It has similar properties to Shader Graph and VFX Graph. You build the dialogue using nodes. There are different types of nodes: behaviour, process and connection nodes. 
+'.dialoguegraph' is created from the dialogue window. It has similar features to Shader Graph and VFX Graph. You build the dialogue using nodes. There are different types of nodes: basic, behaviour, process and connection nodes. It also supports properties that allow the user to affect the dialogue from code. These properties are accessible from the property blackboard.
 
-'.dialoguegraph' is a '.json', meaning it is possible to build by hand or by a third-party creator.
+* **Behaviour nodes** are logical nodes that execute or change the dialogue. Dialogue Nodes are a type of behaviour. It contains the text and if it should run/when to run.
+
+* **Process nodes** are nodes that process a value or values to something else. Condition Node is one example that compares two values and chooses one of them based on a condition.
+
+* **Connection nodes** are nodes that handle how the dialogue is accessed. Marker Node is a connection node that can be subscribed to in runtime that calls events from the dialogue graph. It is also used as output when reaching the end of a dialogue. 
+
+* **Basic nodes** are constant types such as int, float and bool. Basic nodes are helpful in conjunction with properties to create conditions.
+
