@@ -1,4 +1,4 @@
-# UnityAsyncDialogueSystem
+# Unity Async Dialogue System
 
 Unity Asynchronous Dialogue System is a dialogue system for unity that tries to solve non-sequence-based dialogue situations. It allows for multiple activations of dialogues in parallel. It also has support for traditional sequence-based conversations.
 
@@ -6,6 +6,8 @@ It uses [Unity Timeline](https://docs.unity3d.com/Packages/com.unity.timeline@1.
 
 ![Graph](https://github.com/Celezt/UnityAsyncDialogueSystem/assets/59172226/33773da1-1278-45b6-aa50-b9bbd3b08cc6)
 ![Blackboard](https://github.com/Celezt/UnityAsyncDialogueSystem/assets/59172226/66c7cefc-105f-42b7-afe7-6b96bef72797)
+
+## Dialogue Graph
 
 '.dialoguegraph' is created from the dialogue window. It has similar features to Shader Graph and VFX Graph. You build the dialogue using nodes. There are different types of nodes: basic, behaviour, process and connection nodes. It also supports properties that allow the user to affect the dialogue from code. These properties are accessible from the property blackboard.
 
@@ -17,3 +19,12 @@ It uses [Unity Timeline](https://docs.unity3d.com/Packages/com.unity.timeline@1.
 
 * **Basic nodes** are constant types such as int, float and bool. Basic nodes are helpful in conjunction with properties to create conditions.
 
+## Parallel Dialogue
+
+![image](https://github.com/Celezt/UnityAsyncDialogueSystem/assets/59172226/ed97f2a9-cde5-4884-81ba-dd9839a469e0)
+
+Achieving parallelism in dialogue in the current version requires the Blend Node. This system, unfortunately, limits the number of dialogues simultaneously to two and can only be achieved by blending two dialogues into each other. The runtime implementation with the timeline, on the other hand, supports unlimited parallelism. The restriction is currently only an expression limitation on how to write parallel code in a graph.
+
+## Runtime Dialogue
+
+![image](https://github.com/Celezt/UnityAsyncDialogueSystem/assets/59172226/f9eaa42b-49b0-4b74-94d3-438e97762e29)
