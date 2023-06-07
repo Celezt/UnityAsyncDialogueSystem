@@ -1,10 +1,13 @@
 {
-    "name": "com.celezt.asyncdialogue",
-    "version": "0.1.0",
-    "displayName": "Async Dialogue System",
-    "description": "Asynchronous dialogue system for unity",
-    "unity": "2021.2",
-    "keywords": [
-      "Dialogue"
-    ]
+  "name": "com.celezt.asyncdialogue",
+  "version": "0.1.0",
+  "displayName": "Async Dialogue System",
+  "description": "Asynchronous dialogue system for unity",
+  "unity": "2021.2",
+  "keywords": [
+    "Dialogue"
+  ],
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
   }
+}
