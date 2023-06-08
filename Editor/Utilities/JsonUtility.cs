@@ -19,17 +19,17 @@ namespace Celezt.DialogueSystem.Editor
             return JObject.FromObject(convert);
         }
 
-        public static ReadOnlySpan<char> Serialize(object serialize)
+        public static string Serialize(object serialize)
         {
             return JsonConvert.SerializeObject(serialize);
         }
 
-        public static object Deserialize(ReadOnlySpan<char> deserialize, Type type)
+        public static object Deserialize(string deserialize, Type type)
         {
             return JsonConvert.DeserializeObject(deserialize.ToString(), type);
         }
 
-        public static ReadOnlySpan<char> SerializeGraph(int version, GUID objectID, DGView graphView)
+        public static string SerializeGraph(int version, GUID objectID, DGView graphView)
         {
             List<NodeSerialized> nodeData = new List<NodeSerialized>();
             List<EdgeSerialized> edgeData = new List<EdgeSerialized>();
@@ -123,7 +123,7 @@ namespace Celezt.DialogueSystem.Editor
             return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
         }
 
-        public static ReadOnlySpan<char> SerializeGraph(int version, GUID objectID)
+        public static string SerializeGraph(int version, GUID objectID)
         {
             GraphSerialized graphSerializeData = new GraphSerialized
             {
@@ -140,12 +140,12 @@ namespace Celezt.DialogueSystem.Editor
             return JsonConvert.SerializeObject(graphSerializeData, Formatting.Indented);
         }
 
-        public static GraphSerialized DeserializeGraph(ReadOnlySpan<char> content)
+        public static GraphSerialized DeserializeGraph(string content)
         {
             return JsonConvert.DeserializeObject<GraphSerialized>(content.ToString());
         }
 
-        internal static void DeserializeGraph(this DGView graphView, ReadOnlySpan<char> content)
+        internal static void DeserializeGraph(this DGView graphView, string content)
         {
             GraphSerialized deserializedData = DeserializeGraph(content);
 

@@ -22,7 +22,7 @@ namespace Celezt.DialogueSystem.Editor
                 CreateNewSelected(JsonUtility.SerializeGraph(DGView.DG_VERSION, guid));
         }
 
-        public static void CreateNewSelected(ReadOnlySpan<char> content)
+        public static void CreateNewSelected(string content)
         {
             string[] selectedGUIDs = Selection.assetGUIDs;
 
@@ -39,14 +39,14 @@ namespace Celezt.DialogueSystem.Editor
                     string fullName = $"{path}/New Dialogue Graph {index}{DGImporter.FILE_EXTENSION}";
                     if (!File.Exists(fullName))
                     {
-                        File.WriteAllText(fullName, content.ToString());
+                        File.WriteAllText(fullName, content);
                         break;
                     }
 
                 } while (++index < int.MaxValue);
             }
             else
-                File.WriteAllText($"{path}/New Dialogue Graph{DGImporter.FILE_EXTENSION}", content.ToString());
+                File.WriteAllText($"{path}/New Dialogue Graph{DGImporter.FILE_EXTENSION}", content);
 
             AssetDatabase.Refresh();
         }
@@ -55,7 +55,7 @@ namespace Celezt.DialogueSystem.Editor
         /// Create new file.
         /// </summary>
         /// <returns>If non-existent</returns>
-        public static bool Create(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
+        public static bool Create(string path, string content)
         {
             if (!TryGetValidPath(ref path))
                 return false;
@@ -70,31 +70,31 @@ namespace Celezt.DialogueSystem.Editor
         /// Overwrite already existing file.
         /// </summary>
         /// <returns>If it already exist.</returns>
-        public static bool Overwrite(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
+        public static bool Overwrite(string path, string content)
         {
             if (!TryGetValidPath(ref path))
                 return false;
              
-            if (!File.Exists(path.ToString()))
+            if (!File.Exists(path))
                 return false;
 
             return WriteToDisk(path, content);
         }
 
-        public static ReadOnlySpan<char> ReadAll(ReadOnlySpan<char> path)
+        public static string ReadAll(string path)
         {
-            ReadOnlySpan<char> result = ReadOnlySpan<char>.Empty;
+            string  result = null;
 
             if (!IsValidPath(path))
                 return result;
 
             try
             {
-                result = File.ReadAllText(path.ToString());
+                result = File.ReadAllText(path);
             }
             catch
             {
-                result = ReadOnlySpan<char>.Empty;
+                result = null;
             }
 
             return result;
@@ -112,26 +112,26 @@ namespace Celezt.DialogueSystem.Editor
             return false;
         }
 
-        private static bool TryGetValidPath(ref ReadOnlySpan<char> path)
+        private static bool TryGetValidPath(ref string path)
         {
             if (Path.HasExtension(path))
             {
-                ReadOnlySpan<char> extension = Path.GetExtension(path);
+                ReadOnlySpan<char> extension = Path.GetExtension(path.AsSpan());
                 if (!MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION, StringComparison.Ordinal))
                     return false;
             }
             else 
-                path = path.ToString() + DGImporter.FILE_EXTENSION;
+                path = path + DGImporter.FILE_EXTENSION;
 
             return true;
         }
 
-        private static bool WriteToDisk(ReadOnlySpan<char> path, ReadOnlySpan<char> content)
+        private static bool WriteToDisk(string path, string content)
         {
             // Checks if asset is valid.
             if (Provider.enabled && Provider.isActive)
             {
-                Asset asset = Provider.GetAssetByPath(path.ToString());
+                Asset asset = Provider.GetAssetByPath(path);
                 if (asset != null)
                 {
                     if (!Provider.IsOpenForEdit(asset))
@@ -149,17 +149,17 @@ namespace Celezt.DialogueSystem.Editor
             {
                 try
                 {
-                    File.WriteAllText(path.ToString(), content.ToString());
+                    File.WriteAllText(path, content);
                 }
                 catch (Exception e)
                 {
                     if (e.GetBaseException() is UnauthorizedAccessException &&
-                        (File.GetAttributes(path.ToString()) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                        (File.GetAttributes(path) & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
                     {
-                        if (EditorUtility.DisplayDialog("File is Read-Only", path.ToString(), "Make Writable", "Cancel Save"))
+                        if (EditorUtility.DisplayDialog("File is Read-Only", path, "Make Writable", "Cancel Save"))
                         {
                             // Make file writable.
-                            FileInfo fileInfo = new FileInfo(path.ToString());
+                            FileInfo fileInfo = new FileInfo(path);
                             fileInfo.IsReadOnly = true;
                             continue;   // Retry.
                         }

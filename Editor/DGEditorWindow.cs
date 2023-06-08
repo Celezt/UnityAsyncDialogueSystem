@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+using System.Web;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -29,8 +30,8 @@ namespace Celezt.DialogueSystem.Editor
         {
             get
             {
-                ReadOnlySpan<char> currentSerializedJson = JsonUtility.SerializeGraph(DG_VERSION, _selectedGuid, _graphView);
-                return !MemoryExtensions.Equals(currentSerializedJson, _lastSerializedContent, StringComparison.Ordinal);
+                string currentSerializedJson = JsonUtility.SerializeGraph(DG_VERSION, _selectedGuid, _graphView);
+                return currentSerializedJson != _lastSerializedContent;
             }
         }
 
@@ -125,8 +126,8 @@ namespace Celezt.DialogueSystem.Editor
 
         public void UpdateTitle()
         {
-            ReadOnlySpan<char> assetPath = AssetDatabase.GUIDToAssetPath(_selectedGuid);
-            ReadOnlySpan<char> title = Path.GetFileNameWithoutExtension(assetPath);
+            string assetPath = AssetDatabase.GUIDToAssetPath(_selectedGuid);
+            string title = Path.GetFileNameWithoutExtension(assetPath);
 
             if (HasChangesSinceLastSerialization)
             {
@@ -140,10 +141,10 @@ namespace Celezt.DialogueSystem.Editor
             }
             
             if (!AssetFileExist)
-                title = title.ToString() + "(deleted)";
+                title = title + "(deleted)";
 
-            titleContent.text = title.ToString();
-            OnTitleChanged.Invoke(title.ToString());
+            titleContent.text = title;
+            OnTitleChanged.Invoke(title);
         }
 
         public void AssetWasDeleted()
@@ -254,11 +255,11 @@ namespace Celezt.DialogueSystem.Editor
                             "Save As...", "Cancel", "Discard Graph and Close Window");
                 if (option == 0)
                 {
-                    ReadOnlySpan<char> savePath = SaveAssetAsImplementation();
-                    if (!savePath.IsEmpty)
+                    string savePath = SaveAssetAsImplementation();
+                    if (savePath != null)
                     {
                         save = true;
-                        _selectedGuid = reopen ? AssetDatabase.GUIDFromAssetPath(savePath.ToString()) : new GUID();
+                        _selectedGuid = reopen ? AssetDatabase.GUIDFromAssetPath(savePath) : new GUID();
                         break;
                     }
                 }
@@ -277,9 +278,9 @@ namespace Celezt.DialogueSystem.Editor
             return (save || close);
         }
 
-        private ReadOnlySpan<char> ReadAssetFile()
+        private string ReadAssetFile()
         {
-           ReadOnlySpan<char> filePath = AssetDatabase.GUIDToAssetPath(_selectedGuid);
+           string filePath = AssetDatabase.GUIDToAssetPath(_selectedGuid);
             return DialogueGraphCreator.ReadAll(filePath);
         }
 
@@ -290,16 +291,16 @@ namespace Celezt.DialogueSystem.Editor
 
             OnSaveChanges.Invoke();
 
-            ReadOnlySpan<char> FilePath = AssetDatabase.GUIDToAssetPath(SelectedGuid);
+           string filePath = AssetDatabase.GUIDToAssetPath(SelectedGuid);
 
-            if (FilePath.IsEmpty || FilePath.IsWhiteSpace())
+            if (string.IsNullOrWhiteSpace(filePath))
                 return false;
 
-            ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
-            DialogueGraphCreator.Overwrite(FilePath, serializedJSON);
+            string serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
+            DialogueGraphCreator.Overwrite(filePath, serializedJSON);
             base.hasUnsavedChanges = false;
 
-            AssetDatabase.ImportAsset(FilePath.ToString());    // Reimport.
+            AssetDatabase.ImportAsset(filePath.ToString());    // Reimport.
             _lastSerializedContent = ReadAssetFile().ToString();
 
             return true;
@@ -311,18 +312,18 @@ namespace Celezt.DialogueSystem.Editor
             SaveAssetAsImplementation();
         }
 
-        private ReadOnlySpan<char> SaveAssetAsImplementation()
+        private string SaveAssetAsImplementation()
         {
-            ReadOnlySpan<char> saveFilePath = ReadOnlySpan<char>.Empty;
+            string saveFilePath = null;
 
             if (!SelectedGuid.Empty())
             {
-                ReadOnlySpan<char> oldFilePath = AssetDatabase.GUIDToAssetPath(SelectedGuid);
+                string oldFilePath = AssetDatabase.GUIDToAssetPath(SelectedGuid);
 
-                if (oldFilePath.IsEmpty)
-                    return ReadOnlySpan<char>.Empty;
+                if (oldFilePath == null)
+                    return saveFilePath;
 
-                ReadOnlySpan<char> newFilePath = EditorUtility.SaveFilePanelInProject(
+                    string newFilePath = EditorUtility.SaveFilePanelInProject(
                     "Save Graph As...",
                     Path.GetFileNameWithoutExtension(oldFilePath).ToString(),
                     DGImporter.FILE_EXTENSION.Substring(1),   // Remove dot.
@@ -330,17 +331,17 @@ namespace Celezt.DialogueSystem.Editor
                     Path.GetDirectoryName(oldFilePath).ToString()
                 ).Replace(Application.dataPath, "Assets");  // Simplify path.
 
-                if (newFilePath.IsEmpty || newFilePath.IsWhiteSpace())
-                    return ReadOnlySpan<char>.Empty;
+                if (string.IsNullOrWhiteSpace(newFilePath))
+                    return saveFilePath;
 
                 if (!MemoryExtensions.Equals(newFilePath, oldFilePath, StringComparison.Ordinal))
                 {
-                    ReadOnlySpan<char> serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
+                    string serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
 
                     if (DialogueGraphCreator.Create(newFilePath, serializedJSON))
                     {
-                        AssetDatabase.ImportAsset(newFilePath.ToString());
-                        DGImporterEditor.ShowGraphEditorWindow(newFilePath.ToString());
+                        AssetDatabase.ImportAsset(newFilePath);
+                        DGImporterEditor.ShowGraphEditorWindow(newFilePath);
                         saveFilePath = newFilePath;
                     }
                 }
