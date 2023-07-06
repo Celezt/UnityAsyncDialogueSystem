@@ -6,13 +6,17 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
-    public class DialogueAsset : DSPlayableAsset
+    public class DialogueAsset : DSPlayableAsset, ITime
     {
         public string Actor;
         [TextArea(10, int.MaxValue)]
         public string Text;
-        public float Speed = 1.0f;
-        public float EndOffset = 1.0f;
+        [field: SerializeField]
+        public AnimationCurve TimeSpeed { get; set; }
+        [field: SerializeField, Min(0)]
+        public float StartOffset { get; set; }
+        [field: SerializeField, Min(0)]
+        public float EndOffset { get; set; } = 1;
 
         protected override DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner)
         {

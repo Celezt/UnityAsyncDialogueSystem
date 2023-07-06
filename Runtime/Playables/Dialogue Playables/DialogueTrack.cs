@@ -25,7 +25,7 @@ namespace Celezt.DialogueSystem
 
         private void OnDestroy()
         {
-            _binder?.Remove(this);
+            _binder?.Internal_Remove(this);
         }
 
         private void GetBinder(in PlayableGraph graph)
@@ -49,7 +49,7 @@ namespace Celezt.DialogueSystem
                 _director.SetGenericBinding(this, _binder);
             }
 
-            _binder.Add(this);
+            _binder.Internal_Add(this);
         }
     }
 }

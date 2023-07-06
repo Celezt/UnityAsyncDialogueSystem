@@ -42,8 +42,8 @@ namespace Celezt.DialogueSystem
 
                 asset.Text = text;
                 asset.Actor = actorID;
-                asset.Speed = speed;
-                asset.EndOffset = endOffset;
+                //asset.Speed = speed;
+                //asset.Offset = endOffset; TODO!!!
 
                 duration *= 1 / (speed * 15f);
                 duration += endOffset;

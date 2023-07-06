@@ -6,7 +6,6 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.Events;
 using System;
-using UnityEngine.EventSystems;
 
 namespace Celezt.DialogueSystem
 {
@@ -15,8 +14,13 @@ namespace Celezt.DialogueSystem
     {
         public PlayableDirector Director
         {
-            get => _director;
-            internal set => _director = value;
+            get
+            {
+                if (_director == null)
+                    _director = GetComponent<PlayableDirector>();
+
+                return _director;
+            }
         }
 
         public event Action<Callback> OnEnterDialogueClipCallback = delegate { };
@@ -24,14 +28,10 @@ namespace Celezt.DialogueSystem
         public event Action<Callback> OnProcessDialogueClipCallback = delegate { };
         public event Action OnDeleteTimelineCallback = delegate { };
 
-        [SerializeField]
-        private UnityEvent<Callback> OnEnterDialogueClip = new UnityEvent<Callback>();
-        [SerializeField]
-        private UnityEvent<Callback> OnExitDialogueClip = new UnityEvent<Callback>();
-        [SerializeField]
-        private UnityEvent<Callback> OnProcessDialogueClip = new UnityEvent<Callback>();
-        [SerializeField]
-        private UnityEvent OnDeleteTimeline = new UnityEvent();
+        [SerializeField] private UnityEvent<Callback> OnEnterDialogueClip = new UnityEvent<Callback>();
+        [SerializeField] private UnityEvent<Callback> OnExitDialogueClip = new UnityEvent<Callback>();
+        [SerializeField] private UnityEvent<Callback> OnProcessDialogueClip = new UnityEvent<Callback>();
+        [SerializeField] private UnityEvent OnDeleteTimeline = new UnityEvent();
 
         private Dictionary<DSTrack, object> _trackProperties = new Dictionary<DSTrack, object>();
 
@@ -39,13 +39,26 @@ namespace Celezt.DialogueSystem
 
         public readonly struct Callback
         {
+            /// <summary>
+            /// [0-1]. Unaffected by speed.
+            /// </summary>
+            public float PercentageUnscaled => 
+                Mathf.Clamp01((float)((Time - Start) / (End - Start)));
+
+            /// <summary>
+            /// [0-1]
+            /// </summary>
+            public float Percentage =>
+                Asset is ITime asset ? 
+                asset.TimeSpeed.Evaluate(Mathf.Clamp01((float)((Time - Start + asset.StartOffset) / (End - asset.EndOffset - Start)))) : PercentageUnscaled;
+
             public double Time => Director.time;
             public double Start => Clip.start;
             public double End => Clip.end;
             public object UserData
             {
                 get => Binder._trackProperties[Track];
-                set => Binder._trackProperties[Track] = value;
+                set => Binder._trackProperties[Track] = value; 
             }
 
             public readonly int Index;
@@ -94,7 +107,7 @@ namespace Celezt.DialogueSystem
             OnDeleteTimelineCallback();
         }
 
-        internal DialogueSystemBinder Add(DialogueTrack track)
+        internal DialogueSystemBinder Internal_Add(DialogueTrack track)
         {
             if (!_trackProperties.ContainsKey(track))
                 _trackProperties.Add(track, null);
@@ -102,7 +115,7 @@ namespace Celezt.DialogueSystem
             return this;
         }
 
-        internal bool Remove(DialogueTrack track)
+        internal bool Internal_Remove(DialogueTrack track)
         {
             return _trackProperties.Remove(track);
         }
