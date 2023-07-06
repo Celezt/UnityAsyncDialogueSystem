@@ -12,59 +12,22 @@ namespace Celezt.DialogueSystem
     {
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
-            PlayableDirector director = playable.GetGraph().GetResolver() as PlayableDirector;
-            TimelineAsset timeline = director.playableAsset as TimelineAsset;
-            int index = timeline.IndexOf(Track);
-            Binder.OnEnterDialogueClip.Invoke(new DialogueSystemBinder.Callback
-            {
-                Index = index,
-                Binder = Binder,
-                Track = Track as DialogueTrack,
-                Asset = behaviour.Asset,
-                Behaviour = behaviour,
-                Info = info,
-                Playable = playable,
-            });
+            Binder.Internal_InvokeOnEnterDialogueClip(Track, behaviour);
         }
 
         protected override void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
-            PlayableDirector director = playable.GetGraph().GetResolver() as PlayableDirector;
-            TimelineAsset timeline = director.playableAsset as TimelineAsset;
-            int index = timeline.IndexOf(Track);
-            Binder.OnProcessDialogueClip.Invoke(new DialogueSystemBinder.Callback
-            {
-                Index = index,
-                Binder = Binder,
-                Track = Track as DialogueTrack,
-                Asset = behaviour.Asset,
-                Behaviour = behaviour,
-                Info = info,
-                Playable = playable,
-            });
+            Binder.Internal_InvokeOnProcessDialogueClip(Track, behaviour);
         }
-
 
         protected override void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
-            PlayableDirector director = playable.GetGraph().GetResolver() as PlayableDirector;
-            TimelineAsset timeline = director.playableAsset as TimelineAsset;
-            int index = timeline.IndexOf(Track);
-            Binder.OnExitDialogueClip.Invoke(new DialogueSystemBinder.Callback
-            {
-                Index = index,
-                Binder = Binder,
-                Track = Track as DialogueTrack,
-                Asset = behaviour.Asset,
-                Behaviour = behaviour,
-                Info = info,
-                Playable = playable,
-            });
+            Binder.Internal_InvokeOnExitDialogueClip(Track, behaviour);
         }
 
         public override void OnPlayableDestroy(Playable playable)
         {
-            Binder.OnDeleteTimeline.Invoke();
+            Binder.Internal_InvokeOnDeleteTimeline();
         }
     }
 }

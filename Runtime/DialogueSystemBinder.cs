@@ -6,6 +6,7 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.Events;
 using System;
+using UnityEngine.EventSystems;
 
 namespace Celezt.DialogueSystem
 {
@@ -18,19 +19,85 @@ namespace Celezt.DialogueSystem
             internal set => _director = value;
         }
 
-        public UnityEvent<Callback> OnEnterDialogueClip = new UnityEvent<Callback>();
-        public UnityEvent<Callback> OnExitDialogueClip = new UnityEvent<Callback>();
-        public UnityEvent<Callback> OnProcessDialogueClip = new UnityEvent<Callback>();
-        public UnityEvent OnDeleteTimeline = new UnityEvent();
+        public event Action<Callback> OnEnterDialogueClipCallback = delegate { };
+        public event Action<Callback> OnExitDialogueClipCallback = delegate { };
+        public event Action<Callback> OnProcessDialogueClipCallback = delegate { };
+        public event Action OnDeleteTimelineCallback = delegate { };
 
-        private Dictionary<DSTrack, TrackProperties> _trackProperties = new Dictionary<DSTrack, TrackProperties>();
+        [SerializeField]
+        private UnityEvent<Callback> OnEnterDialogueClip = new UnityEvent<Callback>();
+        [SerializeField]
+        private UnityEvent<Callback> OnExitDialogueClip = new UnityEvent<Callback>();
+        [SerializeField]
+        private UnityEvent<Callback> OnProcessDialogueClip = new UnityEvent<Callback>();
+        [SerializeField]
+        private UnityEvent OnDeleteTimeline = new UnityEvent();
+
+        private Dictionary<DSTrack, object> _trackProperties = new Dictionary<DSTrack, object>();
 
         private PlayableDirector _director;
+
+        public readonly struct Callback
+        {
+            public double Time => Director.time;
+            public double Start => Clip.start;
+            public double End => Clip.end;
+            public object UserData
+            {
+                get => Binder._trackProperties[Track];
+                set => Binder._trackProperties[Track] = value;
+            }
+
+            public readonly int Index;
+            public readonly DialogueSystemBinder Binder;
+            public readonly PlayableDirector Director;
+            public readonly DSPlayableAsset Asset;
+            public readonly DSPlayableBehaviour Behaviour;
+            public readonly DSTrack Track;
+            public readonly TimelineClip Clip;
+
+            internal Callback(DialogueSystemBinder binder, DSTrack track, DSPlayableBehaviour behaviour)
+            {
+                Binder = binder;
+                Director = binder.Director;
+                Asset = behaviour.Asset;
+                Track = track;
+                Behaviour = behaviour;
+                Clip = behaviour.Clip;
+
+                TimelineAsset timeline = Director.playableAsset as TimelineAsset;
+                Index = timeline.IndexOf(Track);
+            }
+        }
+
+        internal void Internal_InvokeOnEnterDialogueClip(DSTrack track, DSPlayableBehaviour behaviour)
+        {
+            OnEnterDialogueClip.Invoke(new Callback(this, track, behaviour));
+            OnEnterDialogueClipCallback(new Callback(this, track, behaviour));
+        }
+
+        internal void Internal_InvokeOnExitDialogueClip(DSTrack track, DSPlayableBehaviour behaviour)
+        {
+            OnExitDialogueClip.Invoke(new Callback(this, track, behaviour));
+            OnExitDialogueClipCallback(new Callback(this, track, behaviour));
+        }
+
+        internal void Internal_InvokeOnProcessDialogueClip(DSTrack track, DSPlayableBehaviour behaviour)
+        {
+            OnProcessDialogueClip.Invoke(new Callback(this, track, behaviour));
+            OnProcessDialogueClipCallback(new Callback(this, track, behaviour));
+        }
+
+        internal void Internal_InvokeOnDeleteTimeline()
+        {
+            OnDeleteTimeline.Invoke();
+            OnDeleteTimelineCallback();
+        }
 
         internal DialogueSystemBinder Add(DialogueTrack track)
         {
             if (!_trackProperties.ContainsKey(track))
-                _trackProperties[track] = new TrackProperties();
+                _trackProperties.Add(track, null);
 
             return this;
         }
@@ -40,37 +107,9 @@ namespace Celezt.DialogueSystem
             return _trackProperties.Remove(track);
         }
 
-        [Serializable]
-        public class TrackProperties
+        private void Start()
         {
-            public object UserData
-            {
-                get => _userData;
-                set => _userData = value;
-            }
-
-            private object _userData;
-        }
-
-        public struct Callback
-        {
-            public int Index { get; internal set; }
-            public double Time => Director.time;
-            public double Start => Clip.start;
-            public double End => Clip.end;
-            public object UserData
-            {
-                get => Binder._trackProperties[Track].UserData;
-                set => Binder._trackProperties[Track].UserData = value;
-            }
-            public DialogueSystemBinder Binder { get; internal set; }
-            public DSPlayableAsset Asset { get; internal set; }
-            public DSPlayableBehaviour Behaviour { get; internal set; }
-            public DialogueTrack Track { get; internal set; }
-            public TimelineClip Clip => Behaviour.Clip;
-            public PlayableDirector Director => Binder.Director;
-            public Playable Playable { get; internal set; }
-            public FrameData Info { get; internal set; }
+            _director = GetComponent<PlayableDirector>();
         }
     }
 }

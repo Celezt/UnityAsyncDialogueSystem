@@ -49,12 +49,7 @@ namespace Celezt.DialogueSystem
                 _director.SetGenericBinding(this, _binder);
             }
 
-            if (_binder != null)
-            {
-                _binder.Director = _director;
-                _binder.Add(this);
-            }
-
+            _binder.Add(this);
         }
     }
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    public static class EnumerableExtension
+    public static class EnumerableExtensions
     {
         public static int IndexOf<T>(this IEnumerable<T> obj, T value) => obj.IndexOf(value, null);
         public static int IndexOf<T>(this IEnumerable<T> obj, T value, IEqualityComparer<T> comparer)
