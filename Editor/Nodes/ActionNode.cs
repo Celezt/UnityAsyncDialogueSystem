@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -11,7 +12,7 @@ namespace Celezt.DialogueSystem.Editor
     [CreateNode("Behaviour/Action", "Action")]
     public class ActionNode : DGNode
     {
-        [SerializeField] private List<Choice> _choices = new List<Choice>();
+        [SerializeField] private int _choiceCount;
 
         public class Choice
         {
@@ -29,14 +30,15 @@ namespace Celezt.DialogueSystem.Editor
 
             inputVerticalContainer.Insert(0, actionPort);
 
-            foreach (Choice choice in _choices)
-                AddNewChoicePort(choice);
+            for (int i = 0; i < _choiceCount; i++)
+                AddNewChoicePort();
 
             Button addChoiceButton = new Button(() =>
             {
-                Choice choice = new Choice { Text = "New Choice" };
-                AddNewChoicePort(choice);
-                _choices.Add(choice);
+                hasUnsavedChanges = true;
+
+                AddNewChoicePort();
+                _choiceCount++;
             })
             {
                 text = "Add Choice",
@@ -46,11 +48,12 @@ namespace Celezt.DialogueSystem.Editor
             mainContainer.Insert(2, addChoiceButton);
         }
 
-        private void AddNewChoicePort(Choice choiceData)
+        private void AddNewChoicePort()
         {
             hasUnsavedChanges = true;
 
-            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(ChoicePortType));
+            outputPort.portName = $"{outputContainer.childCount}";
 
             Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionPortType));
             inputPort.portName = "Condition";
@@ -65,28 +68,18 @@ namespace Celezt.DialogueSystem.Editor
 
                 hasUnsavedChanges = true;
 
-                _choices.Remove(choiceData);
+                _choiceCount--;
                 graphView.RemoveElement(outputPort);
                 graphView.RemoveElement(inputPort);
+
+                int count = 0;
+                foreach (var element in outputContainer.Children().Skip(1))
+                    if (element is Port port)
+                        port.portName = $"{count++}";
             });
 
             deleteChoiceButton.AddToClassList("button__delete");
 
-            TextField choiceTextField = new TextField()
-            {
-                value = choiceData.Text,
-            };
-            choiceTextField.RegisterValueChangedCallback(callback =>
-            {
-                choiceData.Text = callback.newValue;
-                hasUnsavedChanges = true;
-            });
-
-
-            choiceTextField.AddToClassList("text-field__choice");
-            choiceTextField.AddToClassList("text-field__hidden");
-
-            outputPort.Add(choiceTextField);
             outputPort.Add(deleteChoiceButton);
             outputContainer.Add(outputPort);
             inputContainer.Add(inputPort);

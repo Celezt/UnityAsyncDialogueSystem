@@ -21,8 +21,6 @@ namespace Celezt.DialogueSystem
 
         protected override void OnInterpret(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
         {
-            IEnumerable<string> choiceTexts = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => (string)((JProperty)x).Value);
-
             double start = default;
             double duration = default;
 
@@ -98,16 +96,21 @@ namespace Celezt.DialogueSystem
                 //
                 _actionGroupClips = new List<List<TimelineClip>>() { new List<TimelineClip>() };
                 _actionGroupCounts = new List<int> { 1 };
-                int index = 0; 
-                foreach (string choiceText in choiceTexts)
+                int index = 0;
+                foreach (DSPort port in currentNode.Outputs.Where(x => x.Key >= 0).Select(x => x.Value))
                 {
+                    // If connected node is not of type ChoiceInterpreter.
+                    ChoiceInterpreter interpreter = null;
+                    if (!port.Connections.FirstOrDefault()?.Input.Node.TryGetInterpreter(out interpreter) ?? true)
+                        continue;
+
                     var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
                     var clip = track.CreateClip<ButtonAsset>();
                     var asset = clip.asset as ButtonAsset;
 
                     clip.start = start;
                     clip.duration = duration;
-                    asset.Text = choiceText;
+                    asset.Text = (string)(interpreter?.Node.Values["_text"] ?? index - 1);
                     asset.System = system;
                     asset.OverrideSettingName = overrideSettingName;
 

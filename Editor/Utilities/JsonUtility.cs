@@ -116,7 +116,7 @@ namespace Celezt.DialogueSystem.Editor
                 Nodes = nodeData,
                 Edges = edgeData,
                 Positions = positionData,
-                Specialization = specialData,
+                Data = specialData,
             };
 
 
@@ -133,7 +133,7 @@ namespace Celezt.DialogueSystem.Editor
                 Nodes = new List<NodeSerialized>(),
                 Edges = new List<EdgeSerialized>(),
                 Positions = new List<SerializedVector2Int>(),
-                Specialization = new List<dynamic>(),
+                Data = new List<dynamic>(),
             };
 
 
@@ -224,7 +224,7 @@ namespace Celezt.DialogueSystem.Editor
             {
                 NodeSerialized nodeData = deserializedData.Nodes[i];
                 SerializedVector2Int positionData = deserializedData.Positions[i];
-                JObject specialData = deserializedData.Specialization[i] as JObject;
+                JObject specialData = deserializedData.Data[i] as JObject;
 
                 if (!Guid.TryParseExact(nodeData.ID, "N", out Guid id))
                     throw new Exception(nodeData.ID + " is invalid GUID");

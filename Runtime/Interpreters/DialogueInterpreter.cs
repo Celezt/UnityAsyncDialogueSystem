@@ -24,9 +24,10 @@ namespace Celezt.DialogueSystem
 
             string text = (string)currentNode.Values["_text"];
             string actorID = (string)currentNode.Values["_actorID"];
-            float speed = Convert.ToSingle(currentNode.Values["_speed"]);
             float endOffset = Convert.ToSingle(currentNode.Values["_endOffset"]);
-            IEnumerable<string> choiceTexts = ((JEnumerable<JToken>)currentNode.Values["_choices"]).Select(x => (string)((JProperty)x).Value);
+            AnimationCurve timeSpeed = (AnimationCurve)currentNode.Values["_timeSpeed"];
+            float speed = Convert.ToSingle(currentNode.Values["_speed"]);
+            int choiceCount = Convert.ToInt32(currentNode.Values["_choices"]);
 
             IEnumerable<DialogueTrack> dialogueTracks = timeline.GetOutputTracks().OfType<DialogueTrack>();
             TrackAsset dialogueTrack = dialogueTracks.First();
@@ -42,8 +43,8 @@ namespace Celezt.DialogueSystem
 
                 asset.Text = text;
                 asset.Actor = actorID;
-                //asset.Speed = speed;
-                //asset.Offset = endOffset; TODO!!!
+                asset.TimeSpeed = timeSpeed;
+                asset.EndOffset = endOffset;
 
                 duration *= 1 / (speed * 15f);
                 duration += endOffset;
@@ -79,15 +80,20 @@ namespace Celezt.DialogueSystem
 
                 _actionClips = new List<TimelineClip>();
                 int index = 1;  // Index 0 is "Continue" and "Connections".
-                foreach (string choiceText in choiceTexts)
+                foreach (DSPort port in currentNode.Outputs.Where(x => x.Key >= 0).Select(x => x.Value))
                 {
+                    // If connected node is not of type ChoiceInterpreter.
+                    ChoiceInterpreter interpreter = null;
+                    if (!port.Connections.FirstOrDefault()?.Input.Node.TryGetInterpreter(out interpreter) ?? true)
+                        continue;
+
                     var track = timeline.FindOrAllocateTrackSpace<ActionTrack>(start);
                     var clip = track.CreateClip<ButtonAsset>();
                     var asset = clip.asset as ButtonAsset;
 
                     clip.start = start;
                     clip.duration = duration;
-                    asset.Text = choiceText;
+                    asset.Text = (string)(interpreter?.Node.Values["_text"] ?? index - 1);
                     asset.System = system;
                     asset.OverrideSettingName = overrideSettingName;
 
@@ -97,10 +103,10 @@ namespace Celezt.DialogueSystem
                         if (currentNode.Outputs.TryGetValue(snappedIndex, out DSPort choiceOutputPort))
                         {
                             DSNode choiceNode = choiceOutputPort.Connections.First().Input.Node;
-                            
+
                             choiceNode.RebuildTimelineFromNode(this, system);
                         }
-                    };              
+                    };
 
                     if (currentNode.Inputs.TryGetValue(index, out DSPort conditionInputPort))
                     {

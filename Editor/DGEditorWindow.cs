@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem.Editor
 {
     public class DGEditorWindow : EditorWindow
     {
-        internal const int DG_VERSION = 1;
+        internal const int DG_VERSION = 2;
 
         internal GUID SelectedGuid
         {

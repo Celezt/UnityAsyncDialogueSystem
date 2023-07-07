@@ -91,7 +91,7 @@ namespace Celezt.DialogueSystem
             for (int i = 0; i < graphData.Nodes.Count; i++)
             {
                 NodeSerialized nodeData = graphData.Nodes[i];
-                JObject specialData = graphData.Specialization[i] as JObject;
+                JObject specialData = graphData.Data[i] as JObject;
 
                 if (!Guid.TryParseExact(nodeData.ID, "N", out Guid id))
                     throw new DeserializeExpection(nodeData.ID + " is invalid GUID");

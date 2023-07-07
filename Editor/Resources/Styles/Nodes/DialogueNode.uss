@@ -7,22 +7,14 @@
 }
 
 .text-field > .unity-text-field__input {
-	background-color: var(--dg-color-default-dark);
-	border-color: var(--dg-color-default);
-	border-radius: 4px;
-	max-width: 240px;
-	min-width: 150px;
-	padding: 8px;
-	white-space: normal;
-}
-
-.text-field > .unity-text-field__input {
 	background-color:var(--dg-color-dark-2);
 	border-color: transparent;
 	border-left-color: var(--dg-color-default);
 	border-left-width: 4px;
 	padding: 16px;
-	max-width: 600px;
+	max-width: 240px;
+	min-width: 150px;
+	white-space: normal;
 }
 
 .text-field > .unity-text-field__input:focus {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
@@ -15,14 +16,10 @@ namespace Celezt.DialogueSystem.Editor
     {
         [SerializeField] private string _actorID = "actor_id";
         [SerializeField] private string _text = "Dialogue text.";
-        [SerializeField] private List<Choice> _choices = new List<Choice>();
-        [SerializeField] private float _speed = 1;
+        [SerializeField] private int _choiceCount;
         [SerializeField] private float _endOffset = 1;
-
-        public class Choice
-        {
-            public string Text;
-        }
+        [SerializeField] private float _speed = 1;
+        [SerializeField] private AnimationCurve _timeSpeed = AnimationCurve.Linear(0, 0, 1, 1);
 
         protected override void Awake()
         {
@@ -71,16 +68,15 @@ namespace Celezt.DialogueSystem.Editor
             actorContainer.Add(actorIDTextField);
             mainContainer.Insert(2, actorContainer);
 
-            foreach (Choice choice in _choices)
-                AddNewChoicePort(choice);
+            for (int i = 0; i < _choiceCount; i++)
+                AddNewChoicePort();
 
             Button addChoiceButton = new Button(() =>
             {
                 hasUnsavedChanges = true;
 
-                Choice choice = new Choice { Text = "New Choice" };
-                AddNewChoicePort(choice);
-                _choices.Add(choice);
+                AddNewChoicePort();
+                _choiceCount++;
             })
             {
                 text = "Add Choice",
@@ -92,19 +88,6 @@ namespace Celezt.DialogueSystem.Editor
             //
             //  Contol Container.
             //
-            FloatField speedField = new FloatField()
-            {
-                value = _speed,
-            };
-            speedField.RegisterValueChangedCallback(callback =>
-            {
-                var target = callback.target as FloatField;
-                _speed = target.value;
-                hasUnsavedChanges = true;
-            });
-
-            controlContainer.Add(UIElementUtility.ControlRow("Speed", speedField));
-
             FloatField endOffsetField = new FloatField()
             {
                 value = _endOffset,
@@ -118,6 +101,35 @@ namespace Celezt.DialogueSystem.Editor
 
             controlContainer.Add(UIElementUtility.ControlRow("End Offset", endOffsetField));
 
+            CurveField timeSpeedField = new CurveField()
+            {
+                value = _timeSpeed,
+            };
+            timeSpeedField.RegisterValueChangedCallback(callback =>
+            {
+                var target = callback.target as CurveField;
+                _timeSpeed = target.value;
+                hasUnsavedChanges = true;
+            });
+
+            controlContainer.Add(UIElementUtility.ControlRow("Time Speed", timeSpeedField));
+
+            FloatField durationField = new FloatField()
+            {
+                value = _speed,
+            };
+            durationField.RegisterValueChangedCallback(callback =>
+            {
+                var target = callback.target as FloatField;
+                _speed = target.value;
+                hasUnsavedChanges = true;
+            });
+
+            controlContainer.Add(UIElementUtility.ControlRow("Speed", durationField));
+
+            //
+            //  Text Container
+            //
             VisualElement textContainer = new VisualElement()
             {
                 name = "text"
@@ -138,6 +150,7 @@ namespace Celezt.DialogueSystem.Editor
             {
                 var target = callback.target as TextField;
                 _text = target.value;
+                hasUnsavedChanges = true;
             });
 
             textTextField.AddToClassList("text-field");
@@ -149,9 +162,10 @@ namespace Celezt.DialogueSystem.Editor
             RefreshPorts();
         }
 
-        private void AddNewChoicePort(Choice choiceData)
+        private void AddNewChoicePort()
         {
-            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(FlowPortType));
+            Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(ChoicePortType));
+            outputPort.portName = $"{outputContainer.childCount - 1}";
 
             Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(ConditionPortType));
             inputPort.portName = "Condition";
@@ -166,28 +180,18 @@ namespace Celezt.DialogueSystem.Editor
 
                 hasUnsavedChanges = true;
 
-                _choices.Remove(choiceData);
+                _choiceCount--;
                 graphView.RemoveElement(outputPort);
                 graphView.RemoveElement(inputPort);
+
+                int count = 0;
+                foreach (var element in outputContainer.Children().Skip(1))
+                    if (element is Port port)
+                        port.portName = $"{count++}";
             });
 
             deleteChoiceButton.AddToClassList("button__delete");
 
-            TextField choiceTextField = new TextField()
-            {
-                value = choiceData.Text,
-            };
-            choiceTextField.RegisterValueChangedCallback(callback =>
-            {
-                choiceData.Text = callback.newValue;
-                hasUnsavedChanges = true;
-            });
-
-
-            choiceTextField.AddToClassList("text-field__choice");
-            choiceTextField.AddToClassList("text-field__hidden");
-
-            outputPort.Add(choiceTextField);
             outputPort.Add(deleteChoiceButton);
             outputContainer.Add(outputPort);
             inputContainer.Add(inputPort);

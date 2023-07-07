@@ -93,6 +93,34 @@ namespace Celezt.DialogueSystem
         }
 
         /// <summary>
+        /// Try get interpreter of a specific type from node if it exist.
+        /// </summary>
+        /// <param name="interpreter"><see cref="AssetInterpreter"/> instance.</param>
+        /// <returns>If it exist.</returns>
+        public bool TryGetInterpreter<T>(out T interpreter) where T : AssetInterpreter
+        {
+            interpreter = null;
+
+            if (_assetType is not T)
+                return false;
+
+            if (IsInstanced)
+            {
+                interpreter = (T)_instance;
+                return true;
+            }
+
+            if (!IsInterpreter)
+                return false;
+
+            interpreter = (T)Activator.CreateInstance(_assetType);
+            interpreter._node = this;
+            _instance = interpreter;
+
+            return true;
+        }
+
+        /// <summary>
         /// Try get all processors from node if it exist.
         /// </summary>
         /// <param name="processor"><see cref="AssetProcessor"/> instance.</param>

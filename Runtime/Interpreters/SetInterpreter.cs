@@ -30,7 +30,7 @@ namespace Celezt.DialogueSystem
                 }
             }
 
-             double time = timeline.GetOutputTracks().Max(x => x.end);
+            double time = timeline.GetOutputTracks().Max(x => x.end);
 
             SignalEmitter emitter = signalTrack.CreateMarker<SignalEmitter>(time);
             emitter.asset = ScriptableObject.CreateInstance<SignalAsset>();

@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
         [TextArea(10, int.MaxValue)]
         public string Text;
         [field: SerializeField]
-        public AnimationCurve TimeSpeed { get; set; }
+        public AnimationCurve TimeSpeed { get; set; } = AnimationCurve.Linear(0, 0, 1, 1);
         [field: SerializeField, Min(0)]
         public float StartOffset { get; set; }
         [field: SerializeField, Min(0)]

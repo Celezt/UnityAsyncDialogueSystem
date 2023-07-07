@@ -14,6 +14,6 @@ namespace Celezt.DialogueSystem
         public List<NodeSerialized> Nodes;
         public List<EdgeSerialized> Edges;
         public List<SerializedVector2Int> Positions;
-        public List<dynamic> Specialization;
+        public List<dynamic> Data;
     }
 }
