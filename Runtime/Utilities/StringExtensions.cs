@@ -10,15 +10,23 @@ namespace Celezt.DialogueSystem
 {
     internal static class StringExtensions
     {
-        public static string ToSnakeCase(this string text, bool trimUnderscore = true) =>
-            ToSnakeCaseSpan(text, stackalloc char[text.Length + Math.Min(2, text.Length / 5)], trimUnderscore).ToString();
-        public static Span<char> ToSnakeCaseSpan(this string text, Span<char> newText, bool trimUnderscore = true)
+        public static string ToSnakeCase(this string text, bool trimUnderscore = true) 
+            => ToSnakeCaseSpan(text, stackalloc char[text.Length + Math.Min(2, text.Length / 5)], trimUnderscore).ToString();
+        public static Span<char> ToSnakeCaseSpan(this Span<char> span, bool trimUnderscore = true)
         {
-            if (string.IsNullOrEmpty(text))
-                return Span<char>.Empty;
+            Span<char> temp = stackalloc char[span.Length];
+            span.CopyTo(temp);
+            return span.Slice(0, ToSnakeCaseSpan(temp, span, trimUnderscore));
+        }
+        public static Span<char> ToSnakeCaseSpan(this string text, Span<char> span, bool trimUnderscore = true)
+            => span.Slice(0, ToSnakeCaseSpan(text.AsSpan(), span, trimUnderscore));
+        public static int ToSnakeCaseSpan(this ReadOnlySpan<char> text, Span<char> span, bool trimUnderscore = true)
+        {
+            if (text.IsEmpty || text.IsWhiteSpace())
+                return 0;
 
             UnicodeCategory? previousCategory = default;
-            int newTextIndex = 0;
+            int length = 0;
             bool isTrimmable = true;
 
             for (int currentIndex = 0; currentIndex < text.Length; currentIndex++)
@@ -29,7 +37,7 @@ namespace Celezt.DialogueSystem
                     if (trimUnderscore && isTrimmable)  // skip all _ until another letter is found.
                         continue;
 
-                    newText[newTextIndex++] = '_';
+                    span[length++] = '_';
                     previousCategory = null;
                     continue;
                 }
@@ -49,7 +57,7 @@ namespace Celezt.DialogueSystem
                             currentIndex + 1 < text.Length &&
                             char.IsLower(text[currentIndex + 1]))
                         {
-                            newText[newTextIndex++] = '_';
+                            span[length++] = '_';
                         }
 
                         currentChar = char.ToLower(currentChar, CultureInfo.InvariantCulture);
@@ -59,7 +67,7 @@ namespace Celezt.DialogueSystem
                     case UnicodeCategory.DecimalDigitNumber:
                         if (previousCategory == UnicodeCategory.SpaceSeparator)
                         {
-                            newText[newTextIndex++] = '_';
+                            span[length++] = '_';
                         }
                         break;
 
@@ -71,21 +79,29 @@ namespace Celezt.DialogueSystem
                         continue;
                 }
 
-                newText[newTextIndex++] = currentChar;
+                span[length++] = currentChar;
                 previousCategory = currentCategory;
             }
 
-            return newText.Slice(0, newTextIndex);
+            return length;
         }
 
-        public static string ToCamelCase(this string text, bool trimUnderscore = true) =>
-            ToCamelCaseSpan(text, stackalloc char[text.Length], trimUnderscore).ToString();
-        public static Span<char> ToCamelCaseSpan(this string text, Span<char> newText, bool trimUnderscore = true)
+        public static string ToCamelCase(this string text, bool trimUnderscore = true) 
+            => ToCamelCaseSpan(text, stackalloc char[text.Length], trimUnderscore).ToString();
+        public static Span<char> ToCamelCaseSpan(this Span<char> span, bool trimUnderscore = true)
         {
-            if (string.IsNullOrEmpty(text))
-                return Span<char>.Empty;
+            Span<char> temp = stackalloc char[span.Length];
+            span.CopyTo(temp);
+            return span.Slice(0, ToCamelCaseSpan(temp, span, trimUnderscore));
+        }
+        public static Span<char> ToCamelCaseSpan(this string text, Span<char> span, bool trimUnderscore = true)
+            => span.Slice(0, ToCamelCaseSpan(text.AsSpan(), span, trimUnderscore));
+        public static int ToCamelCaseSpan(this ReadOnlySpan<char> text, Span<char> span, bool trimUnderscore = true)
+        {
+            if (text.IsEmpty || text.IsWhiteSpace())
+                return 0;
 
-            int newTextIndex = 0;
+            int length = 0;
             int currentIndex = 0;
             bool toLower = false;
 
@@ -97,20 +113,20 @@ namespace Celezt.DialogueSystem
                     if (!trimUnderscore && currentIndex >= 1)
                     {
                         if (text[currentIndex - 1] == '_')
-                            newText[newTextIndex++] = '_';
+                            span[length++] = '_';
                     }
 
                     char nextChar = text[currentIndex + 1];
                     if (currentIndex + 1 < text.Length && char.IsUpper(currentChar) && char.IsUpper(nextChar)) // If current is upper, both will be lower.
                     {
-                        newText[newTextIndex++] = char.ToLower(currentChar);
-                        newText[newTextIndex++] = char.ToLower(nextChar);
+                        span[length++] = char.ToLower(currentChar);
+                        span[length++] = char.ToLower(nextChar);
                         currentIndex += 2;
                         toLower = true;
                         break;
                     }
 
-                    newText[newTextIndex++] = char.ToLower(currentChar);
+                    span[length++] = char.ToLower(currentChar);
                     currentIndex++;
                     break;
                 }
@@ -130,7 +146,7 @@ namespace Celezt.DialogueSystem
 
                     if (nextChar is not '_' and not ' ')
                     {
-                        newText[newTextIndex++] = char.ToUpper(nextChar);
+                        span[length++] = char.ToUpper(nextChar);
                         currentIndex++;
                     }
 
@@ -146,8 +162,8 @@ namespace Celezt.DialogueSystem
                         if (char.IsUpper(currentChar) && char.IsLower(nextChar))    // Keep them the same if the next is lower but the current is upper.
                         {
                             toLower = false;
-                            newText[newTextIndex++] = currentChar;
-                            newText[newTextIndex++] = nextChar;
+                            span[length++] = currentChar;
+                            span[length++] = nextChar;
                             currentIndex++;
 
                             continue;
@@ -158,8 +174,8 @@ namespace Celezt.DialogueSystem
                         if (char.IsUpper(currentChar) && char.IsUpper(nextChar))    // If current is upper, next one is lower.
                         {
                             toLower = true;
-                            newText[newTextIndex++] = currentChar;
-                            newText[newTextIndex++] = char.ToLower(nextChar);
+                            span[length++] = currentChar;
+                            span[length++] = char.ToLower(nextChar);
                             currentIndex++;
 
                             continue;
@@ -168,20 +184,36 @@ namespace Celezt.DialogueSystem
                 }
 
                 if (toLower)
-                    newText[newTextIndex++] = char.ToLower(currentChar);
+                    span[length++] = char.ToLower(currentChar);
                 else
-                    newText[newTextIndex++] = currentChar;
+                    span[length++] = currentChar;
             }
 
-            return newText.Slice(0, newTextIndex);
+            return length;
         }
 
-        public static string TrimDecoration(this string text, string decoration) => decoration != null ? TrimDecoration(text, decoration.AsSpan()) : text;
+        public static string TrimDecoration(this string text, string decoration) 
+            => TrimDecoration(text, decoration.AsSpan());
         public static string TrimDecoration(this string text, ReadOnlySpan<char> decoration)
+            => TrimDecorationSpan(text, stackalloc char[text.Length], decoration).ToString();
+        public static Span<char> TrimDecorationSpan(this Span<char> span, string decoration)
         {
-            if (decoration.IsWhiteSpace() || text.Length < decoration.Length)
-                return text;
-             
+            Span<char> temp = stackalloc char[span.Length];
+            span.CopyTo(temp);
+            return span.Slice(0, TrimDecorationSpan(temp, span, decoration));
+        }
+        public static Span<char> TrimDecorationSpan(this string text, Span<char> span, string decoration)
+            => TrimDecorationSpan(text, span, decoration.AsSpan());
+        public static Span<char> TrimDecorationSpan(this string text, Span<char> span, ReadOnlySpan<char> decoration)
+            => span.Slice(0, TrimDecorationSpan(text.AsSpan(), span, decoration));
+        public static int TrimDecorationSpan(this ReadOnlySpan<char> text, Span<char> span, ReadOnlySpan<char> decoration)
+        {
+            if (decoration.IsEmpty || decoration.IsWhiteSpace() || text.Length < decoration.Length)
+            {
+                text.CopyTo(span);
+                return text.Length;
+            }
+
             if (char.IsLower(decoration[0]))
                 throw new ArgumentException("Decoration must start with an upper character.", nameof(decoration));
 
@@ -201,12 +233,20 @@ namespace Celezt.DialogueSystem
                         if (text[i + j] != decoration[j])
                             break;
                         else if (j >= decoration.Length - 1)    // If last character in the decoration.
-                            return text.Remove(i, decoration.Length);
+                        {
+                            text.CopyTo(span);
+                            span.Remove(i, decoration.Length);
+                            return text.Length - decoration.Length;
+
+                        }
                     }
                 }
             }
 
-            return text;
+            {
+                text.CopyTo(span);
+                return text.Length;
+            }
         }
     }
 }

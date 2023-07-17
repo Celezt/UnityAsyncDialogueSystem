@@ -226,18 +226,12 @@ namespace Celezt.DialogueSystem
                 if (tagType.GetInterface(nameof(ITag)) == null)
                     throw new Exception("Object with 'CreateTagAttribute' are required to be derived from 'ITag'");
 
-                string name = tagType.Name.TrimDecoration("Tag").ToSnakeCase();
+                Span<char> span = stackalloc char[tagType.Name.Length];
+                string name = tagType.Name.TrimDecorationSpan(span, "Tag").ToCamelCaseSpan().ToString();
                 _tagInstances[name] = (ITag)Activator.CreateInstance(tagType);
-            }
 
-            Debug.Log("TitleSomething!".ToCamelCase());
-            Debug.Log("TITLESomething".ToCamelCase());
-            Debug.Log("titleSomething".ToCamelCase());
-            Debug.Log("Title69SomethiNG".ToCamelCase());
-            Debug.Log("_TitleSomething".ToCamelCase());
-            Debug.Log("  _ Title69Something_".ToCamelCase());
-            Debug.Log("_TitleSomething".ToCamelCase(false));
-            Debug.Log("  _ Title 69 something_".ToCamelCase());
+                Debug.Log("Added: " + name);
+            }
         }
     }
 }
