@@ -5,9 +5,12 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [CreateTag]
-    public class AwaitTag : ITagMarker
+    public class AwaitTag : TagMarker
     {
-        public void OnInvoke(int intex, DSPlayableAsset playableAsset, string parameter = null)
+        [Implicit]
+        public float Speed { get; set; }
+
+        public override void OnInvoke(int index, DSPlayableAsset playableAsset)
         {
             
         }

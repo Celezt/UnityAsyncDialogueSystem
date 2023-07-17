@@ -173,33 +173,34 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        // some logic borrowed from James Newton-King, http://www.newtonsoft.com
         public static void SetValue(this MemberInfo member, object property, object value)
         {
-            if (member.MemberType == MemberTypes.Property)
-                ((PropertyInfo)member).SetValue(property, value, null);
-            else if (member.MemberType == MemberTypes.Field)
-                ((FieldInfo)member).SetValue(property, value);
-            else
-                throw new Exception("Property must be of type FieldInfo or PropertyInfo");
+            switch (member.MemberType)
+            {
+                case MemberTypes.Field:
+                    ((FieldInfo)member).SetValue(property, value);
+                    break;
+                case MemberTypes.Property:
+                    ((PropertyInfo)member).SetValue(property, value, null);
+                    break;
+                default:
+                    throw new ArgumentException("Property must be of type 'FieldInfo' or 'PropertyInfo'", nameof(property));
+            }
         }
 
-        public static object GetValue(this MemberInfo member, object property)
+        public static object GetValue(this MemberInfo member, object property) => member.MemberType switch
         {
-            if (member.MemberType == MemberTypes.Property)
-                return ((PropertyInfo)member).GetValue(property, null);
-            else if (member.MemberType == MemberTypes.Field)
-                return ((FieldInfo)member).GetValue(property);
-            else
-                throw new Exception("Property must be of type FieldInfo or PropertyInfo");
-        }
+            MemberTypes.Field => ((FieldInfo)member).GetValue(property),
+            MemberTypes.Property => ((PropertyInfo)member).GetValue(property, null),
+            _ => throw new ArgumentException("Property must be of type 'FieldInfo' or 'PropertyInfo'", nameof(property)),
+        };
 
         public static Type GetType(this MemberInfo member) => member.MemberType switch
         {
             MemberTypes.Field => ((FieldInfo)member).FieldType,
             MemberTypes.Property => ((PropertyInfo)member).PropertyType,
             MemberTypes.Event => ((EventInfo)member).EventHandlerType,
-            _ => throw new ArgumentException("MemberInfo must be if type FieldInfo, PropertyInfo or EventInfo", "member"),
+            _ => throw new ArgumentException("MemberInfo must be if type 'FieldInfo', 'PropertyInfo' or 'EventInfo'", nameof(member)),
         };
     }
 }
