@@ -56,44 +56,44 @@ namespace Celezt.DialogueSystem
             int endIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
+            TagState state = TagState.Open;
             var tagOpenList = new List<string>();
 
-            bool NameProcess(out string name)
-            {
-                int index = leftIndex;
-                name = string.Empty;
+            
 
-                for (; index < rightIndex; index++) // <?=
+            bool TagName(out string name)
+            {
+                name = string.Empty;
+                int length = 0;
+
+                for (; length < rightIndex - leftIndex; length++) // <?=
                 {
-                    if (text[index] is ' ' or '=')    // Ends if it finds a whitespace or =.
+                    if (text[leftIndex + length] is ' ' or '=')    // Ends if it finds a whitespace or =.
                         break;
 
-                    if (!char.IsLetter(text[index]))    // Invalid: name must be a letter. <tag> ! <%3->
-                        return false;
+                    if (!char.IsLetter(text[leftIndex + length]))    // Invalid: name must be a letter. <tag> ! <%3->
+                        throw new TagException("Name cannot contain any numbers or symbols");
                 }
 
-                string slice = text.Substring(leftIndex, index - leftIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
+                string slice = text.Substring(leftIndex, length);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
 
                 if (!Values.ContainsKey(slice))   // If the tag does not exist.
                     return false;
 
                 name = slice;
-                leftIndex = index;
+                leftIndex += length;
                 return true;    // Name is valid.
             }
 
-            bool ImpliedProcess(TagState state, out ReadOnlySpan<char> impliedArgument)
+            bool Argument(out string? argument)
             {
-                impliedArgument = ReadOnlySpan<char>.Empty;
-
-                if (text[leftIndex++] is not '=')   // If it has no implied arguments.
-                    return true;
+                argument = null;
 
                 if (state == TagState.Close)    // Invalid: no arguments allowed on a closing tag. <tag/> ! <tag=?/>
-                    return false;
+                    throw new TagException("Closure tags are not allowed to contain any arguments."); 
 
-                char decoration = '\0';
                 int length = 0;
+                char decoration = '\0';
 
                 if (text[leftIndex + length] is '"' or '\'') // Ignore decoration.
                 {
@@ -106,7 +106,7 @@ namespace Celezt.DialogueSystem
                             break;
 
                         if (length >= rightIndex - leftIndex - 1)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
-                            return false;
+                            throw new TagException("Arguments using \" or ' must close with the same character.");
                     }
                 }
                 else if (text[leftIndex + length] is not ' ')    // If no decorations are present. WARNING: whitespace means end!
@@ -118,49 +118,66 @@ namespace Celezt.DialogueSystem
 
                         // Invalid: not allowed to use these characters except when having a '\' in front of it.
                         if (text[leftIndex + length] is '/' or '"' or '\'' && text[leftIndex + length - 1] is not '\\')
-                            return false;
+                            throw new TagException("Not allowed to use /, \" or ' except when having a \\ in front of it.");
                     }
                 }
                 else
-                    return false;
+                    throw new TagException("Arguments cannot be empty");
 
-                impliedArgument = text.AsSpan(leftIndex, length);
-                leftIndex += length + 1;
+                argument = text.Substring(leftIndex, length);
+                leftIndex += length + (decoration is '\0' ? 0: 1);
 
                 return true;
             }
 
-            //bool ArgumentProcess(TagState state)
-            //{
+            IEnumerable<(string Name, string Argument)> Arguments()
+            {
+                string ArgumentName()
+                {
+                    int length = 0;
 
-            //    for (; leftIndex < rightIndex; leftIndex++)
-            //    {
-            //        if (!char.IsWhiteSpace(text[leftIndex])) // Skip all white spaces.
-            //            break;
-            //    }
+                    for (; length < rightIndex - leftIndex; length++) // <?=
+                    {
+                        if (text[leftIndex + length] is '=')    // Ends if it finds a =.
+                            break;
 
-            //    int index = leftIndex;
+                        if (text[leftIndex + length] is ' ')
+                            throw new TagException("Argument names are not allowed to end with whitespace.");
 
-            //    for (; index < rightIndex; index++)
-            //    {
-            //        if ()
-            //    }
+                        if (!char.IsLetter(text[leftIndex + length]))    // Invalid: name must be a letter. <tag> ! <%3->
+                            throw new TagException("Name cannot contain any numbers or symbols");
+                    }
 
-            //    for (int i = leftIndex + 1; i < rightIndex; i++) // =?>
-            //    {
+                    string slice = text.Substring(leftIndex, length);
 
-            //    }
+                    leftIndex += length;
+                    return slice;
+                }
 
-            //    return true;
-            //}
+                while(leftIndex < rightIndex)
+                {
+                    if (char.IsWhiteSpace(text[leftIndex])) // Skip all white spaces.
+                    {
+                        leftIndex++;
+                        continue;
+                    }
+
+                    string name = ArgumentName();
+
+                    if (text[leftIndex++] is not '=')
+                        throw new TagException("Arguments must have a value assign to it.");
+
+                    if (Argument(out string? argument) && !string.IsNullOrWhiteSpace(name))
+                        yield return (name, argument!);
+                }
+            }
 
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
             {
-                //Debug.Log(text[leftIndex]);
                 if (text[leftIndex] is '<')
                 {
                     beginIndex = leftIndex;
-                    Debug.Log("Begin Index: " + beginIndex);
+
                     for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
                     {
                         if (text[rightIndex] is '<') // Invalid: must end with >. <tag> ! <tag<
@@ -170,11 +187,11 @@ namespace Celezt.DialogueSystem
                             continue;
 
                         endIndex = rightIndex;
-                        Debug.Log("End Index: " + endIndex);
+
                         if (text[leftIndex + 1] is '/' && text[rightIndex - 1] is '/')   // Invalid: not allowed to have both. ! </tag/>
                             break;
 
-                        TagState state = TagState.Open; // Open by default if it has no '/'.
+                        state = TagState.Open; // Open by default if it has no '/'.
                         if (text[leftIndex + 1] is '/')    // Tag is an tag marker. </tag>
                         {
                             Debug.Log("marker!");
@@ -190,18 +207,22 @@ namespace Celezt.DialogueSystem
                         else
                             Debug.Log("open!");
 
-                        if (!NameProcess(out string name))
+                        if (!TagName(out string name))
                             break;
 
                         Debug.Log("Name: " + name);
 
-                        if (!ImpliedProcess(state, out ReadOnlySpan<char> impliedArgument))
-                            break;
+                        string? implicitArgument = null;
+                        if (text[leftIndex++] is '=')   // If it has implied arguments.
+                            if (!Argument(out implicitArgument))
+                                break;
+      
+                        Debug.Log("Implied: " + implicitArgument);
 
-                        Debug.Log("Implied: " + impliedArgument.ToString());
-
-                        //if (!ArgumentProcess(state))
-                        //    break;
+                        foreach (var argument in Arguments())
+                        {
+                            Debug.Log(argument);
+                        }
 
                         if (state == TagState.Open)
                         {
@@ -244,5 +265,10 @@ namespace Celezt.DialogueSystem
                 Debug.Log("Added: " + name);
             }
         }
+    }
+
+    public class TagException : Exception
+    {
+        public TagException(string message) : base(message) { }
     }
 }

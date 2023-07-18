@@ -11,7 +11,7 @@ namespace Celezt.DialogueSystem
         public float Duration { get; set; }
 
         [SerializeField]
-        private float _someValue;
+        private string _someValue;
 
         public override void OnInvoke(int index, DSPlayableAsset playableAsset)
         {
