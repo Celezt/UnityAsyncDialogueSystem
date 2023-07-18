@@ -10,11 +10,20 @@ using UnityEngine.Rendering;
 
 namespace Celezt.DialogueSystem
 {
-    public static class Tags
+    public class Tags
     {
-        public static IReadOnlyDictionary<string, ITag> Instances => _tagInstances;
+        public static IReadOnlyDictionary<string, ITag> Values
+        {
+            get
+            {
+                if (_values == null)
+                    Initialize();
 
-        private static Dictionary<string, ITag> _tagInstances = new();
+                return _values!;
+            }
+        }
+
+        private static Dictionary<string, ITag>? _values;
         private static Dictionary<ITag, Dictionary<string, MemberInfo>> _cachedMembers = new();
 
         private enum TagState
@@ -37,12 +46,8 @@ namespace Celezt.DialogueSystem
                     .ToDictionary(key => key.Name.ToCamelCase(), value => value);
             }
 
-            //if (members.TryGetValue(name, ))
-
-            //foreach (MemberInfo member in members) 
-            //{
-            //    member.SetValue(name, argument);
-            //}
+            if (members.TryGetValue(name, out var member))
+                member.SetValue(tag, argument);
         }
 
         public static IEnumerable<ITag> GetTags(string text)
@@ -60,7 +65,7 @@ namespace Celezt.DialogueSystem
 
                 for (; index < rightIndex; index++) // <?=
                 {
-                    if (char.IsWhiteSpace(text[index]) || text[index] == '=')    // Ends if it finds a whitespace or =.
+                    if (text[index] is ' ' or '=')    // Ends if it finds a whitespace or =.
                         break;
 
                     if (!char.IsLetter(text[index]))    // Invalid: name must be a letter. <tag> ! <%3->
@@ -69,7 +74,7 @@ namespace Celezt.DialogueSystem
 
                 string slice = text.Substring(leftIndex, index - leftIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
 
-                if (!Instances.ContainsKey(slice))   // If the tag does not exist.
+                if (!Values.ContainsKey(slice))   // If the tag does not exist.
                     return false;
 
                 name = slice;
@@ -79,54 +84,48 @@ namespace Celezt.DialogueSystem
 
             bool ImpliedProcess(TagState state, out ReadOnlySpan<char> impliedArgument)
             {
-                impliedArgument = string.Empty;
-                int index = leftIndex + 1;
+                impliedArgument = ReadOnlySpan<char>.Empty;
+
+                if (text[leftIndex++] is not '=')   // If it has no implied arguments.
+                    return true;
+
+                if (state == TagState.Close)    // Invalid: no arguments allowed on a closing tag. <tag/> ! <tag=?/>
+                    return false;
+
                 char decoration = '\0';
+                int length = 0;
 
-                if (text[leftIndex] is '=')   // If it has an implied argument.
+                if (text[leftIndex + length] is '"' or '\'') // Ignore decoration.
                 {
-                    leftIndex++;
+                    decoration = text[leftIndex++ + length++];
 
-                    if (state == TagState.Close)    // Invalid: no arguments allowed on a closing tag. <tag/> ! <tag=?/>
-                        return false;
-
-                    if (text[index] is '"' or '\'') // Ignore decoration.
-                        decoration = text[index++];
-
-                    if (decoration is '\0') // If no decorations are present. WARNING: whitespace means end!
+                    for (; length < rightIndex - leftIndex; length++)
                     {
-                        for (; index <= rightIndex; index++)
-                        {
-                            if (char.IsWhiteSpace(text[index]))
-                            {
-                                index--;
-                                break;
-                            }
+                        // Argument ending except when having a '\' in front of it.
+                        if (text[leftIndex + length] == decoration && text[leftIndex + length - 1] is not '\\')
+                            break;
 
-                            // Invalid: not allowed to use these characters except when having a '\' in front of it.
-                            if (text[index] is '/' or '"' or '\'' && text[index - 1] is not '\\')
-                                return false;
-                        }
-
-                        impliedArgument = text.AsSpan(leftIndex, index - leftIndex);
+                        if (length >= rightIndex - leftIndex - 1)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
+                            return false;
                     }
-                    else
-                    {
-                        for (; index <= rightIndex; index++)
-                        {
-                            // Argument ending except when having a '\' in front of it.
-                            if (text[index] == decoration && text[index - 1] is not '\\') 
-                                break;
-
-                            if (index >= rightIndex - 1)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
-                                return false;
-                        }
-
-                        impliedArgument = text.AsSpan(leftIndex + 1, index - leftIndex - 1);    // Slice without decorators.
-                    }
-
-                    leftIndex = index + 1;
                 }
+                else if (text[leftIndex + length] is not ' ')    // If no decorations are present. WARNING: whitespace means end!
+                {
+                    for (; length < rightIndex - leftIndex; length++)
+                    {
+                        if (char.IsWhiteSpace(text[leftIndex + length]))
+                            break;
+
+                        // Invalid: not allowed to use these characters except when having a '\' in front of it.
+                        if (text[leftIndex + length] is '/' or '"' or '\'' && text[leftIndex + length - 1] is not '\\')
+                            return false;
+                    }
+                }
+                else
+                    return false;
+
+                impliedArgument = text.AsSpan(leftIndex, length);
+                leftIndex += length + 1;
 
                 return true;
             }
@@ -155,63 +154,73 @@ namespace Celezt.DialogueSystem
             //    return true;
             //}
 
-            for (int i = 0; i < text.Length; i++)
+            for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
             {
-                if (text[leftIndex] == '<')
+                //Debug.Log(text[leftIndex]);
+                if (text[leftIndex] is '<')
                 {
-                    leftIndex = beginIndex = i;
+                    beginIndex = leftIndex;
+                    Debug.Log("Begin Index: " + beginIndex);
                     for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
                     {
-                        if (text[rightIndex] == '<') // Invalid: must end with >. <tag> ! <tag<
+                        if (text[rightIndex] is '<') // Invalid: must end with >. <tag> ! <tag<
                             break;
 
-                        if (text[rightIndex] == '>') // End of tag. <tag>
+                        if (text[rightIndex] is not '>')
+                            continue;
+
+                        endIndex = rightIndex;
+                        Debug.Log("End Index: " + endIndex);
+                        if (text[leftIndex + 1] is '/' && text[rightIndex - 1] is '/')   // Invalid: not allowed to have both. ! </tag/>
+                            break;
+
+                        TagState state = TagState.Open; // Open by default if it has no '/'.
+                        if (text[leftIndex + 1] is '/')    // Tag is an tag marker. </tag>
                         {
-                            endIndex = rightIndex;
+                            Debug.Log("marker!");
+                            state = TagState.Marker;
+                            leftIndex += 2;
+                        }
+                        else if (text[rightIndex - 1] is '/')    // Tag is an closure tag. <tag/>
+                        {
+                            Debug.Log("close!");
+                            state = TagState.Close;
+                            rightIndex -= 2;
+                        }
+                        else
+                            Debug.Log("open!");
 
-                            if (text[leftIndex + 1] == '/' && text[rightIndex - 1] == '/')   // Invalid: not allowed to have both. ! </tag/>
+                        if (!NameProcess(out string name))
+                            break;
+
+                        Debug.Log("Name: " + name);
+
+                        if (!ImpliedProcess(state, out ReadOnlySpan<char> impliedArgument))
+                            break;
+
+                        Debug.Log("Implied: " + impliedArgument.ToString());
+
+                        //if (!ArgumentProcess(state))
+                        //    break;
+
+                        if (state == TagState.Open)
+                        {
+                            tagOpenList.Add(name);
+                            yield return Values[name];
+                        }
+                        else if (state == TagState.Close)
+                        {
+                            int index = tagOpenList.LastIndexOf(name);
+
+                            if (index == -1)    // No open tag of that type exist.
                                 break;
 
-                            TagState state = TagState.Open; // Open by default if it has no '/'.
-                            if (text[leftIndex + 1] == '/')    // Tag is an tag marker. </tag>
-                            {
-                                state = TagState.Marker;
-                                leftIndex += 2;
-                            }
-                            else if (text[rightIndex - 1] == '/')    // Tag is an closure tag. <tag/>
-                            {
-                                state = TagState.Close;
-                                rightIndex -= 2;
-                            }
+                            tagOpenList.RemoveAt(index);    // Remove first last index of a tag.
+                        }
+                        else if (state == TagState.Marker)
+                        {
 
-                            if (!NameProcess(out string name))
-                                break;
-
-                            if (!ImpliedProcess(state, out ReadOnlySpan<char> impliedArgument))
-                                break;
-
-                            //if (!ArgumentProcess(state))
-                            //    break;
-
-                            if (state == TagState.Open)
-                            {
-                                tagOpenList.Add(name);
-                                yield return null;
-                            }
-                            else if (state == TagState.Close)
-                            {
-                                int index = tagOpenList.LastIndexOf(name);
-
-                                if (index == -1)    // No open tag of that type exist.
-                                    break;
-
-                                tagOpenList.RemoveAt(index);    // Remove first last index of a tag.
-                            }
-                            else if (state == TagState.Marker)
-                            {
-
-                                yield return null;
-                            }
+                            yield return Values[name];
                         }
                     }
                 }
@@ -221,6 +230,8 @@ namespace Celezt.DialogueSystem
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void Initialize()
         {
+            _values = new();
+
             foreach (Type tagType in ReflectionUtility.GetTypesWithAttribute<CreateTagAttribute>(AppDomain.CurrentDomain))
             {
                 if (tagType.GetInterface(nameof(ITag)) == null)
@@ -228,7 +239,7 @@ namespace Celezt.DialogueSystem
 
                 Span<char> span = stackalloc char[tagType.Name.Length];
                 string name = tagType.Name.TrimDecorationSpan(span, "Tag").ToCamelCaseSpan().ToString();
-                _tagInstances[name] = (ITag)Activator.CreateInstance(tagType);
+                _values[name] = (ITag)Activator.CreateInstance(tagType);
 
                 Debug.Log("Added: " + name);
             }

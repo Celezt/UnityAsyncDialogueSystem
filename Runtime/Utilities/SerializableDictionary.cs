@@ -14,7 +14,7 @@ namespace Celezt.DialogueSystem
     }
 
     [Serializable]
-    public class SerializableDictionary<TKey, TValue> : SerializableDictionary, IDictionary<TKey, TValue>, ISerializationCallbackReceiver
+    public class SerializableDictionary<TKey, TValue> : SerializableDictionary, IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
     {
         [SerializeField]
         private List<SerializableKeyValuePair> list = new List<SerializableKeyValuePair>();
@@ -192,6 +192,12 @@ namespace Celezt.DialogueSystem
         }
 
         public bool Remove(KeyValuePair<TKey, TValue> kvp) => Remove(kvp.Key);
+        #endregion
+
+        #region IReadOnlyDictionary
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => list.Select(x => x.Key);
+
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => list.Select(x => x.Value);
         #endregion
 
         #region IEnumerable

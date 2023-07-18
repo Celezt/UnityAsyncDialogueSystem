@@ -8,7 +8,10 @@ namespace Celezt.DialogueSystem
     public class AwaitTag : TagMarker
     {
         [Implicit]
-        public float Speed { get; set; }
+        public float Duration { get; set; }
+
+        [SerializeField]
+        private float _someValue;
 
         public override void OnInvoke(int index, DSPlayableAsset playableAsset)
         {
