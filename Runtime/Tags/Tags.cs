@@ -10,21 +10,21 @@ using UnityEngine.Rendering;
 
 namespace Celezt.DialogueSystem
 {
-    public class Tags
+    public static class Tags
     {
-        public static IReadOnlyDictionary<string, ITag> Values
+        public static IReadOnlyDictionary<string, Type> Types
         {
             get
             {
-                if (_values == null)
+                if (_types == null)
                     Initialize();
 
-                return _values!;
+                return _types!;
             }
         }
 
-        private static Dictionary<string, ITag>? _values;
-        private static Dictionary<ITag, Dictionary<string, MemberInfo>> _cachedMembers = new();
+        private static Dictionary<string, Type>? _types;
+        private static Dictionary<Type, Dictionary<string, MemberInfo>> _cachedMembers = new();
 
         private enum TagState
         {
@@ -33,55 +33,74 @@ namespace Celezt.DialogueSystem
             Marker
         }
 
-        public static void BindTag(ITag tag, string name, string argument)
+        public static void Bind(this ITag tag, string name, string argument)
         {
-            if (!_cachedMembers.TryGetValue(tag, out var members))
+            tag.GetMembers(out var members);
+
+            MemberInfo member;
+            if (name == "implicit")
             {
-                Type type = tag.GetType();
-                _cachedMembers[tag] = members = type  // Get all public field, properties and fields with SerializeFieldAttribute.
+                member = members.Values.FirstOrDefault(x => x.GetCustomAttribute<ImplicitAttribute>() != null);
+
+                if (member == null)
+                    throw new TagException("No implicit property or field was found for " + tag.GetType().Name);
+            }
+            else if (!members.TryGetValue(name, out member))
+                throw new TagException($"No '{name}' argument was found for " + tag.GetType().Name);
+
+            member.SetValue(tag, Convert.ChangeType(argument, member.GetUnderlyingType()));
+        }
+
+        public static void GetMembers(this ITag tag, out Dictionary<string, MemberInfo> members)
+            => GetMembers(tag.GetType(), out members);
+        public static void GetMembers(Type type, out Dictionary<string, MemberInfo> members)
+        {
+            if (!_cachedMembers.TryGetValue(type.GetType(), out members))
+            {
+                _cachedMembers[type] = members = type  // Get all public field, properties and fields with SerializeFieldAttribute.
                     .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.SetProperty)
                     .Cast<MemberInfo>()
                     .Concat(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .Where(x => x.IsPrivate ? x.GetCustomAttribute<SerializeField>() != null : x.IsPublic))
                     .ToDictionary(key => key.Name.ToCamelCase(), value => value);
             }
-
-            if (members.TryGetValue(name, out var member))
-                member.SetValue(tag, argument);
         }
 
-        public static IEnumerable<ITag> GetTags(string text)
+        public static IEnumerable<ITag> GetSequence(string text)
         {
             int beginIndex = 0;
             int endIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
-            TagState state = TagState.Open;
-            var tagOpenList = new List<string>();
-
-            
+            int currentCharacterIndex = 0;  // The index to activate tag.
+            var state = TagState.Open;
+            var tagOpenList = new List<Tag>();
 
             bool TagName(out string name)
             {
                 name = string.Empty;
-                int length = 0;
+                int beforeIndex = leftIndex;
 
-                for (; length < rightIndex - leftIndex; length++) // <?=
+                for (; leftIndex < rightIndex; leftIndex++) // <?=
                 {
-                    if (text[leftIndex + length] is ' ' or '=')    // Ends if it finds a whitespace or =.
+                    if (text[leftIndex] is ' ' or '=')    // Ends if it finds a whitespace or =.
                         break;
 
-                    if (!char.IsLetter(text[leftIndex + length]))    // Invalid: name must be a letter. <tag> ! <%3->
+                    if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
                         throw new TagException("Name cannot contain any numbers or symbols");
                 }
 
-                string slice = text.Substring(leftIndex, length);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
+                string slice = text.Substring(beforeIndex, leftIndex - beforeIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
 
-                if (!Values.ContainsKey(slice))   // If the tag does not exist.
+                if (!Types.TryGetValue(slice, out Type type))   // If the tag does not exist.
                     return false;
 
+                if ((typeof(Tag).IsAssignableFrom(type) && state is not TagState.Open and not TagState.Close) ||
+                    (typeof(TagMarker).IsAssignableFrom(type) && state is not TagState.Marker))
+                    throw new TagException($"Tag type: {type} is not derived from Tag");
+
                 name = slice;
-                leftIndex += length;
+
                 return true;    // Name is valid.
             }
 
@@ -92,40 +111,41 @@ namespace Celezt.DialogueSystem
                 if (state == TagState.Close)    // Invalid: no arguments allowed on a closing tag. <tag/> ! <tag=?/>
                     throw new TagException("Closure tags are not allowed to contain any arguments."); 
 
-                int length = 0;
+                int beforeIndex = leftIndex;
                 char decoration = '\0';
 
-                if (text[leftIndex + length] is '"' or '\'') // Ignore decoration.
+                if (text[leftIndex] is '"' or '\'') // Ignore decoration.
                 {
-                    decoration = text[leftIndex++ + length++];
+                    beforeIndex++;
+                    decoration = text[leftIndex++];
 
-                    for (; length < rightIndex - leftIndex; length++)
+                    for (; leftIndex <= rightIndex; leftIndex++)
                     {
                         // Argument ending except when having a '\' in front of it.
-                        if (text[leftIndex + length] == decoration && text[leftIndex + length - 1] is not '\\')
+                        if (text[leftIndex] == decoration && text[leftIndex - 1] is not '\\')
                             break;
 
-                        if (length >= rightIndex - leftIndex - 1)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
+                        if (leftIndex >= rightIndex)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
                             throw new TagException("Arguments using \" or ' must close with the same character.");
                     }
                 }
-                else if (text[leftIndex + length] is not ' ')    // If no decorations are present. WARNING: whitespace means end!
+                else if (text[leftIndex] is not ' ')    // If no decorations are present. WARNING: whitespace means end!
                 {
-                    for (; length < rightIndex - leftIndex; length++)
+                    for (; leftIndex <= rightIndex; leftIndex++)
                     {
-                        if (char.IsWhiteSpace(text[leftIndex + length]))
+                        if (char.IsWhiteSpace(text[leftIndex]))
                             break;
 
                         // Invalid: not allowed to use these characters except when having a '\' in front of it.
-                        if (text[leftIndex + length] is '/' or '"' or '\'' && text[leftIndex + length - 1] is not '\\')
+                        if (text[leftIndex] is '/' or '"' or '\'' && text[leftIndex - 1] is not '\\')
                             throw new TagException("Not allowed to use /, \" or ' except when having a \\ in front of it.");
                     }
                 }
                 else
                     throw new TagException("Arguments cannot be empty");
 
-                argument = text.Substring(leftIndex, length);
-                leftIndex += length + (decoration is '\0' ? 0: 1);
+                argument = text.Substring(beforeIndex, leftIndex - beforeIndex);
+                leftIndex += (decoration is '\0' ? 0: 1);
 
                 return true;
             }
@@ -134,27 +154,25 @@ namespace Celezt.DialogueSystem
             {
                 string ArgumentName()
                 {
-                    int length = 0;
-
-                    for (; length < rightIndex - leftIndex; length++) // <?=
+                    int beforeIndex = leftIndex;
+                    for (; leftIndex < rightIndex; leftIndex++) // <?=
                     {
-                        if (text[leftIndex + length] is '=')    // Ends if it finds a =.
+                        if (text[leftIndex] is '=')    // Ends if it finds a =.
                             break;
 
-                        if (text[leftIndex + length] is ' ')
+                        if (text[leftIndex] is ' ')
                             throw new TagException("Argument names are not allowed to end with whitespace.");
 
-                        if (!char.IsLetter(text[leftIndex + length]))    // Invalid: name must be a letter. <tag> ! <%3->
+                        if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
                             throw new TagException("Name cannot contain any numbers or symbols");
                     }
 
-                    string slice = text.Substring(leftIndex, length);
+                    string slice = text.Substring(beforeIndex, leftIndex - beforeIndex);
 
-                    leftIndex += length;
                     return slice;
                 }
 
-                while(leftIndex < rightIndex)
+                while(leftIndex <= rightIndex)
                 {
                     if (char.IsWhiteSpace(text[leftIndex])) // Skip all white spaces.
                     {
@@ -178,80 +196,99 @@ namespace Celezt.DialogueSystem
                 {
                     beginIndex = leftIndex;
 
+                    if (leftIndex + 1 >= text.Length)
+                        throw new TagException("Must end < with >.");
+
                     for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
                     {
-                        if (text[rightIndex] is '<') // Invalid: must end with >. <tag> ! <tag<
+                        if (text[rightIndex] is '<' && text[rightIndex - 1] is not '\\') // Invalid: must end with >. <tag> ! <tag<
+                            throw new TagException("Not allowed to have two < before close with >.");
+
+                        if (text[rightIndex] is '>' && text[rightIndex - 1] is not '\\')
                             break;
 
-                        if (text[rightIndex] is not '>')
-                            continue;
+                        if (rightIndex + 1 >= text.Length)
+                            throw new TagException("Must end < with >.");
+                    }
 
-                        endIndex = rightIndex;
+                    leftIndex++;
+                    rightIndex--;
 
-                        if (text[leftIndex + 1] is '/' && text[rightIndex - 1] is '/')   // Invalid: not allowed to have both. ! </tag/>
+                    if (text[leftIndex] is '/' && text[rightIndex] is '/')   // Invalid: not allowed to have both. ! </tag/>
+                        break;
+
+                    endIndex = rightIndex;
+
+                    state = TagState.Open; // Open by default if it has no '/'.
+                    if (text[leftIndex] is '/')    // Tag is an tag marker. </tag>
+                    {
+                        state = TagState.Marker;
+                        leftIndex++;
+                    }
+                    else if (text[rightIndex] is '/')    // Tag is an closure tag. <tag/>
+                    {
+                        state = TagState.Close;
+                        rightIndex--;
+                    }
+
+                    if (!TagName(out string tagName))
+                        break;
+
+                    string? implicitArgument = null;
+                    if (text[leftIndex++] is '=')   // If it has implied arguments.
+                        if (!Argument(out implicitArgument))
                             break;
 
-                        state = TagState.Open; // Open by default if it has no '/'.
-                        if (text[leftIndex + 1] is '/')    // Tag is an tag marker. </tag>
-                        {
-                            Debug.Log("marker!");
-                            state = TagState.Marker;
-                            leftIndex += 2;
-                        }
-                        else if (text[rightIndex - 1] is '/')    // Tag is an closure tag. <tag/>
-                        {
-                            Debug.Log("close!");
-                            state = TagState.Close;
-                            rightIndex -= 2;
-                        }
-                        else
-                            Debug.Log("open!");
+                    if (state == TagState.Open)
+                    {
+                        Tag tag = (Tag)Activator.CreateInstance(Types[tagName]);
+                        tag._range = new RangeInt(currentCharacterIndex, -1);
 
-                        if (!TagName(out string name))
-                            break;
+                        if (implicitArgument != null)
+                            tag.Bind("implicit", implicitArgument);
 
-                        Debug.Log("Name: " + name);
+                        foreach ((string name, string argument) in Arguments())
+                            tag.Bind(name, argument);
 
-                        string? implicitArgument = null;
-                        if (text[leftIndex++] is '=')   // If it has implied arguments.
-                            if (!Argument(out implicitArgument))
-                                break;
-      
-                        Debug.Log("Implied: " + implicitArgument);
+                        tagOpenList.Add(tag);
+                        yield return tag;
+                    }
+                    else if (state == TagState.Close)
+                    {
+                        int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == Types[tagName]);
 
-                        foreach (var argument in Arguments())
-                        {
-                            Debug.Log(argument);
-                        }
+                        if (tagIndex == -1)    // No open tag of that type exist.
+                            throw new TagException("Closure tags must have an open tag of the same type.");
 
-                        if (state == TagState.Open)
-                        {
-                            tagOpenList.Add(name);
-                            yield return Values[name];
-                        }
-                        else if (state == TagState.Close)
-                        {
-                            int index = tagOpenList.LastIndexOf(name);
+                        var range = tagOpenList[tagIndex]._range;
+                        range.length = currentCharacterIndex - range.start;
+                        tagOpenList[tagIndex]._range = range;
 
-                            if (index == -1)    // No open tag of that type exist.
-                                break;
+                        tagOpenList.RemoveAt(tagIndex);    // Remove first last index of a tag.
+                    }
+                    else if (state == TagState.Marker)
+                    {
+                        TagMarker tag = (TagMarker)Activator.CreateInstance(Types[tagName]);
+                        tag._index = currentCharacterIndex;
 
-                            tagOpenList.RemoveAt(index);    // Remove first last index of a tag.
-                        }
-                        else if (state == TagState.Marker)
-                        {
+                        if (implicitArgument != null)
+                            tag.Bind("implicit", implicitArgument);
 
-                            yield return Values[name];
-                        }
+                        foreach ((string name, string argument) in Arguments())
+                            tag.Bind(name, argument);
+
+                        yield return tag;
                     }
                 }
+                else if (text[leftIndex] is not ' ')    // The latest character before a tag.
+                    currentCharacterIndex = leftIndex;
             }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void Initialize()
         {
-            _values = new();
+            _types = new();
 
             foreach (Type tagType in ReflectionUtility.GetTypesWithAttribute<CreateTagAttribute>(AppDomain.CurrentDomain))
             {
@@ -260,9 +297,7 @@ namespace Celezt.DialogueSystem
 
                 Span<char> span = stackalloc char[tagType.Name.Length];
                 string name = tagType.Name.TrimDecorationSpan(span, "Tag").ToCamelCaseSpan().ToString();
-                _values[name] = (ITag)Activator.CreateInstance(tagType);
-
-                Debug.Log("Added: " + name);
+                _types[name] = tagType;
             }
         }
     }

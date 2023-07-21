@@ -8,6 +8,10 @@ namespace Celezt.DialogueSystem
 {
     public class TagMarker : ITag
     {
+        public int Index => _index;
+
+        internal int _index;
+
         public virtual void Initialize() { }
         public virtual void OnInvoke(int index, DSPlayableAsset playableAsset) { }
     }

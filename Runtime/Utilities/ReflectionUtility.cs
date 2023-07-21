@@ -195,7 +195,7 @@ namespace Celezt.DialogueSystem
             _ => throw new ArgumentException("Property must be of type 'FieldInfo' or 'PropertyInfo'", nameof(property)),
         };
 
-        public static Type GetType(this MemberInfo member) => member.MemberType switch
+        public static Type GetUnderlyingType(this MemberInfo member) => member.MemberType switch
         {
             MemberTypes.Field => ((FieldInfo)member).FieldType,
             MemberTypes.Property => ((PropertyInfo)member).PropertyType,
