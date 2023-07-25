@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Reflection;
-using System.Linq;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -12,7 +11,7 @@ namespace Celezt.DialogueSystem.Editor
     public class DSPlayableAssetEditor : UnityEditor.Editor
     {
         public virtual void BuildInspector() { }
- 
+
         public sealed override void OnInspectorGUI()
         {
             serializedObject.Update();

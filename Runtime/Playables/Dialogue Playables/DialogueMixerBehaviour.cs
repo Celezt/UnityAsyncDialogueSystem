@@ -4,14 +4,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.Timeline;
+
+#nullable enable
 
 namespace Celezt.DialogueSystem
 {
     public class DialogueMixerBehaviour : DSMixerBehaviour
     {
+        private IEnumerable<ITag>? _sequence;
+
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
+            var asset = (DialogueAsset)behaviour.Asset;
+
+            _sequence = Tags.GetSequence(asset.Text);
+
             Binder.Internal_InvokeOnEnterDialogueClip(Track, behaviour);
         }
 
@@ -22,6 +29,8 @@ namespace Celezt.DialogueSystem
 
         protected override void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
+            _sequence = null;
+
             Binder.Internal_InvokeOnExitDialogueClip(Track, behaviour);
         }
 

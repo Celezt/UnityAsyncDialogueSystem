@@ -192,7 +192,7 @@ namespace Celezt.DialogueSystem
 
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
             {
-                if (text[leftIndex] is '<')
+                if (text[leftIndex] is '<' && text[leftIndex - 1] is not '\\')
                 {
                     beginIndex = leftIndex;
 
@@ -215,7 +215,7 @@ namespace Celezt.DialogueSystem
                     rightIndex--;
 
                     if (text[leftIndex] is '/' && text[rightIndex] is '/')   // Invalid: not allowed to have both. ! </tag/>
-                        break;
+                        throw new TagException("Not allowed to have both '/' on the beginning and the end of the tag.");
 
                     endIndex = rightIndex;
 
@@ -285,6 +285,107 @@ namespace Celezt.DialogueSystem
             }
         }
 
+        public static string TrimTextTags(string text)
+        {
+            Span<char> span = stackalloc char[text.Length];
+            int newLength = 0;
+            int endIndex = 0;
+            int beginIndex = 0;
+            int leftIndex = 0;
+            int rightIndex = 0;
+
+
+            bool TagName()
+            {
+                int beforeIndex = leftIndex;
+
+                for (; leftIndex <= rightIndex; leftIndex++) // <?=
+                {
+                    if (text[leftIndex] is ' ' or '=')    // Ends if it finds a whitespace or =.
+                        break;
+
+                    if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
+                        return false;
+                }
+                string slice = text.Substring(beforeIndex, leftIndex - beforeIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
+
+                if (!Types.TryGetValue(slice, out Type type))   // If the tag does not exist.
+                    return false;
+
+                return true;    // Name is valid.
+            }
+
+            bool ValidTag()
+            {
+                if (leftIndex + 1 >= text.Length)
+                    return false;
+
+                for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
+                {
+                    if (text[rightIndex] is '<' && text[rightIndex - 1] is not '\\') // Invalid: must end with >. <tag> ! <tag<
+                        return false;
+
+                    if (text[rightIndex] is '>' && text[rightIndex - 1] is not '\\')
+                        break;
+
+                    if (rightIndex + 1 >= text.Length)
+                        return false;
+                }
+
+                leftIndex++;
+                rightIndex--;
+
+                if (text[leftIndex] is '/' && text[rightIndex] is '/')   // Invalid: not allowed to have both. ! </tag/>
+                    return false;
+
+                return true;
+            }
+
+            bool HasNext() => leftIndex + 1 < text.Length;
+            bool HasPrevious() => leftIndex - 1 >= 0;
+
+            for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
+            {
+                switch (text[leftIndex])
+                {
+                    case '\\' when !HasNext() || text[leftIndex + 1] is not '\\':
+                        break;
+                    case '<' when !HasPrevious() ||text[leftIndex - 1] is not '\\':
+                        beginIndex = leftIndex;
+
+                        if (!ValidTag())
+                        {
+                            span[newLength++] = '<';
+                            break;
+                        }
+
+                        endIndex = rightIndex + 1;
+
+                        if (text[leftIndex] is '/')    // Tag is an tag marker. </tag>
+                            leftIndex++;
+                        else if (text[rightIndex] is '/')    // Tag is an closure tag. <tag/>
+                            rightIndex--;
+
+                        if (TagName())
+                        {
+                            leftIndex = endIndex;
+                        }
+                        else
+                        {
+                            for (leftIndex = beginIndex; leftIndex <= endIndex; leftIndex++)
+                                span[newLength++] = text[leftIndex];
+                            leftIndex--;
+                        }
+                        break;
+                    default:
+                        span[newLength++] = text[leftIndex];
+                        break;
+                }
+            }
+
+            return span.Slice(0, newLength).ToString();
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void Initialize()
         {
@@ -293,7 +394,7 @@ namespace Celezt.DialogueSystem
             foreach (Type tagType in ReflectionUtility.GetTypesWithAttribute<CreateTagAttribute>(AppDomain.CurrentDomain))
             {
                 if (tagType.GetInterface(nameof(ITag)) == null)
-                    throw new Exception("Object with 'CreateTagAttribute' are required to be derived from 'ITag'");
+                    throw new TagException("Object with 'CreateTagAttribute' are required to be derived from 'ITag'");
 
                 Span<char> span = stackalloc char[tagType.Name.Length];
                 string name = tagType.Name.TrimDecorationSpan(span, "Tag").ToCamelCaseSpan().ToString();

@@ -14,12 +14,17 @@ namespace Celezt.DialogueSystem.Editor
 
             EditorGUI.indentLevel--;
             EditorGUILayout.LabelField("Actor");
-            using (new EditorGUILayout.VerticalScope()) 
+            using (new EditorGUILayout.VerticalScope())
             {
                 EditorGUILayout.Space(6);
             }
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("Actor"), GUIContent.none);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("Text"), GUIContent.none);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_actor"), GUIContent.none);
+
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_text"), GUIContent.none);
+            serializedObject.ApplyModifiedProperties();
+            if (EditorGUI.EndChangeCheck())
+                asset.UpdateTrimmedText();
 
             EditorGUILayout.LabelField("Speed Settings");
             using (new EditorGUILayout.VerticalScope())
@@ -33,7 +38,7 @@ namespace Celezt.DialogueSystem.Editor
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("<TimeSpeed>k__BackingField"), GUIContent.none);
                 EditorGUIExtraUtility.TightLabel("s");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("<EndOffset>k__BackingField"), GUIContent.none, GUILayout.Width(50));
-            }        
+            }
         }
     }
 }
