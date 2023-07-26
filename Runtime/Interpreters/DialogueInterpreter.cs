@@ -41,7 +41,7 @@ namespace Celezt.DialogueSystem
             {
                 var asset = _dialogueClip.asset as DialogueAsset;
 
-                asset.Text = text;
+                asset.RawText = text;
                 asset.Actor = actorID;
                 asset.TimeSpeed = timeSpeed;
                 asset.EndOffset = endOffset;

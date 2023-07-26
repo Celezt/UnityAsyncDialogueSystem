@@ -24,9 +24,9 @@ namespace Celezt.DialogueSystem
         }
 
         /// <summary>
-        /// How much time is left in unit interval [1,0]. 0 if before and 1 if after.
+        /// How much time is left in unit interval [0-1]. 0 if before and 1 if after.
         /// </summary>
-        public float Inteval
+        public float Interval
         {
             get
             {

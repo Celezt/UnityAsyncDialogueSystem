@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -9,9 +10,6 @@ namespace Celezt.DialogueSystem
 {
     public class DSMixerBehaviour : PlayableBehaviour
     {
-        private List<ClipData> _oldClips = new List<ClipData>();
-        private List<ClipData> _currentClips = new List<ClipData>();
-
         public DialogueSystemBinder Binder
         {
             get => _binder;
@@ -36,10 +34,19 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public List<DSPlayableBehaviour> CurrentBehaviours => _currentClips.Select(x => x.Behaviour).ToList();
+        public bool IsPlayingForward => _isPLayingForward;
+
+        public IEnumerable<DSPlayableBehaviour> CurrentBehaviours => _currentClips.Select(x => x.Behaviour);
+        public IEnumerable<DSPlayableAsset> CurrentAssets => _currentClips.Select(x => x.Behaviour.Asset);
+
+        private List<ClipData> _oldClips = new List<ClipData>();
+        private List<ClipData> _currentClips = new List<ClipData>();
 
         private DialogueSystemBinder _binder;
         private DSTrack _track;
+
+        private double _oldTime;
+        private bool _isPLayingForward;
 
         protected struct ClipData : IEquatable<ClipData>
         {
@@ -61,6 +68,10 @@ namespace Celezt.DialogueSystem
         private void ProcessClips(Playable playable, FrameData info, object playerData)
         {
             _currentClips.Clear();
+
+            double time = playable.GetTime();
+            _isPLayingForward = time >= _oldTime;
+            _oldTime = time;
 
             int inputCount = playable.GetInputCount();
             for (int i = 0; i < inputCount; i++)
@@ -110,7 +121,23 @@ namespace Celezt.DialogueSystem
                 OnProcessClip(_currentClips[i].Playable, _currentClips[i].Behaviour, info, playerData);
             }
 
-            _oldClips = _currentClips.ToList();
+            if (_oldClips.Count <= _currentClips.Count) 
+            {
+                int index = 0;
+                for (; index < _oldClips.Count; index++)
+                    _oldClips[index] = _currentClips[index];
+
+                for (; index < _currentClips.Count; index++)
+                    _oldClips.Add(_currentClips[index]);
+            }
+            else
+            {
+                int index = 0;
+                for (; index < _currentClips.Count; index++)
+                    _oldClips[index] = _currentClips[index];
+
+                _oldClips.RemoveRange(_currentClips.Count, _oldClips.Count - _currentClips.Count);
+            }
         }
     }
 }

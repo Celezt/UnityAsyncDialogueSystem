@@ -40,17 +40,17 @@ namespace Celezt.DialogueSystem
         public readonly struct Callback
         {
             /// <summary>
-            /// [0-1]. Unaffected by speed.
+            /// How much time is left in unit interval [0-1]. Unaffected by speed.
             /// </summary>
-            public float PercentageUnscaled => 
+            public float IntervalUnscaled => 
                 Mathf.Clamp01((float)((Time - Start) / (End - Start)));
 
             /// <summary>
-            /// [0-1]
+            /// How much time is left in unit interval [0-1]. 0 if before and 1 if after.
             /// </summary>
-            public float Percentage =>
+            public float Interval =>
                 Asset is ITime asset ? 
-                asset.TimeSpeed.Evaluate(Mathf.Clamp01((float)((Time - Start + asset.StartOffset) / (End - asset.EndOffset - Start)))) : PercentageUnscaled;
+                asset.TimeSpeed.Evaluate(Mathf.Clamp01((float)((Time - Start + asset.StartOffset) / (End - asset.EndOffset - Start)))) : IntervalUnscaled;
 
             public double Time => Director.time;
             public double Start => Clip.start;

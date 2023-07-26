@@ -8,6 +8,6 @@ namespace Celezt.DialogueSystem
 {
     public interface ITag
     {
-        public void Initialize();
+        public void OnCreate();
     }
 }

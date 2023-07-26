@@ -11,9 +11,8 @@ namespace Celezt.DialogueSystem
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
             DialogueAsset asset = Asset as DialogueAsset;
-            if (!string.IsNullOrWhiteSpace(asset.Text))
-                clip.displayName = asset.Text;
+            if (!string.IsNullOrWhiteSpace(asset.RawText))
+                clip.displayName = Tags.TrimTextTags(asset.Text, false);
         }
-
     }
 }

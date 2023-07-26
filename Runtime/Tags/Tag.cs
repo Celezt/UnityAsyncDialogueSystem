@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
 
         internal RangeInt _range;
 
-        public virtual void Initialize() { }
+        public virtual void OnCreate() { }
         public virtual void OnEnter(int index, RangeInt range, DSPlayableAsset playableAsset) { }
         public virtual void OnProcess(int index, RangeInt range, DSPlayableAsset playableAsset) { }
         public virtual void OnExit(int index, RangeInt range, DSPlayableAsset playableAsset) { }

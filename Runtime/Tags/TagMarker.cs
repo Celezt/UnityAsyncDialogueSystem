@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
 
         internal int _index;
 
-        public virtual void Initialize() { }
+        public virtual void OnCreate() { }
         public virtual void OnInvoke(int index, DSPlayableAsset playableAsset) { }
     }
 }
