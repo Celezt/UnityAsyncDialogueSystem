@@ -12,6 +12,46 @@ namespace Celezt.DialogueSystem
 {
     public static class Tags
     {
+        private static readonly HashSet<string> _unityRichTextTags = new()
+        {
+            "a",
+            "align",
+            "allcaps",
+            "alpha",
+            "b",
+            "br",
+            "color",
+            "cspace",
+            "font",
+            "font-weight",
+            "gradient",
+            "i",
+            "indent",
+            "line-height",
+            "line-indent",
+            "lowercase",
+            "margin",
+            "mark",
+            "mspace",
+            "nobr",
+            "noparse",
+            "pos",
+            "rotate",
+            "s",
+            "size",
+            "smallcaps",
+            "space",
+            "sprite",
+            "strikethrough",
+            "style",
+            "sub",
+            "sup",
+            "u",
+            "uppercase",
+            "voffset",
+            "width",
+        };
+
         public static IReadOnlyDictionary<string, Type> Types
         {
             get
@@ -495,6 +535,34 @@ namespace Celezt.DialogueSystem
             return span.Slice(0, newLength).ToString();
         }
 
+        //private static bool ExtractTagName(out string name)
+        //{
+        //    name = string.Empty;
+        //    int beforeIndex = leftIndex;
+
+        //    for (; leftIndex <= rightIndex; leftIndex++) // <?=
+        //    {
+        //        if (text[leftIndex] is ' ' or '=')    // Ends if it finds a whitespace or =.
+        //            break;
+
+        //        if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
+        //            throw new TagException("Name cannot contain any numbers or symbols");
+        //    }
+
+        //    string slice = text.Substring(beforeIndex, leftIndex - beforeIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
+
+        //    if (!Types.TryGetValue(slice, out Type type))   // If the tag does not exist.
+        //        return false;
+
+        //    if ((typeof(Tag).IsAssignableFrom(type) && state is not TagState.Open and not TagState.Close) ||
+        //        (typeof(TagMarker).IsAssignableFrom(type) && state is not TagState.Marker))
+        //        throw new TagException($"Tag type: {type} is not derived from Tag");
+
+        //    name = slice;
+
+        //    return true;    // Name is valid.
+        //}
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void Initialize()
         {
@@ -505,8 +573,7 @@ namespace Celezt.DialogueSystem
                 if (tagType.GetInterface(nameof(ITag)) == null)
                     throw new TagException("Object with 'CreateTagAttribute' are required to be derived from 'ITag'");
 
-                Span<char> span = stackalloc char[tagType.Name.Length];
-                string name = tagType.Name.TrimDecorationSpan(span, "Tag").ToCamelCaseSpan().ToString();
+                string name = tagType.Name.TrimDecoration("Tag").ToKebabCase();
                 _types[name] = tagType;
             }
         }

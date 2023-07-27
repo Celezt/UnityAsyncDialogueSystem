@@ -11,7 +11,7 @@ namespace Celezt.DialogueSystem
     internal static class StringExtensions
     {
         public static string ToSnakeCase(this string text, bool trimUnderscore = true) 
-            => ToSnakeCaseSpan(text, stackalloc char[text.Length + Math.Min(2, text.Length / 5)], trimUnderscore).ToString();
+            => ToSnakeCaseSpan(text, stackalloc char[text.Length * 2], trimUnderscore).ToString();
         public static Span<char> ToSnakeCaseSpan(this Span<char> span, bool trimUnderscore = true)
         {
             Span<char> temp = stackalloc char[span.Length];
@@ -68,6 +68,82 @@ namespace Celezt.DialogueSystem
                         if (previousCategory == UnicodeCategory.SpaceSeparator)
                         {
                             span[length++] = '_';
+                        }
+                        break;
+
+                    default:
+                        if (previousCategory != null)
+                        {
+                            previousCategory = UnicodeCategory.SpaceSeparator;
+                        }
+                        continue;
+                }
+
+                span[length++] = currentChar;
+                previousCategory = currentCategory;
+            }
+
+            return length;
+        }
+
+        public static string ToKebabCase(this string text, bool trimDash = true)
+      => ToKebabCaseSpan(text, stackalloc char[text.Length * 2], trimDash).ToString();
+        public static Span<char> ToKebabCaseSpan(this Span<char> span, bool trimDash = true)
+        {
+            Span<char> temp = stackalloc char[span.Length];
+            span.CopyTo(temp);
+            return span.Slice(0, ToKebabCaseSpan(temp, span, trimDash));
+        }
+        public static Span<char> ToKebabCaseSpan(this string text, Span<char> span, bool trimDash = true)
+            => span.Slice(0, ToKebabCaseSpan(text.AsSpan(), span, trimDash));
+        public static int ToKebabCaseSpan(this ReadOnlySpan<char> text, Span<char> span, bool trimDash = true)
+        {
+            if (text.IsEmpty || text.IsWhiteSpace())
+                return 0;
+
+            UnicodeCategory? previousCategory = default;
+            int length = 0;
+            bool isTrimmable = true;
+
+            for (int currentIndex = 0; currentIndex < text.Length; currentIndex++)
+            {
+                char currentChar = text[currentIndex];
+                if (currentChar == '-')
+                {
+                    if (trimDash && isTrimmable)  // skip all - until another letter is found.
+                        continue;
+
+                    span[length++] = '-';
+                    previousCategory = null;
+                    continue;
+                }
+                else
+                    isTrimmable = false;
+
+                var currentCategory = char.GetUnicodeCategory(currentChar);
+                switch (currentCategory)
+                {
+                    case UnicodeCategory.UppercaseLetter:
+                    case UnicodeCategory.TitlecaseLetter:
+                        if (previousCategory == UnicodeCategory.SpaceSeparator ||
+                            previousCategory == UnicodeCategory.LowercaseLetter ||
+                            previousCategory != UnicodeCategory.DecimalDigitNumber &&
+                            previousCategory != null &&
+                            currentIndex > 0 &&
+                            currentIndex + 1 < text.Length &&
+                            char.IsLower(text[currentIndex + 1]))
+                        {
+                            span[length++] = '-';
+                        }
+
+                        currentChar = char.ToLower(currentChar, CultureInfo.InvariantCulture);
+                        break;
+
+                    case UnicodeCategory.LowercaseLetter:
+                    case UnicodeCategory.DecimalDigitNumber:
+                        if (previousCategory == UnicodeCategory.SpaceSeparator)
+                        {
+                            span[length++] = '-';
                         }
                         break;
 
