@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEditor.VersionControl;
+using UnityEngine.Assertions;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -79,6 +80,12 @@ namespace Celezt.DialogueSystem
         private string _trimmedText;
 
         public void UpdateTrimmedText() => Text = _text;
+
+        public int GetIndexByTime(double time)
+        {
+            float interval = TimeSpeed.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
+            return Mathf.CeilToInt(interval * Tags.GetTextLength(Text));
+        }
 
         protected override DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner)
         {

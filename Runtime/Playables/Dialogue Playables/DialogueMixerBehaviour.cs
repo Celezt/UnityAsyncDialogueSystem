@@ -10,18 +10,14 @@ namespace Celezt.DialogueSystem
     public class DialogueMixerBehaviour : DSMixerBehaviour
     {
         private List<ITag> _sequence;
-        private int _textLength;
+        private int _characterCount;
+        private float _previousCurrentValue;
 
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             var asset = (DialogueAsset)behaviour.Asset;
 
-            _sequence = Tags.GetSequence(asset.RawText).ToList();
-            _textLength = Tags.TextLengthWithoutTags(asset.Text);
-
-            foreach (var tag in _sequence) 
-                Debug.Log(tag);
-
+            _sequence = Tags.GetSequence(asset.RawText, out _characterCount).ToList();
             Binder.Internal_InvokeOnEnterDialogueClip(Track, behaviour);
         }
 
@@ -29,7 +25,8 @@ namespace Celezt.DialogueSystem
         {
             var asset = (DialogueAsset)behaviour.Asset;
 
-            int currentIndex = Mathf.CeilToInt(asset.Interval * _textLength);
+            float currentValue = asset.Interval * (_characterCount + 1);
+            int currentIndex = Mathf.CeilToInt(currentValue);
 
             foreach (ITag tag in _sequence)
             {
@@ -38,10 +35,10 @@ namespace Celezt.DialogueSystem
                     case Tag tagRange:
                         break;
                     case TagMarker tagMarker:
-                        if ((IsPlayingForward && currentIndex >= tagMarker.Index) ||
-                            (!IsPlayingForward && currentIndex <= tagMarker.Index))
+                        if ((IsPlayingForward && _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index) ||
+                            (!IsPlayingForward && _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index))
                         {
-                            Debug.Log(currentIndex);
+                            Debug.Log(currentValue + " " + tagMarker.Index);
                             //tagMarker.OnInvoke(currentIndex, asset);
                             //if (!_sequenceEnumerator.MoveNext())
                             //    _sequenceEnumerator = null;
@@ -49,6 +46,8 @@ namespace Celezt.DialogueSystem
                         break;
                 }
             }
+
+            _previousCurrentValue = currentValue;
 
             Binder.Internal_InvokeOnProcessDialogueClip(Track, behaviour);
         }

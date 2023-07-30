@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
         {
             DialogueAsset asset = Asset as DialogueAsset;
             if (!string.IsNullOrWhiteSpace(asset.RawText))
-                clip.displayName = Tags.TrimTextTags(asset.Text, false);
+                clip.displayName = Tags.TrimTextTags(asset.Text);
         }
     }
 }

@@ -66,6 +66,14 @@ namespace Celezt.DialogueSystem
         private static Dictionary<string, Type>? _types;
         private static Dictionary<Type, Dictionary<string, MemberInfo>> _cachedMembers = new();
 
+        [Flags]
+        public enum TagType
+        {
+            Invalid = 0,
+            Custom = 1 << 0,
+            Unity = 1 << 1,
+        }
+
         private enum TagState
         {
             Open,
@@ -102,466 +110,347 @@ namespace Celezt.DialogueSystem
                     .Cast<MemberInfo>()
                     .Concat(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .Where(x => x.IsPrivate ? x.GetCustomAttribute<SerializeField>() != null : x.IsPublic))
-                    .ToDictionary(key => key.Name.ToCamelCase(), value => value);
+                    .ToDictionary(key => key.Name.ToKebabCase(), value => value);
             }
         }
 
         public static IEnumerable<ITag> GetSequence(string text)
+            => GetSequence(text, out _);
+        public static IEnumerable<ITag> GetSequence(string text, out int visibleCharacterCount)
         {
+            visibleCharacterCount = 0;
             int beginIndex = 0;
             int endIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
-            int newLength = 0;
-            var state = TagState.Open;
             var tagOpenList = new List<Tag>();
-
-            bool HasNext() => leftIndex + 1 < text.Length;
-            bool HasPrevious() => leftIndex - 1 >= 0;
-
-            bool TagName(out string name)
-            {
-                name = string.Empty;
-                int beforeIndex = leftIndex;
-
-                for (; leftIndex <= rightIndex; leftIndex++) // <?=
-                {
-                    if (text[leftIndex] is ' ' or '=')    // Ends if it finds a whitespace or =.
-                        break;
-
-                    if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
-                        throw new TagException("Name cannot contain any numbers or symbols");
-                }
-
-                string slice = text.Substring(beforeIndex, leftIndex - beforeIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
-
-                if (!Types.TryGetValue(slice, out Type type))   // If the tag does not exist.
-                    return false;
-
-                if ((typeof(Tag).IsAssignableFrom(type) && state is not TagState.Open and not TagState.Close) ||
-                    (typeof(TagMarker).IsAssignableFrom(type) && state is not TagState.Marker))
-                    throw new TagException($"Tag type: {type} is not derived from Tag");
-
-                name = slice;
-
-                return true;    // Name is valid.
-            }
-
-            bool Argument(out string? argument)
-            {
-                argument = null;
-
-                if (state == TagState.Close)    // Invalid: no arguments allowed on a closing tag. <tag/> ! <tag=?/>
-                    throw new TagException("Closure tags are not allowed to contain any arguments."); 
-
-                int beforeIndex = leftIndex;
-                char decoration = '\0';
-
-                if (text[leftIndex] is '"' or '\'') // Ignore decoration.
-                {
-                    beforeIndex++;
-                    decoration = text[leftIndex++];
-
-                    for (; leftIndex <= rightIndex; leftIndex++)
-                    {
-                        // Argument ending except when having a '\' in front of it.
-                        if (text[leftIndex] == decoration && text[leftIndex - 1] is not '\\')
-                            break;
-
-                        if (leftIndex >= rightIndex)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
-                            throw new TagException("Arguments using \" or ' must close with the same character.");
-                    }
-                }
-                else if (text[leftIndex] is not ' ')    // If no decorations are present. WARNING: whitespace means end!
-                {
-                    for (; leftIndex <= rightIndex; leftIndex++)
-                    {
-                        if (char.IsWhiteSpace(text[leftIndex]))
-                            break;
-
-                        // Invalid: not allowed to use these characters except when having a '\' in front of it.
-                        if (text[leftIndex] is '/' or '"' or '\'' && text[leftIndex - 1] is not '\\')
-                            throw new TagException("Not allowed to use /, \" or ' except when having a \\ in front of it.");
-                    }
-                }
-                else
-                    throw new TagException("Arguments cannot be empty");
-
-                argument = text.Substring(beforeIndex, leftIndex - beforeIndex);
-                leftIndex += (decoration is '\0' ? 0: 1);
-
-                return true;
-            }
-
-            IEnumerable<(string Name, string Argument)> Arguments()
-            {
-                string ArgumentName()
-                {
-                    int beforeIndex = leftIndex;
-                    for (; leftIndex < rightIndex; leftIndex++) // <?=
-                    {
-                        if (text[leftIndex] is '=')    // Ends if it finds a =.
-                            break;
-
-                        if (text[leftIndex] is ' ')
-                            throw new TagException("Argument names are not allowed to end with whitespace.");
-
-                        if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
-                            throw new TagException("Name cannot contain any numbers or symbols");
-                    }
-
-                    string slice = text.Substring(beforeIndex, leftIndex - beforeIndex);
-
-                    return slice;
-                }
-
-                while(leftIndex <= rightIndex)
-                {
-                    if (char.IsWhiteSpace(text[leftIndex])) // Skip all white spaces.
-                    {
-                        leftIndex++;
-                        continue;
-                    }
-
-                    string name = ArgumentName();
-
-                    if (text[leftIndex++] is not '=')
-                        throw new TagException("Arguments must have a value assign to it.");
-
-                    if (Argument(out string? argument) && !string.IsNullOrWhiteSpace(name))
-                        yield return (name, argument!);
-                }
-            }
+            var sequence = new List<ITag>();
 
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
             {
-                if (text[leftIndex] is '<' && (!HasPrevious() || text[leftIndex - 1] is not '\\'))
+                if (text[leftIndex] is '<' && (leftIndex <= 0 || text[leftIndex - 1] is not '\\'))
                 {
                     beginIndex = leftIndex;
 
-                    if (leftIndex + 1 >= text.Length)
-                        throw new TagException("Must end < with >.");
-
-                    for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
+                    if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
                     {
-                        if (text[rightIndex] is '<' && text[rightIndex - 1] is not '\\') // Invalid: must end with >. <tag> ! <tag<
-                            throw new TagException("Not allowed to have two < before close with >.");
-
-                        if (text[rightIndex] is '>' && text[rightIndex - 1] is not '\\')
-                            break;
-
-                        if (rightIndex + 1 >= text.Length)
-                            throw new TagException("Must end < with >.");
-                    }
-
-                    leftIndex++;
-                    rightIndex--;
-
-                    if (text[leftIndex] is '/' && text[rightIndex] is '/')   // Invalid: not allowed to have both. ! </tag/>
-                        throw new TagException("Not allowed to have both '/' on the beginning and the end of the tag.");
-
-                    endIndex = rightIndex;
-
-                    state = TagState.Open; // Open by default if it has no '/'.
-                    if (text[leftIndex] is '/')    // Tag is an tag marker. </tag>
-                    {
-                        state = TagState.Marker;
-                        leftIndex++;
-                    }
-                    else if (text[rightIndex] is '/')    // Tag is an closure tag. <tag/>
-                    {
-                        state = TagState.Close;
-                        rightIndex--;
-                    }
-
-                    if (!TagName(out string tagName))
-                    {
-                        leftIndex = endIndex + 1;
+                        leftIndex = rightIndex;
+                        visibleCharacterCount += beginIndex - rightIndex + 1;
                         continue;
                     }
 
-                    string? implicitArgument = null;
-                    if (text[leftIndex++] is '=')   // If it has implied arguments.
-                        if (!Argument(out implicitArgument))
-                        {
-                            leftIndex = endIndex + 1;
+                    TagType tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out string tagName);
+                    switch (tagType) // Ignore if not custom.
+                    {
+                        case TagType.Invalid:
+                            visibleCharacterCount += beginIndex - endIndex + 1;
+                            goto case TagType.Unity;    // Don't include as visible characters if unity tag.
+                        case TagType.Unity:
+                            leftIndex = endIndex;
                             continue;
+                    }
+
+                    (string? name, string? argument) implicitArgument = text[leftIndex++] is '=' ?  // If it has implied arguments.
+                        ExtractArgument(text, ref leftIndex, rightIndex - leftIndex + 1, isImplicit: true) : (null, null);
+
+                    if (!string.IsNullOrEmpty(implicitArgument.name) && implicitArgument.name != "implicit")
+                        throw new TagException("Implicit argument is not valid");
+
+                    void BindArguments(ITag tag)
+                    {
+                        if (!string.IsNullOrEmpty(implicitArgument.argument))
+                            tag.Bind("implicit", implicitArgument.argument);
+
+                        while (leftIndex <= rightIndex)
+                        {
+                            (string? name, string? argument) = ExtractArgument(text, ref leftIndex, rightIndex - leftIndex + 1);
+
+                            if (name is null || argument is null)   // If there is no arguments left.
+                            {
+                                leftIndex = endIndex;
+                                break;
+                            }
+
+                            tag.Bind(name, argument);
                         }
-
-                    if (state == TagState.Open)
-                    {
-                        Tag tag = (Tag)Activator.CreateInstance(Types[tagName]);
-                        tag._range = new RangeInt(newLength, -1);
-
-                        if (implicitArgument != null)
-                            tag.Bind("implicit", implicitArgument);
-
-                        foreach ((string name, string argument) in Arguments())
-                            tag.Bind(name, argument);
-
-                        tagOpenList.Add(tag);
-                        tag.OnCreate();
-                        yield return tag;
                     }
-                    else if (state == TagState.Close)
+
+                    switch (state)
                     {
-                        int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == Types[tagName]);
+                        case TagState.Open:
+                            Tag tag = (Tag)Activator.CreateInstance(Types[tagName]);
+                            tag._range = new RangeInt(visibleCharacterCount, -1);
 
-                        if (tagIndex == -1)    // No open tag of that type exist.
-                            throw new TagException("Closure tags must have an open tag of the same type.");
+                            BindArguments(tag);
 
-                        var range = tagOpenList[tagIndex]._range;
-                        range.length = newLength - range.start;
-                        tagOpenList[tagIndex]._range = range;
+                            tagOpenList.Add(tag);
+                            tag.OnCreate();
+                            sequence.Add(tag);
+                            break;
+                        case TagState.Close:
+                            int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == Types[tagName]);
 
-                        tagOpenList.RemoveAt(tagIndex);    // Remove first last index of a tag.
-                    }
-                    else if (state == TagState.Marker)
-                    {
-                        TagMarker tag = (TagMarker)Activator.CreateInstance(Types[tagName]);
-                        tag._index = newLength;
+                            if (tagIndex == -1)    // No open tag of that type exist.
+                                throw new TagException("Closure tags must have an open tag of the same type.");
 
-                        if (implicitArgument != null)
-                            tag.Bind("implicit", implicitArgument);
+                            var range = tagOpenList[tagIndex]._range;
+                            range.length = visibleCharacterCount - range.start;
+                            tagOpenList[tagIndex]._range = range;
 
-                        foreach ((string name, string argument) in Arguments())
-                            tag.Bind(name, argument);
+                            tagOpenList.RemoveAt(tagIndex);    // Remove first last index of a tag.
+                            break;
+                        case TagState.Marker:
+                            TagMarker tagMarker = (TagMarker)Activator.CreateInstance(Types[tagName]);
+                            tagMarker._index = visibleCharacterCount;
 
-                        tag.OnCreate();
-                        yield return tag;
+                            BindArguments(tagMarker);
+
+                            tagMarker.OnCreate();
+                            sequence.Add(tagMarker);
+                            break;
                     }
                 }
                 else
-                    newLength++;
+                    visibleCharacterCount++;
             }
+
+            return sequence;
         }
 
-        public static int TextLengthWithoutTags(string text)
-        {
-            int newLength = 0;
-            int endIndex = 0;
-            int beginIndex = 0;
-            int leftIndex = 0;
-            int rightIndex = 0;
-
-            bool HasNext() => leftIndex + 1 < text.Length;
-            bool HasPrevious() => leftIndex - 1 >= 0;
-
-            bool TagName()
-            {
-                int beforeIndex = leftIndex;
-
-                for (; leftIndex <= rightIndex; leftIndex++) // <?=
-                {
-                    if (text[leftIndex] is ' ' or '=')    // Ends if it finds a whitespace or =.
-                        break;
-
-                    if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
-                        return false;
-                }
-
-                return true;    // Name is valid.
-            }
-
-            bool ValidTag()
-            {
-                if (leftIndex + 1 >= text.Length)
-                    return false;
-
-                for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
-                {
-                    if (text[rightIndex] is '<' && text[rightIndex - 1] is not '\\') // Invalid: must end with >. <tag> ! <tag<
-                        return false;
-
-                    if (text[rightIndex] is '>' && text[rightIndex - 1] is not '\\')
-                        break;
-
-                    if (rightIndex + 1 >= text.Length)
-                        return false;
-                }
-
-                leftIndex++;
-                rightIndex--;
-
-                if (text[leftIndex] is '/' && text[rightIndex] is '/')   // Invalid: not allowed to have both. ! </tag/>
-                    return false;
-
-                return true;
-            }
-
-            for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
-            {
-                switch (text[leftIndex])
-                {
-                    case '\\' when !HasNext() || text[leftIndex + 1] is not '\\':
-                        break;
-                    case '<' when !HasPrevious() || text[leftIndex - 1] is not '\\':
-                        beginIndex = leftIndex;
-
-                        if (!ValidTag())
-                        {
-                            newLength++;
-                            break;
-                        }
-
-                        endIndex = rightIndex + 1;
-
-                        if (text[leftIndex] is '/')    // Tag is an tag marker. </tag>
-                            leftIndex++;
-                        else if (text[rightIndex] is '/')    // Tag is an closure tag. <tag/>
-                            rightIndex--;
-
-                        if (TagName())
-                        {
-                            leftIndex = endIndex;
-                        }
-                        else
-                        {
-                            for (leftIndex = beginIndex; leftIndex <= endIndex; leftIndex++)
-                                newLength++;
-                            leftIndex--;
-                        }
-                        break;
-                    default:
-                        newLength++;
-                        break;
-                }
-            }
-
-            return newLength;
-        }
-
-        public static string TrimTextTags(string text, bool onlyExistingTags = true)
+        public static string TrimTextTags(string text, TagType excludeTagType = TagType.Custom | TagType.Unity)
         {
             Span<char> span = stackalloc char[text.Length];
             int newLength = 0;
-            int endIndex = 0;
             int beginIndex = 0;
+            int endIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
 
-            bool TagName()
-            {
-                int beforeIndex = leftIndex;
-
-                for (; leftIndex <= rightIndex; leftIndex++) // <?=
-                {
-                    if (text[leftIndex] is ' ' or '=')    // Ends if it finds a whitespace or =.
-                        break;
-
-                    if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
-                        return false;
-                }
-
-                if (onlyExistingTags)
-                {
-                    string slice = text.Substring(beforeIndex, leftIndex - beforeIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
-
-                    if (!Types.TryGetValue(slice, out Type type))   // If the tag does not exist.
-                        return false;
-                }
-
-                return true;    // Name is valid.
-            }
-
-            bool ValidTag()
-            {
-                if (leftIndex + 1 >= text.Length)
-                    return false;
-
-                for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
-                {
-                    if (text[rightIndex] is '<' && text[rightIndex - 1] is not '\\') // Invalid: must end with >. <tag> ! <tag<
-                        return false;
-
-                    if (text[rightIndex] is '>' && text[rightIndex - 1] is not '\\')
-                        break;
-
-                    if (rightIndex + 1 >= text.Length)
-                        return false;
-                }
-
-                leftIndex++;
-                rightIndex--;
-
-                if (text[leftIndex] is '/' && text[rightIndex] is '/')   // Invalid: not allowed to have both. ! </tag/>
-                    return false;
-
-                return true;
-            }
-
-            bool HasNext() => leftIndex + 1 < text.Length;
-            bool HasPrevious() => leftIndex - 1 >= 0;
-
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
             {
-                switch (text[leftIndex])
+                if (text[leftIndex] is '<' && (leftIndex <= 0 || text[leftIndex - 1] is not '\\'))
                 {
-                    case '\\' when !HasNext() || text[leftIndex + 1] is not '\\':
-                        break;
-                    case '<' when !HasPrevious() ||text[leftIndex - 1] is not '\\':
-                        beginIndex = leftIndex;
+                    beginIndex = leftIndex;
 
-                        if (!ValidTag())
-                        {
-                            span[newLength++] = '<';
-                            break;
-                        }
+                    if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
+                    {
+                        for (leftIndex = beginIndex; leftIndex <= rightIndex; leftIndex++)
+                            span[newLength++] = text[leftIndex];
+                        continue;
+                    }
 
-                        endIndex = rightIndex + 1;
-
-                        if (text[leftIndex] is '/')    // Tag is an tag marker. </tag>
-                            leftIndex++;
-                        else if (text[rightIndex] is '/')    // Tag is an closure tag. <tag/>
-                            rightIndex--;
-
-                        if (TagName())
-                        {
-                            leftIndex = endIndex;
-                        }
-                        else
-                        {
-                            for (leftIndex = beginIndex; leftIndex <= endIndex; leftIndex++)
-                                span[newLength++] = text[leftIndex];
-                            leftIndex--;
-                        }
-                        break;
-                    default:
-                        span[newLength++] = text[leftIndex];
-                        break;
+                    TagType tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
+                    if (!excludeTagType.HasFlag(tagType))
+                    {
+                        for (leftIndex = beginIndex; leftIndex <= endIndex; leftIndex++)
+                            span[newLength++] = text[leftIndex];
+                    }
+                    else
+                        leftIndex = endIndex;
                 }
+                else
+                    span[newLength++] = text[leftIndex];
             }
 
             return span.Slice(0, newLength).ToString();
         }
 
-        //private static bool ExtractTagName(out string name)
-        //{
-        //    name = string.Empty;
-        //    int beforeIndex = leftIndex;
+        public static int GetTextLength(string text, TagType excludeTagType = TagType.Custom | TagType.Unity)
+        {
+            int visibleCharacterCount = 0;
+            int beginIndex = 0;
+            int endIndex = 0;
+            int leftIndex = 0;
+            int rightIndex = 0;
 
-        //    for (; leftIndex <= rightIndex; leftIndex++) // <?=
-        //    {
-        //        if (text[leftIndex] is ' ' or '=')    // Ends if it finds a whitespace or =.
-        //            break;
+            for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
+            {
+                if (text[leftIndex] is '<' && (leftIndex <= 0 || text[leftIndex - 1] is not '\\'))
+                {
+                    beginIndex = leftIndex;
 
-        //        if (!char.IsLetter(text[leftIndex]))    // Invalid: name must be a letter. <tag> ! <%3->
-        //            throw new TagException("Name cannot contain any numbers or symbols");
-        //    }
+                    if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
+                    {
+                        visibleCharacterCount += beginIndex - rightIndex + 1;
+                        continue;
+                    }
 
-        //    string slice = text.Substring(beforeIndex, leftIndex - beforeIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
+                    TagType tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
+                    if (!excludeTagType.HasFlag(tagType))
+                        visibleCharacterCount += beginIndex - endIndex + 1;
+                    else
+                        leftIndex = endIndex;
+                }
+                else
+                    visibleCharacterCount++;
+            }
 
-        //    if (!Types.TryGetValue(slice, out Type type))   // If the tag does not exist.
-        //        return false;
+            return visibleCharacterCount;
+        }
 
-        //    if ((typeof(Tag).IsAssignableFrom(type) && state is not TagState.Open and not TagState.Close) ||
-        //        (typeof(TagMarker).IsAssignableFrom(type) && state is not TagState.Marker))
-        //        throw new TagException($"Tag type: {type} is not derived from Tag");
+        #region Private
+        private static bool IsValidTag(string text, ref int leftIndex, ref int rightIndex, ref int endIndex, out TagState state)
+        {
+            char decoration = '\0';
+            state = TagState.Open; // Open by default if it has no '/'.
 
-        //    name = slice;
+            if (!(text[leftIndex] is '<' && (leftIndex - 1 < 0 || text[leftIndex - 1] is not '\\')))
+                return false;
 
-        //    return true;    // Name is valid.
-        //}
+            if (leftIndex + 1 >= text.Length)
+                return false;
+
+            for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
+            {
+                if (text[rightIndex] is '"' or '\'' && text[rightIndex - 1] is not '\\')
+                {
+                    if (text[rightIndex] == decoration)
+                        decoration = '\0';
+                    else
+                        decoration = text[rightIndex];
+                }
+
+                if (decoration == '\0')
+                {
+                    if (text[rightIndex] is '<' && text[rightIndex - 1] is not '\\') // Invalid: must end with >. <tag> ! <tag<
+                        return false;
+
+                    if (text[rightIndex] is '>' && text[rightIndex - 1] is not '\\')
+                        break;
+                }
+
+                if (rightIndex >= text.Length - 1)
+                    return false;
+            }
+
+            endIndex = rightIndex;
+
+            if (text[leftIndex + 1] is '/' && text[rightIndex - 1] is '/')   // Invalid: not allowed to have both. ! </tag/>
+                return false;
+
+            leftIndex++;    // After <.
+            rightIndex--;   // Before >.
+
+            if (text[leftIndex] is '/')    // Tag is an tag marker. </tag>
+            {
+                state = TagState.Marker;
+                leftIndex++; // After /.
+            }
+            else if (text[rightIndex] is '/')    // Tag is an closure tag. <tag/>
+            {
+                state = TagState.Close;
+                rightIndex--; // Before /.
+            }
+
+            return true;
+        }
+
+        private static void SkipWhitespace(string text, ref int index, int maxLength)
+        {
+            int startIndex = index;
+            for (; index < startIndex + maxLength; index++)
+                if (!char.IsWhiteSpace(text[index]))
+                    return;
+        }
+
+        private static TagType ExtractTagName(string text, ref int index, int length, out string tagName)
+        {
+            int startIndex = index;
+            int endIndex = index + length;
+            tagName = string.Empty;
+
+            for (; index < endIndex; index++) // <?=
+            {
+                if (text[index] is ' ' or '=')    // Ends if it finds a whitespace or =.
+                    break;
+
+                if (!char.IsLetter(text[index]) && text[index] != '-')    // Invalid: name must be a letter. <tag> ! <%3->
+                    return TagType.Invalid;
+            }
+
+            tagName = text.Substring(startIndex, index - startIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
+
+            if (_unityRichTextTags.Contains(tagName))   // If name is a unity tag.
+                return TagType.Unity;
+
+            if (Types.ContainsKey(tagName))   // If name is of custom tag.
+                return TagType.Custom;
+
+            return TagType.Invalid;    // If the tag does not exist.
+        }
+
+        private static (string? name, string? argument) ExtractArgument(string text, ref int index, int length, bool isImplicit = false)
+        {
+            int endIndex = index + length;
+
+            SkipWhitespace(text, ref index, length);
+
+            if (index == endIndex)
+                return (null, null);
+
+            //
+            //  Extract Name
+            //
+            int startIndex = index;
+            if (!isImplicit)
+            {
+                for (; index < endIndex; index++) // <?=
+                {
+                    if (text[index] is '=')    // Ends if it finds a =.
+                        break;
+
+                    if (text[index] is ' ')
+                        throw new TagException("Argument names are not allowed to end with whitespace.");
+
+                    if (!char.IsLetter(text[index]) && text[index] != '-')    // Invalid: name must be a letter. <tag> ! <%3->
+                        throw new TagException($"Name cannot contain any numbers or symbols: '{text[index]}'");
+                }
+            }
+
+            string name = isImplicit ? "implicit" : text.Substring(startIndex, index - startIndex);
+
+            if (!isImplicit) // After =.
+                index++;
+
+            // 
+            //  Extract Argument
+            //
+            char decoration = '\0';
+            startIndex = index;
+            if (text[index] is '"' or '\'') // Ignore decoration.
+            {
+                decoration = text[index++];
+
+                for (; index < endIndex; index++)
+                {
+                    // Argument ending except when having a '\' in front of it.
+                    if (text[index] == decoration && text[index - 1] is not '\\')
+                        break;
+
+                    if (index >= endIndex - 1)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
+                        throw new TagException("Arguments using \" or ' must close with the same character.");
+                }
+            }
+            else if (text[index] is not ' ')    // If no decorations are present. WARNING: whitespace means end!
+            {
+                for (; index < endIndex; index++)
+                {
+                    if (char.IsWhiteSpace(text[index]))
+                        break;
+
+                    // Invalid: not allowed to use these characters except when having a '\' in front of it.
+                    if (text[index] is '/' or '"' or '\'' && text[index - 1] is not '\\')
+                        throw new TagException("Not allowed to use /, \" or ' except when having a \\ in front of it.");
+                }
+            }
+            else
+                throw new TagException("Arguments cannot be empty");
+
+            string argument = text.Substring(startIndex + (decoration is '\0' ? 0 : 1), index - startIndex - (decoration is '\0' ? 0 : 1));
+            index += (decoration is '\0' ? 0 : 1);
+
+            return (name, argument);
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void Initialize()
@@ -577,6 +466,7 @@ namespace Celezt.DialogueSystem
                 _types[name] = tagType;
             }
         }
+        #endregion
     }
 
     public class TagException : Exception

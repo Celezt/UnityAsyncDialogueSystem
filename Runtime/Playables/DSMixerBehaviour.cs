@@ -15,7 +15,6 @@ namespace Celezt.DialogueSystem
             get => _binder;
             internal set => _binder = value;
         }
-
         public DSTrack Track
         {
             get => _track;
@@ -25,7 +24,6 @@ namespace Celezt.DialogueSystem
                 _track.Mixer = this;
             }
         }
-
         public bool IsProcessing
         {
             get
@@ -33,8 +31,9 @@ namespace Celezt.DialogueSystem
                 return _currentClips.Any(x => x.Behaviour.ProcessState == DSPlayableBehaviour.ProcessStates.Processing);
             }
         }
-
-        public bool IsPlayingForward => _isPLayingForward;
+        public double Time => _time;
+        public double PreviousTime => _previousTime;
+        public bool IsPlayingForward => _isPlayingForward;
 
         public IEnumerable<DSPlayableBehaviour> CurrentBehaviours => _currentClips.Select(x => x.Behaviour);
         public IEnumerable<DSPlayableAsset> CurrentAssets => _currentClips.Select(x => x.Behaviour.Asset);
@@ -45,8 +44,9 @@ namespace Celezt.DialogueSystem
         private DialogueSystemBinder _binder;
         private DSTrack _track;
 
-        private double _oldTime;
-        private bool _isPLayingForward;
+        private double _previousTime;
+        private double _time;
+        private bool _isPlayingForward;
 
         protected struct ClipData : IEquatable<ClipData>
         {
@@ -69,9 +69,9 @@ namespace Celezt.DialogueSystem
         {
             _currentClips.Clear();
 
-            double time = playable.GetTime();
-            _isPLayingForward = time >= _oldTime;
-            _oldTime = time;
+            _time = playable.GetTime();
+            _isPlayingForward = _time >= _previousTime;
+            _previousTime = _time;
 
             int inputCount = playable.GetInputCount();
             for (int i = 0; i < inputCount; i++)
