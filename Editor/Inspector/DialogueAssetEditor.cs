@@ -33,11 +33,10 @@ namespace Celezt.DialogueSystem.Editor
             }
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUIExtraUtility.TightLabel("s");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("<StartOffset>k__BackingField"), GUIContent.none, GUILayout.Width(50));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("<TimeSpeed>k__BackingField"), GUIContent.none);
-                EditorGUIExtraUtility.TightLabel("s");
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("<EndOffset>k__BackingField"), GUIContent.none, GUILayout.Width(50));
+                EditorGUIUtility.labelWidth = 10;
+                asset.StartOffset = EditorGUILayout.FloatField("s", asset.StartOffset, GUILayout.Width(50));
+                asset.TimeSpeedCurve = EditorGUILayout.CurveField(asset.TimeSpeedCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+                asset.EndOffset = EditorGUILayout.FloatField("s", asset.EndOffset, GUILayout.Width(50));
             }
         }
     }

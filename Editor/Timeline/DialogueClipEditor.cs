@@ -11,7 +11,7 @@ namespace Celezt.DialogueSystem.Editor
     [CustomTimelineEditor(typeof(DialogueAsset))]
     public class DialogueClipEditor : ClipEditor
     {
-        private readonly Color _offsetBackgroundColour = new Color(0.22f, 0.22f, 0.22f);
+        private readonly Color _offsetBackgroundColour = new Color(0.225f, 0.225f, 0.225f);
 
         public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region)
         {

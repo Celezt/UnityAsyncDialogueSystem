@@ -51,26 +51,37 @@ namespace Celezt.DialogueSystem
 
         public double StartTime => Clip.start;
         public double EndTime => Clip.end;
+        public float Duration => (float)(EndTime - StartTime);
 
         /// <summary>
         /// How much time is left in unit interval [0-1]. Unaffected by speed.
         /// </summary>
         public float IntervalUnscaled =>
-            Mathf.Clamp01((float)((Director.time - StartTime) / (EndTime - StartTime)));
+            Mathf.Clamp01((float)((Director.time - StartTime) / Duration));
 
         /// <summary>
         /// How much time is left dependent on speed in unit interval [0-1]. 0 if before and 1 if after.
         /// </summary>
         public float Interval =>
-            TimeSpeed.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (EndTime - EndOffset - StartOffset - StartTime))));
+            TimeSpeedCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (Duration - EndOffset - StartOffset))));
 
+        public AnimationCurve TimeSpeedCurve
+        {
+            get => _timeSpeedCurve;
+            set => _timeSpeedCurve = value;
+        }
 
-        [field: SerializeField]
-        public AnimationCurve TimeSpeed { get; set; } = AnimationCurve.Linear(0, 0, 1, 1);
-        [field: SerializeField, Min(0)]
-        public float StartOffset { get; set; }
-        [field: SerializeField, Min(0)]
-        public float EndOffset { get; set; } = 1;
+        public float StartOffset
+        {
+            get => _startOffset;
+            set => _startOffset = Mathf.Clamp(value, 0, Duration - _endOffset);
+        }
+
+        public float EndOffset
+        {
+            get => _endOffset;
+            set => _endOffset = Mathf.Clamp(value, 0, Duration - _startOffset);
+        }
 
         [SerializeField]
         private string _actor;
@@ -78,12 +89,18 @@ namespace Celezt.DialogueSystem
         private string _text;
         [SerializeField, HideInInspector]
         private string _trimmedText;
+        [SerializeField, HideInInspector, Min(0)]
+        private float _startOffset;
+        [SerializeField, HideInInspector, Min(0)]
+        private float _endOffset;
+        [SerializeField, HideInInspector]
+        private AnimationCurve _timeSpeedCurve = AnimationCurve.Linear(0, 0, 1, 1);
 
         public void UpdateTrimmedText() => Text = _text;
 
         public int GetIndexByTime(double time)
         {
-            float interval = TimeSpeed.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
+            float interval = TimeSpeedCurve.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
             return Mathf.CeilToInt(interval * Tags.GetTextLength(Text));
         }
 

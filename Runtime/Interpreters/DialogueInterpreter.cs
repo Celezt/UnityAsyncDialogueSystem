@@ -43,7 +43,7 @@ namespace Celezt.DialogueSystem
 
                 asset.RawText = text;
                 asset.Actor = actorID;
-                asset.TimeSpeed = timeSpeed;
+                asset.TimeSpeedCurve = timeSpeed;
                 asset.EndOffset = endOffset;
 
                 duration *= 1 / (speed * 15f);
