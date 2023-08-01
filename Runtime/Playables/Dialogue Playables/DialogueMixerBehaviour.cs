@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
     {
         private List<ITag> _tags;
         private int _characterCount;
-        private float _previousCurrentValue;
+        private float _previousCurrentValue = float.MaxValue;
 
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
