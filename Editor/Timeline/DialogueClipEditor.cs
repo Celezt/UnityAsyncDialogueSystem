@@ -17,12 +17,18 @@ namespace Celezt.DialogueSystem.Editor
         {
             var asset = clip.asset as DialogueAsset;
 
-            float startWidthOffset = region.position.width * (float)(asset.StartOffset / region.endTime);
-            float endWidthOffset = region.position.width * (float)(asset.EndOffset / region.endTime);
-            var startOffsetRegion = new Rect(region.position.position.x, region.position.position.y,
+            float length = (float)(clip.end - clip.start); 
+            float ratio = (float)(region.endTime - region.startTime) / length;
+            float width = region.position.width / ratio;
+            float startWidthOffset = width * (float)(asset.StartOffset / length);
+            float endWidthOffset = width * (float)(asset.EndOffset / length);
+            //float existingWidth = width - startWidthOffset - endWidthOffset;
+            var startOffsetRegion = new Rect(0, 1,
                                         startWidthOffset, region.position.height);
-            var endOffsetRegion = new Rect(region.position.width - endWidthOffset, region.position.position.y,
+            var endOffsetRegion = new Rect(width - endWidthOffset, 1,
                                         endWidthOffset, region.position.height);
+            //var existingRegion = new Rect(0 + startWidthOffset, 1,
+            //                            existingWidth, region.position.height);
 
             EditorGUI.DrawRect(startOffsetRegion, _offsetBackgroundColour);
             EditorGUI.DrawRect(endOffsetRegion, _offsetBackgroundColour);

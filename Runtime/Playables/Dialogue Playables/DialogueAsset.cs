@@ -51,19 +51,19 @@ namespace Celezt.DialogueSystem
 
         public double StartTime => Clip.start;
         public double EndTime => Clip.end;
-        public float Duration => (float)(EndTime - StartTime);
+        public float Length => (float)(EndTime - StartTime);
 
         /// <summary>
         /// How much time is left in unit interval [0-1]. Unaffected by speed.
         /// </summary>
         public float IntervalUnscaled =>
-            Mathf.Clamp01((float)((Director.time - StartTime) / Duration));
+            Mathf.Clamp01((float)((Director.time - StartTime) / Length));
 
         /// <summary>
         /// How much time is left dependent on speed in unit interval [0-1]. 0 if before and 1 if after.
         /// </summary>
         public float Interval =>
-            TimeSpeedCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (Duration - EndOffset - StartOffset))));
+            TimeSpeedCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (Length - EndOffset - StartOffset))));
 
         public AnimationCurve TimeSpeedCurve
         {
@@ -74,13 +74,13 @@ namespace Celezt.DialogueSystem
         public float StartOffset
         {
             get => _startOffset;
-            set => _startOffset = Mathf.Clamp(value, 0, Duration - _endOffset);
+            set => _startOffset = Mathf.Clamp(value, 0, Length - _endOffset);
         }
 
         public float EndOffset
         {
             get => _endOffset;
-            set => _endOffset = Mathf.Clamp(value, 0, Duration - _startOffset);
+            set => _endOffset = Mathf.Clamp(value, 0, Length - _startOffset);
         }
 
         [SerializeField]
