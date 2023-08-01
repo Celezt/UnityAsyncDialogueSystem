@@ -76,8 +76,8 @@ namespace Celezt.DialogueSystem
 
         private enum TagState
         {
-            Open,
-            Close,
+            Start,
+            End,
             Marker
         }
 
@@ -178,15 +178,15 @@ namespace Celezt.DialogueSystem
                     Type tagType = Types[tagName];
                     switch (state)
                     {
-                        case TagState.Open or TagState.Close when typeof(TagMarker).IsAssignableFrom(tagType):
-                            throw new TagException($"{tagType} is a tag marker and must use </... in front of it.");
+                        case TagState.Start or TagState.End when typeof(TagMarker).IsAssignableFrom(tagType):
+                            throw new TagException($"{tagType} is a tag marker and must use <.../> and not: {(state == TagState.Start ? "<...>" : "</...>")}");
                         case TagState.Marker when typeof(TagElement).IsAssignableFrom(tagType):
-                            throw new TagException($"{tagType} is a tag element, not a tag marker. It should use <...> if open or <.../> if closure.");
+                            throw new TagException($"{tagType} is a tag element, not a tag marker. It should use <...> if start or </...> if end.");
                     }
 
                     switch (state)
                     {
-                        case TagState.Open:
+                        case TagState.Start:
                             TagElement tag = (TagElement)Activator.CreateInstance(tagType);
                             tag._range = new RangeInt(visibleCharacterCount, -1);
 
@@ -196,7 +196,7 @@ namespace Celezt.DialogueSystem
                             tag.OnCreate();
                             tags.Add(tag);
                             break;
-                        case TagState.Close:
+                        case TagState.End:
                             int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == tagType);
 
                             if (tagIndex == -1)    // No open tag of that type exist.
@@ -218,6 +218,8 @@ namespace Celezt.DialogueSystem
                             tags.Add(tagMarker);
                             break;
                     }
+
+                    leftIndex = endIndex;
                 }
                 else
                     visibleCharacterCount++;
@@ -301,7 +303,7 @@ namespace Celezt.DialogueSystem
         private static bool IsValidTag(string text, ref int leftIndex, ref int rightIndex, ref int endIndex, out TagState state)
         {
             char decoration = '\0';
-            state = TagState.Open; // Open by default if it has no '/'.
+            state = TagState.Start; // Start by default if it has no '/'.
 
             if (!(text[leftIndex] is '<' && (leftIndex - 1 < 0 || text[leftIndex - 1] is not '\\')))
                 return false;
@@ -340,15 +342,15 @@ namespace Celezt.DialogueSystem
             leftIndex++;    // After <.
             rightIndex--;   // Before >.
 
-            if (text[leftIndex] is '/')    // Tag is an tag marker. </tag>
+            if (text[rightIndex] is '/')    // Tag is an tag marker. <tag/>
             {
                 state = TagState.Marker;
-                leftIndex++; // After /.
-            }
-            else if (text[rightIndex] is '/')    // Tag is an closure tag. <tag/>
-            {
-                state = TagState.Close;
                 rightIndex--; // Before /.
+            }
+            else if (text[leftIndex] is '/')    // Tag is an end tag. </tag>
+            {
+                state = TagState.End;
+                leftIndex++; // After /.
             }
 
             return true;
