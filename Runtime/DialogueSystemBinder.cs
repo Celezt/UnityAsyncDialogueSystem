@@ -42,15 +42,14 @@ namespace Celezt.DialogueSystem
             /// <summary>
             /// How much time is left in unit interval [0-1]. Unaffected by speed.
             /// </summary>
-            public float IntervalUnscaled => 
-                Mathf.Clamp01((float)((Time - Start) / (End - Start)));
+            public float IntervalUnscaled => Asset is ITime asset ?
+                asset.IntervalUnscaled : Mathf.Clamp01((float)((Time - Start) / (End - Start)));
 
             /// <summary>
             /// How much time is left in unit interval [0-1]. 0 if before and 1 if after.
             /// </summary>
-            public float Interval =>
-                Asset is ITime asset ? 
-                asset.TimeSpeed.Evaluate(Mathf.Clamp01((float)((Time - Start + asset.StartOffset) / (End - asset.EndOffset - Start)))) : IntervalUnscaled;
+            public float Interval => Asset is ITime asset ? 
+                asset.Interval: IntervalUnscaled;
 
             public double Time => Director.time;
             public double Start => Clip.start;

@@ -67,7 +67,7 @@ namespace Celezt.DialogueSystem
         private static Dictionary<Type, Dictionary<string, MemberInfo>> _cachedMembers = new();
 
         [Flags]
-        public enum TagType
+        public enum TagVariation
         {
             Invalid = 0,
             Custom = 1 << 0,
@@ -114,9 +114,9 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public static IEnumerable<ITag> GetSequence(string text)
-            => GetSequence(text, out _);
-        public static IEnumerable<ITag> GetSequence(string text, out int visibleCharacterCount)
+        public static List<ITag> GetSequence(string text)
+            => GetTags(text, out _);
+        public static List<ITag> GetTags(string text, out int visibleCharacterCount)
         {
             visibleCharacterCount = 0;
             int beginIndex = 0;
@@ -124,7 +124,7 @@ namespace Celezt.DialogueSystem
             int leftIndex = 0;
             int rightIndex = 0;
             var tagOpenList = new List<Tag>();
-            var sequence = new List<ITag>();
+            var tags = new List<ITag>();
 
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
             {
@@ -139,13 +139,13 @@ namespace Celezt.DialogueSystem
                         continue;
                     }
 
-                    TagType tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out string tagName);
-                    switch (tagType) // Ignore if not custom.
+                    TagVariation tagVariation = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out string tagName);
+                    switch (tagVariation) // Ignore if not custom.
                     {
-                        case TagType.Invalid:
+                        case TagVariation.Invalid:
                             visibleCharacterCount += beginIndex - endIndex + 1;
-                            goto case TagType.Unity;    // Don't include as visible characters if unity tag.
-                        case TagType.Unity:
+                            goto case TagVariation.Unity;    // Don't include as visible characters if unity tag.
+                        case TagVariation.Unity:
                             leftIndex = endIndex;
                             continue;
                     }
@@ -175,20 +175,29 @@ namespace Celezt.DialogueSystem
                         }
                     }
 
+                    Type tagType = Types[tagName];
+                    switch (state)
+                    {
+                        case TagState.Open or TagState.Close when typeof(TagMarker).IsAssignableFrom(tagType):
+                            throw new TagException($"{tagType} is a tag marker and must use </... in front of it.");
+                        case TagState.Marker when typeof(Tag).IsAssignableFrom(tagType):
+                            throw new TagException($"{tagType} is a tag and not a tag marker. It should use <...> if open or <.../> if closure.");
+                    }
+
                     switch (state)
                     {
                         case TagState.Open:
-                            Tag tag = (Tag)Activator.CreateInstance(Types[tagName]);
+                            Tag tag = (Tag)Activator.CreateInstance(tagType);
                             tag._range = new RangeInt(visibleCharacterCount, -1);
 
                             BindArguments(tag);
 
                             tagOpenList.Add(tag);
                             tag.OnCreate();
-                            sequence.Add(tag);
+                            tags.Add(tag);
                             break;
                         case TagState.Close:
-                            int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == Types[tagName]);
+                            int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == tagType);
 
                             if (tagIndex == -1)    // No open tag of that type exist.
                                 throw new TagException("Closure tags must have an open tag of the same type.");
@@ -200,13 +209,13 @@ namespace Celezt.DialogueSystem
                             tagOpenList.RemoveAt(tagIndex);    // Remove first last index of a tag.
                             break;
                         case TagState.Marker:
-                            TagMarker tagMarker = (TagMarker)Activator.CreateInstance(Types[tagName]);
+                            TagMarker tagMarker = (TagMarker)Activator.CreateInstance(tagType);
                             tagMarker._index = visibleCharacterCount;
 
                             BindArguments(tagMarker);
 
                             tagMarker.OnCreate();
-                            sequence.Add(tagMarker);
+                            tags.Add(tagMarker);
                             break;
                     }
                 }
@@ -214,10 +223,10 @@ namespace Celezt.DialogueSystem
                     visibleCharacterCount++;
             }
 
-            return sequence;
+            return tags;
         }
 
-        public static string TrimTextTags(string text, TagType excludeTagType = TagType.Custom | TagType.Unity)
+        public static string TrimTextTags(string text, TagVariation excludeTagType = TagVariation.Custom | TagVariation.Unity)
         {
             Span<char> span = stackalloc char[text.Length];
             int newLength = 0;
@@ -239,7 +248,7 @@ namespace Celezt.DialogueSystem
                         continue;
                     }
 
-                    TagType tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
+                    TagVariation tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
                     if (!excludeTagType.HasFlag(tagType))
                     {
                         for (leftIndex = beginIndex; leftIndex <= endIndex; leftIndex++)
@@ -255,7 +264,7 @@ namespace Celezt.DialogueSystem
             return span.Slice(0, newLength).ToString();
         }
 
-        public static int GetTextLength(string text, TagType excludeTagType = TagType.Custom | TagType.Unity)
+        public static int GetTextLength(string text, TagVariation excludeTagType = TagVariation.Custom | TagVariation.Unity)
         {
             int visibleCharacterCount = 0;
             int beginIndex = 0;
@@ -275,7 +284,7 @@ namespace Celezt.DialogueSystem
                         continue;
                     }
 
-                    TagType tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
+                    TagVariation tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
                     if (!excludeTagType.HasFlag(tagType))
                         visibleCharacterCount += beginIndex - endIndex + 1;
                     else
@@ -353,7 +362,7 @@ namespace Celezt.DialogueSystem
                     return;
         }
 
-        private static TagType ExtractTagName(string text, ref int index, int length, out string tagName)
+        private static TagVariation ExtractTagName(string text, ref int index, int length, out string tagName)
         {
             int startIndex = index;
             int endIndex = index + length;
@@ -365,18 +374,18 @@ namespace Celezt.DialogueSystem
                     break;
 
                 if (!char.IsLetter(text[index]) && text[index] != '-')    // Invalid: name must be a letter. <tag> ! <%3->
-                    return TagType.Invalid;
+                    return TagVariation.Invalid;
             }
 
             tagName = text.Substring(startIndex, index - startIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
 
             if (_unityRichTextTags.Contains(tagName))   // If name is a unity tag.
-                return TagType.Unity;
+                return TagVariation.Unity;
 
             if (Types.ContainsKey(tagName))   // If name is of custom tag.
-                return TagType.Custom;
+                return TagVariation.Custom;
 
-            return TagType.Invalid;    // If the tag does not exist.
+            return TagVariation.Invalid;    // If the tag does not exist.
         }
 
         private static (string? name, string? argument) ExtractArgument(string text, ref int index, int length, bool isImplicit = false)

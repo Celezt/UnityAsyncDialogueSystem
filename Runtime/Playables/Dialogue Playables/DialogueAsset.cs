@@ -62,7 +62,7 @@ namespace Celezt.DialogueSystem
         /// How much time is left dependent on speed in unit interval [0-1]. 0 if before and 1 if after.
         /// </summary>
         public float Interval =>
-            TimeSpeed.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
+            TimeSpeed.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (EndTime - EndOffset - StartOffset - StartTime))));
 
 
         [field: SerializeField]

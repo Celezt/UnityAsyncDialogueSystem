@@ -15,7 +15,7 @@ namespace Celezt.DialogueSystem
 
         public override void OnInvoke(int index, DSPlayableAsset playableAsset)
         {
-            
+            Debug.Log("AWAKE! " + index);
         }
     }
 }

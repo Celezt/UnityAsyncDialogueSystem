@@ -12,5 +12,7 @@ namespace Celezt.DialogueSystem
         public AnimationCurve TimeSpeed { get; set; }
         public float StartOffset { get; set; }
         public float EndOffset { get; set; }
+        public float Interval { get; }
+        public float IntervalUnscaled { get; }
     }
 }

@@ -4,45 +4,54 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEditor.VersionControl;
 
 namespace Celezt.DialogueSystem
 {
     public class DialogueMixerBehaviour : DSMixerBehaviour
     {
-        private List<ITag> _sequence;
+        private List<ITag> _tags;
         private int _characterCount;
         private float _previousCurrentValue;
 
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             var asset = (DialogueAsset)behaviour.Asset;
+            float currentValue = asset.Interval * _characterCount;
 
-            _sequence = Tags.GetSequence(asset.RawText, out _characterCount).ToList();
+            _tags = Tags.GetTags(asset.RawText, out _characterCount);
             Binder.Internal_InvokeOnEnterDialogueClip(Track, behaviour);
-        }
 
-        protected override void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
-        {
-            var asset = (DialogueAsset)behaviour.Asset;
-
-            float currentValue = asset.Interval * (_characterCount + 1);
-            int currentIndex = Mathf.CeilToInt(currentValue);
-
-            foreach (ITag tag in _sequence)
+            foreach (ITag tag in _tags)
             {
                 switch (tag)
                 {
                     case Tag tagRange:
                         break;
-                    case TagMarker tagMarker:
-                        if ((IsPlayingForward && _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index) ||
-                            (!IsPlayingForward && _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index))
-                        {
-                            Debug.Log(currentValue + " " + tagMarker.Index);
-                            //tagMarker.OnInvoke(currentIndex, asset);
-                            //if (!_sequenceEnumerator.MoveNext())
-                            //    _sequenceEnumerator = null;
-                        }
+                    case TagMarker tagMarker when
+                    asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1 ||
+                    asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1:
+                        tagMarker.OnInvoke(tagMarker.Index, asset);
+                        break;
+                }
+            }
+        }
+
+        protected override void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
+        {
+            var asset = (DialogueAsset)behaviour.Asset;
+            float currentValue = asset.Interval * _characterCount;
+
+            foreach (ITag tag in _tags)
+            {
+                switch (tag)
+                {
+                    case Tag tagRange:
+                        break;
+                    case TagMarker tagMarker when IsPlayingForward ?
+                    _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index:
+                    _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index:
+                        tagMarker.OnInvoke(tagMarker.Index, asset);
                         break;
                 }
             }
@@ -54,7 +63,24 @@ namespace Celezt.DialogueSystem
 
         protected override void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
-            _sequence = null;
+            var asset = (DialogueAsset)behaviour.Asset;
+            float currentValue = asset.Interval * _characterCount;
+
+            foreach (ITag tag in _tags)
+            {
+                switch (tag)
+                {
+                    case Tag tagRange:
+                        break;
+                    case TagMarker tagMarker when 
+                    asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1 ||
+                    asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1:
+                        tagMarker.OnInvoke(tagMarker.Index, asset);
+                        break;
+                }
+            }
+
+            _tags = null;
 
             Binder.Internal_InvokeOnExitDialogueClip(Track, behaviour);
         }
