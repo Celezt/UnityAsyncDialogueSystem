@@ -48,10 +48,14 @@ namespace Celezt.DialogueSystem
                 {
                     case TagElement tagRange:
                         break;
-                    case TagMarker tagMarker when IsPlayingForward ?
-                    _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index:
-                    _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index:
-                        tagMarker.OnInvoke(tagMarker.Index, asset);
+                    case TagMarker tagMarker when IsPlayingForward ? 
+                    (tagMarker.Index == 0 && asset.StartOffset > 0 ?
+                        _previousCurrentValue <= tagMarker.Index && currentValue > tagMarker.Index :
+                        _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index) :
+                    (tagMarker.Index == 0 && asset.StartOffset > 0 ?
+                        _previousCurrentValue > tagMarker.Index && currentValue <= tagMarker.Index :
+                        _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index):
+                            tagMarker.OnInvoke(tagMarker.Index, asset);
                         break;
                 }
             }
