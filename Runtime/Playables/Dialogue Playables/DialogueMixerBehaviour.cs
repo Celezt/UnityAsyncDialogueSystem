@@ -26,7 +26,7 @@ namespace Celezt.DialogueSystem
             {
                 switch (tag)
                 {
-                    case Tag tagRange:
+                    case TagElement tagRange:
                         break;
                     case TagMarker tagMarker when
                     asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1 ||
@@ -46,7 +46,7 @@ namespace Celezt.DialogueSystem
             {
                 switch (tag)
                 {
-                    case Tag tagRange:
+                    case TagElement tagRange:
                         break;
                     case TagMarker tagMarker when IsPlayingForward ?
                     _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index:
@@ -70,7 +70,7 @@ namespace Celezt.DialogueSystem
             {
                 switch (tag)
                 {
-                    case Tag tagRange:
+                    case TagElement tagRange:
                         break;
                     case TagMarker tagMarker when 
                     asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1 ||

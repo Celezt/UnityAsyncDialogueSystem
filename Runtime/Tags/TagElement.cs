@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    public class Tag : ITag
+    public class TagElement : ITag
     {
         public RangeInt Range => _range;
 

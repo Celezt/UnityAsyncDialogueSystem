@@ -123,7 +123,7 @@ namespace Celezt.DialogueSystem
             int endIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
-            var tagOpenList = new List<Tag>();
+            var tagOpenList = new List<TagElement>();
             var tags = new List<ITag>();
 
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
@@ -180,14 +180,14 @@ namespace Celezt.DialogueSystem
                     {
                         case TagState.Open or TagState.Close when typeof(TagMarker).IsAssignableFrom(tagType):
                             throw new TagException($"{tagType} is a tag marker and must use </... in front of it.");
-                        case TagState.Marker when typeof(Tag).IsAssignableFrom(tagType):
-                            throw new TagException($"{tagType} is a tag and not a tag marker. It should use <...> if open or <.../> if closure.");
+                        case TagState.Marker when typeof(TagElement).IsAssignableFrom(tagType):
+                            throw new TagException($"{tagType} is a tag element, not a tag marker. It should use <...> if open or <.../> if closure.");
                     }
 
                     switch (state)
                     {
                         case TagState.Open:
-                            Tag tag = (Tag)Activator.CreateInstance(tagType);
+                            TagElement tag = (TagElement)Activator.CreateInstance(tagType);
                             tag._range = new RangeInt(visibleCharacterCount, -1);
 
                             BindArguments(tag);
