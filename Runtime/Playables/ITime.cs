@@ -9,7 +9,7 @@ namespace Celezt.DialogueSystem
 {
     public interface ITime
     {
-        public AnimationCurve TimeSpeedCurve { get; set; }
+        public AnimationCurve TimeVisibilityCurve { get; set; }
         public float StartOffset { get; set; }
         public float EndOffset { get; set; }
         public float Interval { get; }

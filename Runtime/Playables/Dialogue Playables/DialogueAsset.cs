@@ -63,12 +63,12 @@ namespace Celezt.DialogueSystem
         /// How much time is left dependent on speed in unit interval [0-1]. 0 if before and 1 if after.
         /// </summary>
         public float Interval =>
-            TimeSpeedCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (Length - EndOffset - StartOffset))));
+            TimeVisibilityCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (Length - EndOffset - StartOffset))));
 
-        public AnimationCurve TimeSpeedCurve
+        public AnimationCurve TimeVisibilityCurve
         {
-            get => _timeSpeedCurve;
-            set => _timeSpeedCurve = value;
+            get => _timeVisibilityCurve;
+            set => _timeVisibilityCurve = value;
         }
 
         public float StartOffset
@@ -94,13 +94,13 @@ namespace Celezt.DialogueSystem
         [SerializeField, HideInInspector, Min(0)]
         private float _endOffset;
         [SerializeField, HideInInspector]
-        private AnimationCurve _timeSpeedCurve = AnimationCurve.Linear(0, 0, 1, 1);
+        private AnimationCurve _timeVisibilityCurve = AnimationCurve.Linear(0, 0, 1, 1);
 
         public void UpdateTrimmedText() => Text = _text;
 
         public int GetIndexByTime(double time)
         {
-            float interval = TimeSpeedCurve.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
+            float interval = TimeVisibilityCurve.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
             return Mathf.CeilToInt(interval * Tags.GetTextLength(Text));
         }
 

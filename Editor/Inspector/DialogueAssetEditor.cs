@@ -8,7 +8,8 @@ namespace Celezt.DialogueSystem.Editor
     [CustomEditor(typeof(DialogueAsset), true)]
     public class DialogueAssetEditor : DSPlayableAssetEditor
     {
-        private static readonly GUIContent _timeSpeedContent = new GUIContent("s", "Time Offset");
+        private static readonly GUIContent _visibilityOffsetContent = new GUIContent("s", "Visibility offset (seconds)");
+        private static readonly GUIContent _visibilityCurveContent = new GUIContent("", "Visibility curve (x: time, y: visible)");
 
         public override void BuildInspector()
         {
@@ -28,16 +29,17 @@ namespace Celezt.DialogueSystem.Editor
             if (EditorGUI.EndChangeCheck())
                 asset.UpdateTrimmedText();
 
-            EditorGUILayout.LabelField("Speed Settings");
+            EditorGUILayout.LabelField("Visibility Settings");
             using (new EditorGUILayout.VerticalScope())
                 EditorGUILayout.Space(6);
 
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUIUtility.labelWidth = 10;
-                asset.StartOffset = EditorGUILayout.FloatField(_timeSpeedContent, asset.StartOffset, GUILayout.Width(50));
-                asset.TimeSpeedCurve = EditorGUILayout.CurveField(asset.TimeSpeedCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
-                asset.EndOffset = EditorGUILayout.FloatField(_timeSpeedContent, asset.EndOffset, GUILayout.Width(50));
+                asset.StartOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
+                asset.TimeVisibilityCurve = EditorGUILayout.CurveField(asset.TimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+                GUI.Box(GUILayoutUtility.GetLastRect(), _visibilityCurveContent);
+                asset.EndOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
             }
         }
     }

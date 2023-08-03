@@ -36,7 +36,7 @@ namespace Celezt.DialogueSystem.Editor
 
             EditorGUI.DrawRect(startOffsetRegion, _offsetBackgroundColour);
             EditorGUI.DrawRect(endOffsetRegion, _offsetBackgroundColour);
-            DisplayCurve(existingRegion, _timeSpeedCurveColour, asset.TimeSpeedCurve);
+            DisplayCurve(existingRegion, _timeSpeedCurveColour, asset.TimeVisibilityCurve);
         }
 
         private static void DisplayCurve(Rect rect, Color color, AnimationCurve curve, int subdivitions = 10)
