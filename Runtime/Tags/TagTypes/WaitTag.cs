@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [CreateTag]
-    public class WaitTag : TagMarker
+    public class WaitTag : DSTagSingle
     {
         [Implicit]
         public float Duration { get; set; }
@@ -13,7 +13,7 @@ namespace Celezt.DialogueSystem
         [SerializeField]
         private string _someValue;
 
-        public override void OnInvoke(int index, DSPlayableAsset playableAsset)
+        public override void OnInvoke(int index, DialogueAsset asset)
         {
             Debug.Log("AWAKE! " + index);
         }

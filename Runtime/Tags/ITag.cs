@@ -8,6 +8,11 @@ namespace Celezt.DialogueSystem
 {
     public interface ITag
     {
-        public void OnCreate();
+        public object? Bind { get; }
+
+        /// <summary>
+        /// Shrinks the visibility curve.
+        /// </summary>
+        public void AddPadding(float padding);
     }
 }

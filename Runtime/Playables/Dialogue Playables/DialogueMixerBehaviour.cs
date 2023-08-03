@@ -19,19 +19,19 @@ namespace Celezt.DialogueSystem
             var asset = (DialogueAsset)behaviour.Asset;
             float currentValue = asset.Interval * _characterCount;
 
-            _tags = Tags.GetTags(asset.RawText, out _characterCount);
+            _tags = Tags.GetTags(asset.RawText, out _characterCount, asset);
             Binder.Internal_InvokeOnEnterDialogueClip(Track, behaviour);
 
             foreach (ITag tag in _tags)
             {
                 switch (tag)
                 {
-                    case TagElement tagRange:
+                    case DSTagSpan tagRange:
                         break;
-                    case TagMarker tagMarker when
+                    case DSTagSingle tagMarker when
                     asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1 ||
                     asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1:
-                        tagMarker.OnInvoke(tagMarker.Index, asset);
+                        tagMarker.Internal_OnInvoke();
                         break;
                 }
             }
@@ -46,16 +46,16 @@ namespace Celezt.DialogueSystem
             {
                 switch (tag)
                 {
-                    case TagElement tagRange:
+                    case DSTagSpan tagRange:
                         break;
-                    case TagMarker tagMarker when IsPlayingForward ? 
+                    case DSTagSingle tagMarker when IsPlayingForward ? 
                     (tagMarker.Index == 0 && asset.StartOffset > 0 ?
                         _previousCurrentValue <= tagMarker.Index && currentValue > tagMarker.Index :
                         _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index) :
                     (tagMarker.Index == 0 && asset.StartOffset > 0 ?
                         _previousCurrentValue > tagMarker.Index && currentValue <= tagMarker.Index :
                         _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index):
-                            tagMarker.OnInvoke(tagMarker.Index, asset);
+                            tagMarker.Internal_OnInvoke();
                         break;
                 }
             }
@@ -74,12 +74,12 @@ namespace Celezt.DialogueSystem
             {
                 switch (tag)
                 {
-                    case TagElement tagRange:
+                    case DSTagSpan tagRange:
                         break;
-                    case TagMarker tagMarker when 
+                    case DSTagSingle tagMarker when 
                     asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1 ||
                     asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1:
-                        tagMarker.OnInvoke(tagMarker.Index, asset);
+                        tagMarker.Internal_OnInvoke();
                         break;
                 }
             }

@@ -114,17 +114,18 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public static List<ITag> GetSequence(string text)
-            => GetTags(text, out _);
-        public static List<ITag> GetTags(string text, out int visibleCharacterCount)
+        public static List<ITag> GetTags(string text, object? bind = null)
+            => GetTags(text, out _, bind);
+        public static List<ITag> GetTags(string text, out int visibleCharacterCount, object? bind = null)
         {
             visibleCharacterCount = 0;
             int beginIndex = 0;
             int endIndex = 0;
             int leftIndex = 0;
             int rightIndex = 0;
-            var tagOpenList = new List<TagElement>();
+            var tagOpenList = new List<ITagSpan>();
             var tags = new List<ITag>();
+            var tagRanges = new List<(int, int)>();
 
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
             {
@@ -178,43 +179,38 @@ namespace Celezt.DialogueSystem
                     Type tagType = Types[tagName];
                     switch (state)
                     {
-                        case TagState.Start or TagState.End when typeof(TagMarker).IsAssignableFrom(tagType):
-                            throw new TagException($"{tagType} is a tag marker and must use <.../> and not: {(state == TagState.Start ? "<...>" : "</...>")}");
-                        case TagState.Marker when typeof(TagElement).IsAssignableFrom(tagType):
-                            throw new TagException($"{tagType} is a tag element, not a tag marker. It should use <...> if start or </...> if end.");
+                        case TagState.Start or TagState.End when typeof(DSTagSingle).IsAssignableFrom(tagType):
+                            throw new TagException($"{tagType} is a single tag and must use <.../> and not: {(state == TagState.Start ? "<...>" : "</...>")}");
+                        case TagState.Marker when typeof(DSTagSpan).IsAssignableFrom(tagType):
+                            throw new TagException($"{tagType} is a tag span, not a single tag. It should use <...> if start or </...> if end.");
                     }
 
                     switch (state)
                     {
                         case TagState.Start:
-                            TagElement tag = (TagElement)Activator.CreateInstance(tagType);
-                            tag._range = new RangeInt(visibleCharacterCount, -1);
+                            var tag = (TagSpan)Activator.CreateInstance(tagType);
 
                             BindArguments(tag);
 
                             tagOpenList.Add(tag);
-                            tag.OnCreate();
+                            tagRanges.Add((visibleCharacterCount, int.MinValue));
                             tags.Add(tag);
                             break;
                         case TagState.End:
                             int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == tagType);
 
                             if (tagIndex == -1)    // No open tag of that type exist.
-                                throw new TagException("Closure tags must have an open tag of the same type.");
+                                throw new TagException("Close tags must have an open tag of the same type.");
 
-                            var range = tagOpenList[tagIndex]._range;
-                            range.length = visibleCharacterCount - range.start;
-                            tagOpenList[tagIndex]._range = range;
-
+                            tagRanges[tagIndex] = (tagRanges[tagIndex].Item1, visibleCharacterCount);
                             tagOpenList.RemoveAt(tagIndex);    // Remove first last index of a tag.
                             break;
                         case TagState.Marker:
-                            TagMarker tagMarker = (TagMarker)Activator.CreateInstance(tagType);
-                            tagMarker._index = visibleCharacterCount;
+                            var tagMarker = (TagSingle)Activator.CreateInstance(tagType);
 
                             BindArguments(tagMarker);
 
-                            tagMarker.OnCreate();
+                            tagRanges.Add((visibleCharacterCount, int.MinValue));
                             tags.Add(tagMarker);
                             break;
                     }
@@ -223,6 +219,21 @@ namespace Celezt.DialogueSystem
                 }
                 else
                     visibleCharacterCount++;
+            }
+
+            for (int i = 0; i < tags.Count; i++)
+            {
+                (int index, int closeIndex) = tagRanges[i];
+
+                switch (tags[i])
+                {
+                    case ITagSingle tagSingle:
+                        tagSingle.Awake(index, bind);
+                        break;
+                    case ITagSpan tagSpan:
+                        tagSpan.Awake(new RangeInt(index, closeIndex - index), bind);
+                        break;
+                }
             }
 
             return tags;
@@ -342,12 +353,12 @@ namespace Celezt.DialogueSystem
             leftIndex++;    // After <.
             rightIndex--;   // Before >.
 
-            if (text[rightIndex] is '/')    // Tag is an tag marker. <tag/>
+            if (text[rightIndex] is '/')    // Tag is a single tag. <tag/>
             {
                 state = TagState.Marker;
                 rightIndex--; // Before /.
             }
-            else if (text[leftIndex] is '/')    // Tag is an end tag. </tag>
+            else if (text[leftIndex] is '/')    // Tag is close tag. </tag>
             {
                 state = TagState.End;
                 leftIndex++; // After /.
