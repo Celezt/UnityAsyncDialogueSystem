@@ -8,6 +8,8 @@ namespace Celezt.DialogueSystem.Editor
     [CustomEditor(typeof(DialogueAsset), true)]
     public class DialogueAssetEditor : DSPlayableAssetEditor
     {
+        private static readonly GUIContent _timeSpeedContent = new GUIContent("s", "Time Offset");
+
         public override void BuildInspector()
         {
             var asset = serializedObject.targetObject as DialogueAsset;
@@ -28,15 +30,14 @@ namespace Celezt.DialogueSystem.Editor
 
             EditorGUILayout.LabelField("Speed Settings");
             using (new EditorGUILayout.VerticalScope())
-            {
                 EditorGUILayout.Space(6);
-            }
+
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUIUtility.labelWidth = 10;
-                asset.StartOffset = EditorGUILayout.FloatField("s", asset.StartOffset, GUILayout.Width(50));
+                asset.StartOffset = EditorGUILayout.FloatField(_timeSpeedContent, asset.StartOffset, GUILayout.Width(50));
                 asset.TimeSpeedCurve = EditorGUILayout.CurveField(asset.TimeSpeedCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
-                asset.EndOffset = EditorGUILayout.FloatField("s", asset.EndOffset, GUILayout.Width(50));
+                asset.EndOffset = EditorGUILayout.FloatField(_timeSpeedContent, asset.EndOffset, GUILayout.Width(50));
             }
         }
     }

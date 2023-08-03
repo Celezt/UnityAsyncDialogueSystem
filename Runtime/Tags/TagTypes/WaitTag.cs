@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [CreateTag]
-    public class AwaitTag : TagMarker
+    public class WaitTag : TagMarker
     {
         [Implicit]
         public float Duration { get; set; }
