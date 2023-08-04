@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+#nullable enable
+
 namespace Celezt.DialogueSystem
 {
-    public interface ITagSystem<T> where T : ITag
+    public interface ITagSystem<TTag, TBind> where TTag : ITag where TBind : new()
     {
-        public void Execute(IReadOnlyList<T> entities);
+        public void OnCreate(IReadOnlyList<TTag> entities, TBind? binder);
     }
 }

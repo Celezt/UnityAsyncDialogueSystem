@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,28 +8,30 @@ namespace Celezt.DialogueSystem
 {
     public class TagSingle<T> : TagSingle where T : new()
     {
-        public T? Asset => (T?)Bind;
+        [NonSerialized]
+        public new T? Binder => (T?)base.Binder;
 
-        public virtual void OnCreate(int index, T? asset) { }
-        public virtual void OnInvoke(int index, T? asset) { }
+        public virtual void OnCreate(int index, T? binder) { }
+        public virtual void OnInvoke(int index, T? binder) { }
 
-        public sealed override void Awake(int index, object? bind)
+        public sealed override void Awake(int index, object? binder)
         {
-            base.Awake(index, bind);
+            base.Awake(index, binder);
 
-            OnCreate(index, (T?)bind);
+            OnCreate(index, (T?)binder);
         }
 
-        internal void Internal_OnInvoke() => OnInvoke(Index, Asset);
+        internal void Internal_OnInvoke() => OnInvoke(Index, Binder);
     }
 
     public abstract class TagSingle : Tag, ITagSingle
     {
+        [NonSerialized]
         public int Index { get; protected set; }
 
-        public virtual void Awake(int index, object? bind)
+        public virtual void Awake(int index, object? binder)
         {
-            Bind = bind;
+            Binder = binder;
             Index = index;
         }
     }

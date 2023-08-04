@@ -9,32 +9,34 @@ namespace Celezt.DialogueSystem
 {
     public class TagSpan<T> : TagSpan where T : new()
     {
-        public T? Asset => (T?)Bind;
+        [NonSerialized]
+        public new T? Binder => (T?)base.Binder;
 
-        public virtual void OnCreate(RangeInt range, T? asset) { }
-        public virtual void OnEnter(int index, RangeInt range, T? asset) { }
-        public virtual void OnProcess(int index, RangeInt range, T? asset) { }
-        public virtual void OnExit(int index, RangeInt range, T? asset) { }
+        public virtual void OnCreate(RangeInt range, T? binder) { }
+        public virtual void OnEnter(int index, RangeInt range, T? binder) { }
+        public virtual void OnProcess(int index, RangeInt range, T? binder) { }
+        public virtual void OnExit(int index, RangeInt range, T? binder) { }
 
-        public sealed override void Awake(RangeInt range, object? bind)
+        public sealed override void Awake(RangeInt range, object? binder)
         {
-            base.Awake(range, bind);
+            base.Awake(range, binder);
 
-            OnCreate(range, (T?)bind);
+            OnCreate(range, (T?)binder);
         }
 
-        internal void Internal_OnEnter(int index) => OnEnter(index, Range, Asset);
-        internal void Internal_OnProcess(int index) => OnProcess(index, Range, Asset);
-        internal void Internal_OnExit(int index) => OnExit(index, Range, Asset);
+        internal void Internal_OnEnter(int index) => OnEnter(index, Range, Binder);
+        internal void Internal_OnProcess(int index) => OnProcess(index, Range, Binder);
+        internal void Internal_OnExit(int index) => OnExit(index, Range, Binder);
     }
 
     public abstract class TagSpan : Tag, ITagSpan
     {
+        [NonSerialized]
         public RangeInt Range { get; protected set; }
 
-        public virtual void Awake(RangeInt range, object? bind)
+        public virtual void Awake(RangeInt range, object? binder)
         {
-            Bind = bind;
+            Binder = binder;
             Range = range;
         }
     }

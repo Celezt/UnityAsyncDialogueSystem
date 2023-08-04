@@ -122,13 +122,14 @@ namespace Celezt.DialogueSystem
                     .Cast<MemberInfo>()
                     .Concat(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                     .Where(x => x.IsPrivate ? x.GetCustomAttribute<SerializeField>() != null : x.IsPublic))
+                    .Where(x => x.GetCustomAttribute<NonSerializedAttribute>() == null)
                     .ToDictionary(key => key.Name.ToKebabCase(), value => value);
             }
         }
 
         public static List<ITag> GetTags(string text, object? bind = null)
             => GetTags(text, out _, bind);
-        public static List<ITag> GetTags(string text, out int visibleCharacterCount, object? bind = null)
+        public static List<ITag> GetTags(string text, out int visibleCharacterCount, object? binder = null)
         {
             visibleCharacterCount = 0;
             int beginIndex = 0;
@@ -243,10 +244,10 @@ namespace Celezt.DialogueSystem
                 switch (tags[i])
                 {
                     case ITagSingle tagSingle:
-                        tagSingle.Awake(index, bind);
+                        tagSingle.Awake(index, binder);
                         break;
                     case ITagSpan tagSpan:
-                        tagSpan.Awake(new RangeInt(index, closeIndex - index), bind);
+                        tagSpan.Awake(new RangeInt(index, closeIndex - index), binder);
                         break;
                 }
             }
@@ -260,7 +261,7 @@ namespace Celezt.DialogueSystem
                 foreach (var tag in tags.Where(x => x.GetType() == tagType))
                     tagList.Add(tag);
 
-                systemType.GetMethod("Execute").Invoke(system, new[] { tagList });
+                systemType.GetMethod("OnCreate").Invoke(system, new[] { tagList, binder });
             }
 
             return tags;
@@ -522,7 +523,7 @@ namespace Celezt.DialogueSystem
                 Type? foundInterfaceType = null;
                 foreach (Type interfaceType in systemType.GetInterfaces())
                 {
-                    if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(ITagSystem<>))
+                    if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(ITagSystem<,>))
                     {
                         foundInterfaceType = interfaceType;
                         break;
@@ -530,7 +531,7 @@ namespace Celezt.DialogueSystem
                 }
 
                 if (foundInterfaceType == null)
-                    throw new TagException($"Object with '{nameof(CreateTagSystemAttribute)}' are required to be derived from '{typeof(ITagSystem<>).Name}'");
+                    throw new TagException($"Object with '{nameof(CreateTagSystemAttribute)}' are required to be derived from '{typeof(ITagSystem<,>).Name}'");
 
                 _systemTypes[foundInterfaceType.GetGenericArguments()[0]] = systemType;
             }

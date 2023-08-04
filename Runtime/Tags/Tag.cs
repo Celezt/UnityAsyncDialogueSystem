@@ -8,11 +8,7 @@ namespace Celezt.DialogueSystem
 {
     public abstract class Tag : ITag
     {
-        public object? Bind { get; protected set; }
- 
-        public void AddPadding(float padding)
-        {
-            
-        }
+        [NonSerialized]
+        public object? Binder { get; protected set; }
     }
 }

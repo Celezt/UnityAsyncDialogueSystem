@@ -17,16 +17,30 @@ namespace Celezt.DialogueSystem
     }
 
     [CreateTagSystem]
-    public class WaitTagSystem : ITagSystem<WaitTag>
+    public class WaitTagSystem : ITagSystem<WaitTag, DialogueAsset>
     {
-        public void Execute(IReadOnlyList<WaitTag> entities)
+        public void OnCreate(IReadOnlyList<WaitTag> entities, DialogueAsset binder)
         {
             for (int i = 0; i < entities.Count; i++)
             {
                 WaitTag tag = entities[i];
+                //ScaleCurve(tag)
                 //Keyframe keyframe = new(index / asset.Length, 0, 0, 0);
 
                 //tag.Asset.RuntimeVisibilityCurve.AddKey(keyframe);
+            }
+        }
+
+        public static void ScaleCurve(Keyframe[] keys, float scaleX, float scaleY)
+        {
+            for (int i = 0; i < keys.Length; i++)
+            {
+                Keyframe keyframe = keys[i];
+                keyframe.value = keys[i].value * scaleY;
+                keyframe.time = keys[i].time * scaleX;
+                keyframe.inTangent = keys[i].inTangent * scaleY / scaleX;
+                keyframe.outTangent = keys[i].outTangent * scaleY / scaleX;
+                keys[i] = keyframe;
             }
         }
     }
