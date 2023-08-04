@@ -192,9 +192,9 @@ namespace Celezt.DialogueSystem
                     Type tagType = Types[tagName];
                     switch (state)
                     {
-                        case TagState.Start or TagState.End when typeof(DSTagSingle).IsAssignableFrom(tagType):
+                        case TagState.Start or TagState.End when typeof(TagSingle).IsAssignableFrom(tagType):
                             throw new TagException($"{tagType} is a single tag and must use <.../> and not: {(state == TagState.Start ? "<...>" : "</...>")}");
-                        case TagState.Marker when typeof(DSTagSpan).IsAssignableFrom(tagType):
+                        case TagState.Marker when typeof(TagSpan).IsAssignableFrom(tagType):
                             throw new TagException($"{tagType} is a tag span, not a single tag. It should use <...> if start or </...> if end.");
                     }
 

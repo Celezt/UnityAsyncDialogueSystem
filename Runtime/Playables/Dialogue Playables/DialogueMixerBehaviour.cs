@@ -27,9 +27,9 @@ namespace Celezt.DialogueSystem
             {
                 switch (tag)
                 {
-                    case DSTagSpan tagRange:
+                    case TagSpan<DialogueAsset> tagRange:
                         break;
-                    case DSTagSingle tagMarker when
+                    case TagSingle<DialogueAsset> tagMarker when
                     asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1 ||
                     asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1:
                         tagMarker.Internal_OnInvoke();
@@ -47,9 +47,9 @@ namespace Celezt.DialogueSystem
             {
                 switch (tag)
                 {
-                    case DSTagSpan tagRange:
+                    case TagSpan<DialogueAsset> tagRange:
                         break;
-                    case DSTagSingle tagMarker when IsPlayingForward ?
+                    case TagSingle<DialogueAsset> tagMarker when IsPlayingForward ?
                     (tagMarker.Index == 0 && asset.StartOffset > 0 ?
                         _previousCurrentValue <= tagMarker.Index && currentValue > tagMarker.Index :
                         _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index) :
@@ -75,9 +75,9 @@ namespace Celezt.DialogueSystem
             {
                 switch (tag)
                 {
-                    case DSTagSpan tagRange:
+                    case TagSpan<DialogueAsset> tagRange:
                         break;
-                    case DSTagSingle tagMarker when 
+                    case TagSingle<DialogueAsset> tagMarker when 
                     asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1 ||
                     asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1:
                         tagMarker.Internal_OnInvoke();
