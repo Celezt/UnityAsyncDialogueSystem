@@ -37,7 +37,7 @@ namespace Celezt.DialogueSystem.Editor
             {
                 EditorGUIUtility.labelWidth = 10;
                 asset.StartOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
-                asset.TimeVisibilityCurve = EditorGUILayout.CurveField(asset.TimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+                asset.VisibilityCurve = EditorGUILayout.CurveField(asset.VisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
                 GUI.Box(GUILayoutUtility.GetLastRect(), _visibilityCurveContent);
                 asset.EndOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
             }

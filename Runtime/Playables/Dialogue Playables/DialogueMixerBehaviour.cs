@@ -4,7 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEditor.VersionControl;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Celezt.DialogueSystem
 {
@@ -48,14 +49,14 @@ namespace Celezt.DialogueSystem
                 {
                     case DSTagSpan tagRange:
                         break;
-                    case DSTagSingle tagMarker when IsPlayingForward ? 
+                    case DSTagSingle tagMarker when IsPlayingForward ?
                     (tagMarker.Index == 0 && asset.StartOffset > 0 ?
                         _previousCurrentValue <= tagMarker.Index && currentValue > tagMarker.Index :
                         _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index) :
                     (tagMarker.Index == 0 && asset.StartOffset > 0 ?
                         _previousCurrentValue > tagMarker.Index && currentValue <= tagMarker.Index :
                         _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index):
-                            tagMarker.Internal_OnInvoke();
+                        tagMarker.Internal_OnInvoke();
                         break;
                 }
             }

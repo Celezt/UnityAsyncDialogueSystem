@@ -63,7 +63,19 @@ namespace Celezt.DialogueSystem
             }
         }
 
+        public static IReadOnlyDictionary<Type, Type> SystemTypes
+        {
+            get
+            {
+                if (_systemTypes == null)
+                    Initialize();
+
+                return _systemTypes!;
+            }
+        }
+
         private static Dictionary<string, Type>? _types;
+        private static Dictionary<Type, Type>? _systemTypes;
         private static Dictionary<Type, Dictionary<string, MemberInfo>> _cachedMembers = new();
 
         [Flags]
@@ -125,6 +137,7 @@ namespace Celezt.DialogueSystem
             int rightIndex = 0;
             var tagOpenList = new List<ITagSpan>();
             var tags = new List<ITag>();
+            var tagTypes = new HashSet<Type>();
             var tagRanges = new List<(int, int)>();
 
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
@@ -195,6 +208,7 @@ namespace Celezt.DialogueSystem
                             tagOpenList.Add(tag);
                             tagRanges.Add((visibleCharacterCount, int.MinValue));
                             tags.Add(tag);
+                            tagTypes.Add(tagType);
                             break;
                         case TagState.End:
                             int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == tagType);
@@ -212,6 +226,7 @@ namespace Celezt.DialogueSystem
 
                             tagRanges.Add((visibleCharacterCount, int.MinValue));
                             tags.Add(tagMarker);
+                            tagTypes.Add(tagType);
                             break;
                     }
 
@@ -234,6 +249,18 @@ namespace Celezt.DialogueSystem
                         tagSpan.Awake(new RangeInt(index, closeIndex - index), bind);
                         break;
                 }
+            }
+
+            // Execute system if the tag type is used.
+            foreach ((Type tagType, Type systemType) in tagTypes.Where(x => SystemTypes.ContainsKey(x)).Select(x => (x, SystemTypes[x])))
+            {
+                object system = Activator.CreateInstance(systemType);
+                IList tagList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(tagType));
+
+                foreach (var tag in tags.Where(x => x.GetType() == tagType))
+                    tagList.Add(tag);
+
+                systemType.GetMethod("Execute").Invoke(system, new[] { tagList });
             }
 
             return tags;
@@ -266,6 +293,7 @@ namespace Celezt.DialogueSystem
                     {
                         for (leftIndex = beginIndex; leftIndex <= endIndex; leftIndex++)
                             span[newLength++] = text[leftIndex];
+                        leftIndex--;
                     }
                     else
                         leftIndex = endIndex;
@@ -300,8 +328,8 @@ namespace Celezt.DialogueSystem
                     TagVariation tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
                     if (!excludeTagType.HasFlag(tagType))
                         visibleCharacterCount += beginIndex - endIndex + 1;
-                    else
-                        leftIndex = endIndex;
+
+                    leftIndex = endIndex;
                 }
                 else
                     visibleCharacterCount++;
@@ -478,14 +506,33 @@ namespace Celezt.DialogueSystem
         private static void Initialize()
         {
             _types = new();
+            _systemTypes = new();
 
             foreach (Type tagType in ReflectionUtility.GetTypesWithAttribute<CreateTagAttribute>(AppDomain.CurrentDomain))
             {
                 if (tagType.GetInterface(nameof(ITag)) == null)
-                    throw new TagException("Object with 'CreateTagAttribute' are required to be derived from 'ITag'");
+                    throw new TagException($"Object with '{nameof(CreateTagAttribute)}' are required to be derived from '{nameof(ITag)}'");
 
                 string name = tagType.Name.TrimDecoration("Tag").ToKebabCase();
                 _types[name] = tagType;
+            }
+
+            foreach (Type systemType in ReflectionUtility.GetTypesWithAttribute<CreateTagSystemAttribute>(AppDomain.CurrentDomain))
+            {
+                Type? foundInterfaceType = null;
+                foreach (Type interfaceType in systemType.GetInterfaces())
+                {
+                    if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(ITagSystem<>))
+                    {
+                        foundInterfaceType = interfaceType;
+                        break;
+                    }   
+                }
+
+                if (foundInterfaceType == null)
+                    throw new TagException($"Object with '{nameof(CreateTagSystemAttribute)}' are required to be derived from '{typeof(ITagSystem<>).Name}'");
+
+                _systemTypes[foundInterfaceType.GetGenericArguments()[0]] = systemType;
             }
         }
         #endregion

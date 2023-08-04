@@ -10,6 +10,8 @@ using UnityEngine.Assertions;
 using UnityEditor;
 #endif
 
+#nullable enable
+
 namespace Celezt.DialogueSystem
 {
     public class DialogueAsset : DSPlayableAsset, ITime
@@ -37,70 +39,97 @@ namespace Celezt.DialogueSystem
                 if (_trimmedText == null)
                     UpdateTrimmedText();
 
-                return _trimmedText;
+                return _trimmedText!;
             }
             private set
             {
                 _text = value;
-                _trimmedText = Tags.TrimTextTags(_text);
+                _trimmedText = Tags.TrimTextTags(_text, Tags.TagVariation.Custom);
+                _length = Tags.GetTextLength(_trimmedText);
 #if UNITY_EDITOR
                 EditorUtility.IsDirty(this);
 #endif
             }
         }
 
+        public int Length => _length;
+
         public double StartTime => Clip.start;
         public double EndTime => Clip.end;
-        public float Length => (float)(EndTime - StartTime);
+        public float TimeLength => (float)(EndTime - StartTime);
 
         /// <summary>
         /// How much time is left in unit interval [0-1]. Unaffected by speed.
         /// </summary>
         public float IntervalUnscaled =>
-            Mathf.Clamp01((float)((Director.time - StartTime) / Length));
+            Mathf.Clamp01((float)((Director.time - StartTime) / TimeLength));
 
         /// <summary>
         /// How much time is left dependent on speed in unit interval [0-1]. 0 if before and 1 if after.
         /// </summary>
         public float Interval =>
-            TimeVisibilityCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (Length - EndOffset - StartOffset))));
+            VisibilityCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (TimeLength - EndOffset - StartOffset))));
 
-        public AnimationCurve TimeVisibilityCurve
+        public AnimationCurve VisibilityCurve
         {
-            get => _timeVisibilityCurve;
-            set => _timeVisibilityCurve = value;
+            get => _visibilityCurve;
+            set
+            {
+                _visibilityCurve = value;
+
+                if (_runtimeVisibilityCurve == null)
+                    _runtimeVisibilityCurve = new AnimationCurve(_visibilityCurve.keys);
+                else
+                    _runtimeVisibilityCurve.keys = _visibilityCurve.keys;
+            }
+        }
+
+        public AnimationCurve RuntimeVisibilityCurve
+        {
+            get
+            {
+                if (_runtimeVisibilityCurve == null)
+                    _runtimeVisibilityCurve = new AnimationCurve(_visibilityCurve.keys);
+
+                return _runtimeVisibilityCurve;
+            }
+            set => _runtimeVisibilityCurve = value;
         }
 
         public float StartOffset
         {
             get => _startOffset;
-            set => _startOffset = Mathf.Clamp(value, 0, Length - _endOffset);
+            set => _startOffset = Mathf.Clamp(value, 0, TimeLength - _endOffset);
         }
 
         public float EndOffset
         {
             get => _endOffset;
-            set => _endOffset = Mathf.Clamp(value, 0, Length - _startOffset);
+            set => _endOffset = Mathf.Clamp(value, 0, TimeLength - _startOffset);
         }
 
         [SerializeField]
-        private string _actor;
+        private string _actor = string.Empty;
         [SerializeField, TextArea(10, int.MaxValue)]
-        private string _text;
+        private string _text = string.Empty;
         [SerializeField, HideInInspector]
-        private string _trimmedText;
+        private string _trimmedText = string.Empty;
         [SerializeField, HideInInspector, Min(0)]
         private float _startOffset;
         [SerializeField, HideInInspector, Min(0)]
         private float _endOffset;
         [SerializeField, HideInInspector]
-        private AnimationCurve _timeVisibilityCurve = AnimationCurve.Linear(0, 0, 1, 1);
+        private AnimationCurve _visibilityCurve = AnimationCurve.Linear(0, 0, 1, 1);
+        [SerializeField, HideInInspector]
+        private int _length;
+
+        private AnimationCurve? _runtimeVisibilityCurve;
 
         public void UpdateTrimmedText() => Text = _text;
 
         public int GetIndexByTime(double time)
         {
-            float interval = TimeVisibilityCurve.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
+            float interval = VisibilityCurve.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
             return Mathf.CeilToInt(interval * Tags.GetTextLength(Text));
         }
 

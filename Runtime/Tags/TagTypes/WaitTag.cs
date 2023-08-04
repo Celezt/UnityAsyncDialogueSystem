@@ -13,9 +13,20 @@ namespace Celezt.DialogueSystem
         [SerializeField]
         private string _someValue;
 
-        public override void OnInvoke(int index, DialogueAsset asset)
+        public override void OnCreate(int index, DialogueAsset asset)
         {
-            Debug.Log("AWAKE! " + index);
+            Keyframe keyframe = new(index / asset.Length, 0, 0, 0);
+
+            asset.RuntimeVisibilityCurve.AddKey(keyframe);
+        }
+    }
+
+    [CreateTagSystem]
+    public class WaitTagSystem : ITagSystem<WaitTag>
+    {
+        public void Execute(IReadOnlyList<WaitTag> entities)
+        {
+            Debug.Log(entities.Count);
         }
     }
 }

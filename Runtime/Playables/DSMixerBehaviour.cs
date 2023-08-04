@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -43,6 +44,7 @@ namespace Celezt.DialogueSystem
 
         private DialogueSystemBinder _binder;
         private DSTrack _track;
+        private Task _processTask;
 
         private double _previousTime;
         private double _time;
