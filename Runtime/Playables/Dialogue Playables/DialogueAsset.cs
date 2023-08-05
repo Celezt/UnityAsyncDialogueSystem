@@ -37,52 +37,48 @@ namespace Celezt.DialogueSystem
             get
             {
                 if (_trimmedText == null)
-                    UpdateTrimmedText();
+                    Text = _text;
 
                 return _trimmedText!;
             }
-            private set
+            set
             {
                 _text = value;
-                _trimmedText = Tags.TrimTextTags(_text, Tags.TagVariation.Custom);
-                _length = Tags.GetTextLength(_trimmedText);
-#if UNITY_EDITOR
-                EditorUtility.IsDirty(this);
-#endif
+                RefreshDialogue();
             }
         }
 
         public int Length => _length;
 
+        public IReadOnlyList<ITag> TagSequence
+        {
+            get
+            {
+                if (_tagSequence == null)
+                    _tagSequence = Tags.GetTagSequence(RawText, this);
+
+                return _tagSequence;
+            }
+        }
+
         public double StartTime => Clip.start;
         public double EndTime => Clip.end;
-        public float TimeLength => (float)(EndTime - StartTime);
+        public float TimeLengthUnscaled => (float)(EndTime - StartTime);
+        public float TimeLength => TimeLengthUnscaled - EndOffset - StartOffset;
 
         /// <summary>
         /// How much time is left in unit interval [0-1]. Unaffected by speed.
         /// </summary>
         public float IntervalUnscaled =>
-            Mathf.Clamp01((float)((Director.time - StartTime) / TimeLength));
+            Mathf.Clamp01((float)((Director.time - StartTime) / TimeLengthUnscaled));
 
         /// <summary>
         /// How much time is left dependent on speed in unit interval [0-1]. 0 if before and 1 if after.
         /// </summary>
         public float Interval =>
-            VisibilityCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / (TimeLength - EndOffset - StartOffset))));
+            RuntimeVisibilityCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / TimeLength)));
 
-        public AnimationCurve VisibilityCurve
-        {
-            get => _visibilityCurve;
-            set
-            {
-                _visibilityCurve = value;
-
-                if (_runtimeVisibilityCurve == null)
-                    _runtimeVisibilityCurve = new AnimationCurve(_visibilityCurve.keys);
-                else
-                    _runtimeVisibilityCurve.keys = _visibilityCurve.keys;
-            }
-        }
+        public AnimationCurve VisibilityCurve => _visibilityCurve;
 
         public AnimationCurve RuntimeVisibilityCurve
         {
@@ -93,19 +89,18 @@ namespace Celezt.DialogueSystem
 
                 return _runtimeVisibilityCurve;
             }
-            set => _runtimeVisibilityCurve = value;
         }
 
         public float StartOffset
         {
             get => _startOffset;
-            set => _startOffset = Mathf.Clamp(value, 0, TimeLength - _endOffset);
+            set => _startOffset = Mathf.Clamp(value, 0, TimeLengthUnscaled - _endOffset);
         }
 
         public float EndOffset
         {
             get => _endOffset;
-            set => _endOffset = Mathf.Clamp(value, 0, TimeLength - _startOffset);
+            set => _endOffset = Mathf.Clamp(value, 0, TimeLengthUnscaled - _startOffset);
         }
 
         [SerializeField]
@@ -124,12 +119,29 @@ namespace Celezt.DialogueSystem
         private int _length;
 
         private AnimationCurve? _runtimeVisibilityCurve;
+        private List<ITag>? _tagSequence;
 
-        public void UpdateTrimmedText() => Text = _text;
+        public void RefreshDialogue()
+        {
+            _trimmedText = Tags.TrimTextTags(_text, Tags.TagVariation.Custom);
+            _length = Tags.GetTextLength(_trimmedText);
+            _tagSequence = Tags.GetTagSequence(RawText, this);
+#if UNITY_EDITOR
+            EditorUtility.IsDirty(this);
+#endif
+        }
+
+        public void UpdateTags()
+        {
+            foreach (ITag tag in TagSequence)
+                tag.OnCreate();
+
+            Tags.InvokeSystems(TagSequence, this);
+        }
 
         public int GetIndexByTime(double time)
         {
-            float interval = VisibilityCurve.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
+            float interval = RuntimeVisibilityCurve.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
             return Mathf.CeilToInt(interval * Tags.GetTextLength(Text));
         }
 

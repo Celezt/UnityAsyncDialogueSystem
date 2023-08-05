@@ -14,14 +14,15 @@ namespace Celezt.DialogueSystem
         public virtual void OnCreate(int index, T? binder) { }
         public virtual void OnInvoke(int index, T? binder) { }
 
-        public sealed override void Awake(int index, object? binder)
+        public sealed override void Initialize(int index, object? binder)
         {
-            base.Awake(index, binder);
+            base.Initialize(index, binder);
 
             OnCreate(index, (T?)binder);
         }
 
-        internal void Internal_OnInvoke() => OnInvoke(Index, Binder);
+        public override void OnCreate() => OnCreate(Index, Binder);
+        public void OnInvoke() => OnInvoke(Index, Binder);
     }
 
     public abstract class TagSingle : Tag, ITagSingle
@@ -29,7 +30,7 @@ namespace Celezt.DialogueSystem
         [NonSerialized]
         public int Index { get; protected set; }
 
-        public virtual void Awake(int index, object? binder)
+        public virtual void Initialize(int index, object? binder)
         {
             Binder = binder;
             Index = index;

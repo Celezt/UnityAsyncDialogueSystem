@@ -10,6 +10,6 @@ namespace Celezt.DialogueSystem
     {
         public int Index { get; }
 
-        public void Awake(int index, object? bind);
+        public void Initialize(int index, object? bind);
     }
 }

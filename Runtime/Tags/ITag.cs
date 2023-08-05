@@ -9,5 +9,7 @@ namespace Celezt.DialogueSystem
     public interface ITag
     {
         public object? Binder { get; }
+
+        public void OnCreate();
     }
 }

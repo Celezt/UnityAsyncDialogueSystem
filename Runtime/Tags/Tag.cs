@@ -10,5 +10,7 @@ namespace Celezt.DialogueSystem
     {
         [NonSerialized]
         public object? Binder { get; protected set; }
+
+        public abstract void OnCreate();
     }
 }

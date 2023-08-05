@@ -6,8 +6,6 @@ using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Timeline;
-using UnityEngine.UIElements;
-using static UnityEditor.PlayerSettings;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -16,7 +14,7 @@ namespace Celezt.DialogueSystem.Editor
     {
         private static readonly Color _offsetBackgroundColour = new Color(0f, 0f, 0f, 0.2f);
         private static readonly Color _timeSpeedCurveColour = new Color(0.7f, 0.9f, 1f, 0.2f);
-
+       
         public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region)
         {
             var asset = clip.asset as DialogueAsset;
@@ -39,12 +37,12 @@ namespace Celezt.DialogueSystem.Editor
             DisplayCurve(existingRegion, _timeSpeedCurveColour, asset.RuntimeVisibilityCurve);
         }
 
-        private static void DisplayCurve(Rect rect, Color color, AnimationCurve curve, int subdivitions = 10)
+        private static void DisplayCurve(Rect rect, Color color, AnimationCurve curve, int subdivitions = 8)
         {
             if (curve.length < 1)
                 return;
 
-            int iterations = (int)(Mathf.Log10(rect.width) * subdivitions);
+            int iterations = (int)(Mathf.Log(rect.width) * subdivitions);
             float previousTime = 0;
             float previousValue = 0;
 

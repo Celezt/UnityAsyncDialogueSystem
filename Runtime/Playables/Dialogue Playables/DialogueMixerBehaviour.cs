@@ -11,7 +11,6 @@ namespace Celezt.DialogueSystem
 {
     public class DialogueMixerBehaviour : DSMixerBehaviour
     {
-        private List<ITag> _tags;
         private int _characterCount;
         private float _previousCurrentValue = float.MaxValue;
 
@@ -20,10 +19,9 @@ namespace Celezt.DialogueSystem
             var asset = (DialogueAsset)behaviour.Asset;
             float currentValue = asset.Interval * _characterCount;
 
-            _tags = Tags.GetTags(asset.RawText, out _characterCount, asset);
             Binder.Internal_InvokeOnEnterDialogueClip(Track, behaviour);
 
-            foreach (ITag tag in _tags)
+            foreach (ITag tag in asset.TagSequence)
             {
                 switch (tag)
                 {
@@ -32,7 +30,7 @@ namespace Celezt.DialogueSystem
                     case TagSingle<DialogueAsset> tagMarker when
                     asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1 ||
                     asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1:
-                        tagMarker.Internal_OnInvoke();
+                        tagMarker.OnInvoke();
                         break;
                 }
             }
@@ -43,7 +41,7 @@ namespace Celezt.DialogueSystem
             var asset = (DialogueAsset)behaviour.Asset;
             float currentValue = asset.Interval * _characterCount;
 
-            foreach (ITag tag in _tags)
+            foreach (ITag tag in asset.TagSequence)
             {
                 switch (tag)
                 {
@@ -56,7 +54,7 @@ namespace Celezt.DialogueSystem
                     (tagMarker.Index == 0 && asset.StartOffset > 0 ?
                         _previousCurrentValue > tagMarker.Index && currentValue <= tagMarker.Index :
                         _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index):
-                        tagMarker.Internal_OnInvoke();
+                        tagMarker.OnInvoke();
                         break;
                 }
             }
@@ -71,7 +69,7 @@ namespace Celezt.DialogueSystem
             var asset = (DialogueAsset)behaviour.Asset;
             float currentValue = asset.Interval * _characterCount;
 
-            foreach (ITag tag in _tags)
+            foreach (ITag tag in asset.TagSequence)
             {
                 switch (tag)
                 {
@@ -80,12 +78,10 @@ namespace Celezt.DialogueSystem
                     case TagSingle<DialogueAsset> tagMarker when 
                     asset.EndOffset == 0 && tagMarker.Index == _characterCount && currentValue > _characterCount - 1 ||
                     asset.StartOffset == 0 && tagMarker.Index == 0 && currentValue < 1:
-                        tagMarker.Internal_OnInvoke();
+                        tagMarker.OnInvoke();
                         break;
                 }
             }
-
-            _tags = null;
 
             Binder.Internal_InvokeOnExitDialogueClip(Track, behaviour);
         }

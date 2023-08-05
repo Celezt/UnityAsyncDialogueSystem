@@ -11,9 +11,6 @@ namespace Celezt.DialogueSystem
     {
         [Implicit]
         public float Duration { get; set; }
-
-        [SerializeField]
-        private string _someValue;
     }
 
     [CreateTagSystem]
@@ -21,14 +18,20 @@ namespace Celezt.DialogueSystem
     {
         public void OnCreate(IReadOnlyList<WaitTag> entities, DialogueAsset binder)
         {
-            for (int i = 0; i < entities.Count; i++)
+            Keyframe[] keys = binder.VisibilityCurve.keys;
+            Span<(int, float)> values = stackalloc (int, float)[entities.Count];
+            float duration = 0;
+
+            for (int i = 0; i < values.Length; i++)
             {
                 WaitTag tag = entities[i];
-                //ScaleCurve(tag)
-                //Keyframe keyframe = new(index / asset.Length, 0, 0, 0);
-
-                //tag.Asset.RuntimeVisibilityCurve.AddKey(keyframe);
+                values[i] = (tag.Index, tag.Duration);
+                duration += tag.Duration;
             }
+            //Debug.Log(duration + " " + binder.TimeLength + " " + ((binder.TimeLength - duration) / binder.TimeLength));
+            ScaleCurve(keys, (binder.TimeLength - duration) / binder.TimeLength, 1.0f);
+
+            binder.RuntimeVisibilityCurve.keys = keys;
         }
 
         public static void ScaleCurve(Keyframe[] keys, float scaleX, float scaleY)

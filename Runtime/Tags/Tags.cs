@@ -4,12 +4,18 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Rendering;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 #nullable enable
 
 namespace Celezt.DialogueSystem
 {
+#if UNITY_EDITOR
+    [InitializeOnLoad]
+#endif
     public static class Tags
     {
         private static readonly HashSet<string> _unityRichTextTags = new()
@@ -127,9 +133,26 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public static List<ITag> GetTags(string text, object? bind = null)
-            => GetTags(text, out _, bind);
-        public static List<ITag> GetTags(string text, out int visibleCharacterCount, object? binder = null)
+        public static void InvokeSystems(IEnumerable<ITag> tags, object? binder)
+        {
+            IEnumerable<Type> tagTypes = tags.Select(x => x.GetType()).Distinct();
+
+            // Execute system if the tag type is used.
+            foreach ((Type tagType, Type systemType) in tagTypes.Where(x => SystemTypes.ContainsKey(x)).Select(x => (x, SystemTypes[x])))
+            {
+                object system = Activator.CreateInstance(systemType);
+                IList tagList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(tagType));
+
+                foreach (var tag in tags.Where(x => x.GetType() == tagType))
+                    tagList.Add(tag);
+
+                systemType.GetMethod("OnCreate").Invoke(system, new[] { tagList, binder });
+            }
+        }
+
+        public static List<ITag> GetTagSequence(string text, object? bind = null)
+            => GetTagSequence(text, out _, bind);
+        public static List<ITag> GetTagSequence(string text, out int visibleCharacterCount, object? binder = null)
         {
             visibleCharacterCount = 0;
             int beginIndex = 0;
@@ -138,7 +161,6 @@ namespace Celezt.DialogueSystem
             int rightIndex = 0;
             var tagOpenList = new List<ITagSpan>();
             var tags = new List<ITag>();
-            var tagTypes = new HashSet<Type>();
             var tagRanges = new List<(int, int)>();
 
             for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
@@ -209,7 +231,6 @@ namespace Celezt.DialogueSystem
                             tagOpenList.Add(tag);
                             tagRanges.Add((visibleCharacterCount, int.MinValue));
                             tags.Add(tag);
-                            tagTypes.Add(tagType);
                             break;
                         case TagState.End:
                             int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == tagType);
@@ -227,7 +248,6 @@ namespace Celezt.DialogueSystem
 
                             tagRanges.Add((visibleCharacterCount, int.MinValue));
                             tags.Add(tagMarker);
-                            tagTypes.Add(tagType);
                             break;
                     }
 
@@ -244,25 +264,15 @@ namespace Celezt.DialogueSystem
                 switch (tags[i])
                 {
                     case ITagSingle tagSingle:
-                        tagSingle.Awake(index, binder);
+                        tagSingle.Initialize(index, binder);
                         break;
                     case ITagSpan tagSpan:
-                        tagSpan.Awake(new RangeInt(index, closeIndex - index), binder);
+                        tagSpan.Initialize(new RangeInt(index, closeIndex - index), binder);
                         break;
                 }
             }
 
-            // Execute system if the tag type is used.
-            foreach ((Type tagType, Type systemType) in tagTypes.Where(x => SystemTypes.ContainsKey(x)).Select(x => (x, SystemTypes[x])))
-            {
-                object system = Activator.CreateInstance(systemType);
-                IList tagList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(tagType));
-
-                foreach (var tag in tags.Where(x => x.GetType() == tagType))
-                    tagList.Add(tag);
-
-                systemType.GetMethod("OnCreate").Invoke(system, new[] { tagList, binder });
-            }
+            InvokeSystems(tags, binder);
 
             return tags;
         }
@@ -502,6 +512,13 @@ namespace Celezt.DialogueSystem
 
             return (name, argument);
         }
+
+#if UNITY_EDITOR
+        static Tags()
+        {
+            Initialize();
+        }
+#endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void Initialize()

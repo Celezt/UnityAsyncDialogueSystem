@@ -17,16 +17,17 @@ namespace Celezt.DialogueSystem
         public virtual void OnProcess(int index, RangeInt range, T? binder) { }
         public virtual void OnExit(int index, RangeInt range, T? binder) { }
 
-        public sealed override void Awake(RangeInt range, object? binder)
+        public sealed override void Initialize(RangeInt range, object? binder)
         {
-            base.Awake(range, binder);
+            base.Initialize(range, binder);
 
             OnCreate(range, (T?)binder);
         }
 
-        internal void Internal_OnEnter(int index) => OnEnter(index, Range, Binder);
-        internal void Internal_OnProcess(int index) => OnProcess(index, Range, Binder);
-        internal void Internal_OnExit(int index) => OnExit(index, Range, Binder);
+        public override void OnCreate() => OnCreate(Range, Binder);
+        public void OnEnter(int index) => OnEnter(index, Range, Binder);
+        public void OnProcess(int index) => OnProcess(index, Range, Binder);
+        public void OnExit(int index) => OnExit(index, Range, Binder);
     }
 
     public abstract class TagSpan : Tag, ITagSpan
@@ -34,7 +35,7 @@ namespace Celezt.DialogueSystem
         [NonSerialized]
         public RangeInt Range { get; protected set; }
 
-        public virtual void Awake(RangeInt range, object? binder)
+        public virtual void Initialize(RangeInt range, object? binder)
         {
             Binder = binder;
             Range = range;
