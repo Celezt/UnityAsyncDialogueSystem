@@ -51,6 +51,7 @@ namespace Celezt.DialogueSystem.Editor
                     serializedObject.ApplyModifiedProperties();
                     asset.RuntimeVisibilityCurve.keys = curve.keys;
                     asset.UpdateTags();
+                    EditorUtility.SetDirty(asset);
                 }
 
                 GUI.Box(GUILayoutUtility.GetLastRect(), _visibilityCurveContent);

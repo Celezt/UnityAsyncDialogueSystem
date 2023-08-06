@@ -94,13 +94,33 @@ namespace Celezt.DialogueSystem
         public float StartOffset
         {
             get => _startOffset;
-            set => _startOffset = Mathf.Clamp(value, 0, TimeLengthUnscaled - _endOffset);
+            set
+            {
+                if (_startOffset == value)
+                    return;
+
+                _startOffset = Mathf.Clamp(value, 0, TimeLengthUnscaled - _endOffset);
+
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(this);
+#endif
+            }
         }
 
         public float EndOffset
         {
             get => _endOffset;
-            set => _endOffset = Mathf.Clamp(value, 0, TimeLengthUnscaled - _startOffset);
+            set
+            {
+                if (_endOffset == value)
+                    return;
+
+                _endOffset = Mathf.Clamp(value, 0, TimeLengthUnscaled - _startOffset);
+
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(this);
+#endif
+            }
         }
 
         [SerializeField]
@@ -118,13 +138,16 @@ namespace Celezt.DialogueSystem
         [SerializeField, HideInInspector]
         private int _length;
 
-        private float _lastTagUpdate;
+        private float _lastUpdated;
 
         private AnimationCurve? _runtimeVisibilityCurve;
         private List<ITag>? _tagSequence;
 
         public void RefreshDialogue()
         {
+            if (HasUpdated())
+                return;
+
             _trimmedText = Tags.TrimTextTags(_text, Tags.TagVariation.Custom);
             _length = Tags.GetTextLength(_trimmedText);
             _tagSequence = Tags.GetTagSequence(RawText, this);
@@ -135,12 +158,8 @@ namespace Celezt.DialogueSystem
 
         public void UpdateTags()
         {
-            float time = Time.unscaledDeltaTime;
-
-            if (_lastTagUpdate == time)
+            if (HasUpdated())
                 return;
-
-            _lastTagUpdate = time;
 
             foreach (ITag tag in TagSequence)
                 tag.OnCreate();
@@ -158,6 +177,18 @@ namespace Celezt.DialogueSystem
         protected override DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner)
         {
             return new DialogueBehaviour();
+        }
+
+        private bool HasUpdated()
+        {
+            float time = Time.unscaledDeltaTime;
+
+            if (_lastUpdated == time)
+                return true;
+
+            _lastUpdated = time;
+
+            return false;
         }
     }
 }
