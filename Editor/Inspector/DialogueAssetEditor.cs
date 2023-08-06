@@ -10,7 +10,7 @@ namespace Celezt.DialogueSystem.Editor
     {
         private static readonly GUIContent _visibilityOffsetContent = new GUIContent("s", "Visibility offset (seconds)");
         private static readonly GUIContent _visibilityCurveContent = new GUIContent("", "Visibility curve (x: time, y: visible)");
-        
+
         public override void BuildInspector()
         {
             var asset = serializedObject.targetObject as DialogueAsset;
@@ -48,9 +48,8 @@ namespace Celezt.DialogueSystem.Editor
 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    serializedObject.ApplyModifiedProperties();
                     asset.RuntimeVisibilityCurve.keys = curve.keys;
-                    asset.UpdateTags();
+                    asset.UpdateTags(forceUpdate: true);
                     EditorUtility.SetDirty(asset);
                 }
 
@@ -58,9 +57,11 @@ namespace Celezt.DialogueSystem.Editor
                 asset.EndOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
             }
 
+            EditorGUILayout.LabelField($"Text Info", new GUIStyle("PreMiniLabel"));
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField($"Characters: {asset.Length}");
+                EditorGUILayout.LabelField($"Length: {asset.Length}", new GUIStyle("IN ThumbnailSelection"));
+                EditorGUILayout.LabelField($"Visible: {(asset.VisibilityInterval * 100).ToString("0.#")}%", new GUIStyle("IN ThumbnailSelection"));
             }
         }
     }

@@ -40,16 +40,16 @@ namespace Celezt.DialogueSystem
         public readonly struct Callback
         {
             /// <summary>
-            /// How much time is left in unit interval [0-1]. Unaffected by speed.
+            /// How much time has passed in unit interval [0-1].
             /// </summary>
-            public float IntervalUnscaled => Asset is ITime asset ?
-                asset.IntervalUnscaled : Mathf.Clamp01((float)((Time - Start) / (End - Start)));
+            public float Interval => Asset is ITime asset ?
+                asset.Interval : Mathf.Clamp01((float)((Time - Start) / (End - Start)));
 
             /// <summary>
-            /// How much time is left in unit interval [0-1]. 0 if before and 1 if after.
+            /// The ratio of visible characters in unit interval [0-1].
             /// </summary>
-            public float Interval => Asset is ITime asset ? 
-                asset.Interval: IntervalUnscaled;
+            public float VisibilityInterval => Asset is ITime asset ? 
+                asset.VisibilityInterval: Interval;
 
             public double Time => Director.time;
             public double Start => Clip.start;

@@ -67,15 +67,15 @@ namespace Celezt.DialogueSystem
         public float TimeLength => TimeLengthUnscaled - EndOffset - StartOffset;
 
         /// <summary>
-        /// How much time is left in unit interval [0-1]. Unaffected by speed.
+        /// How much time has passed in unit interval [0-1].
         /// </summary>
-        public float IntervalUnscaled =>
+        public float Interval =>
             Mathf.Clamp01((float)((Director.time - StartTime) / TimeLengthUnscaled));
 
         /// <summary>
-        /// How much time is left dependent on speed in unit interval [0-1]. 0 if before and 1 if after.
+        /// The ratio of visible characters in unit interval [0-1].
         /// </summary>
-        public float Interval =>
+        public float VisibilityInterval =>
             RuntimeVisibilityCurve.Evaluate(Mathf.Clamp01((float)((Director.time - StartTime - StartOffset) / TimeLength)));
 
         public AnimationCurve VisibilityCurve => _visibilityCurve;
@@ -156,9 +156,9 @@ namespace Celezt.DialogueSystem
 #endif
         }
 
-        public void UpdateTags()
+        public void UpdateTags(bool forceUpdate = false)
         {
-            if (HasUpdated())
+            if (forceUpdate && HasUpdated())
                 return;
 
             foreach (ITag tag in TagSequence)

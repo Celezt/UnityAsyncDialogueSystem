@@ -17,7 +17,7 @@ namespace Celezt.DialogueSystem
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             var asset = (DialogueAsset)behaviour.Asset;
-            float currentValue = asset.Interval * _characterCount;
+            float currentValue = asset.VisibilityInterval * _characterCount;
 
             Binder.Internal_InvokeOnEnterDialogueClip(Track, behaviour);
 
@@ -39,7 +39,7 @@ namespace Celezt.DialogueSystem
         protected override void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             var asset = (DialogueAsset)behaviour.Asset;
-            float currentValue = asset.Interval * _characterCount;
+            float currentValue = asset.VisibilityInterval * _characterCount;
 
             foreach (ITag tag in asset.TagSequence)
             {
@@ -67,7 +67,7 @@ namespace Celezt.DialogueSystem
         protected override void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             var asset = (DialogueAsset)behaviour.Asset;
-            float currentValue = asset.Interval * _characterCount;
+            float currentValue = asset.VisibilityInterval * _characterCount;
 
             foreach (ITag tag in asset.TagSequence)
             {

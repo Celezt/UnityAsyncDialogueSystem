@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
         public AnimationCurve VisibilityCurve { get; }
         public float StartOffset { get; set; }
         public float EndOffset { get; set; }
+        public float VisibilityInterval { get; }
         public float Interval { get; }
-        public float IntervalUnscaled { get; }
     }
 }
