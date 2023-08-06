@@ -32,6 +32,7 @@ namespace Celezt.DialogueSystem
                     DSPlayableAsset asset = clip.asset as DSPlayableAsset;
                     asset.Clip = clip;
                     asset.Director = _director;
+                    asset.IsReady = true;
 
                     DSPlayableBehaviour behaviour = null;
                     if (asset.BehaviourReference == null)

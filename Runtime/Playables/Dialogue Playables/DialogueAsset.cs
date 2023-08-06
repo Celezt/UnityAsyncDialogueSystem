@@ -118,6 +118,8 @@ namespace Celezt.DialogueSystem
         [SerializeField, HideInInspector]
         private int _length;
 
+        private float _lastTagUpdate;
+
         private AnimationCurve? _runtimeVisibilityCurve;
         private List<ITag>? _tagSequence;
 
@@ -133,6 +135,13 @@ namespace Celezt.DialogueSystem
 
         public void UpdateTags()
         {
+            float time = Time.unscaledDeltaTime;
+
+            if (_lastTagUpdate == time)
+                return;
+
+            _lastTagUpdate = time;
+
             foreach (ITag tag in TagSequence)
                 tag.OnCreate();
 
@@ -144,6 +153,7 @@ namespace Celezt.DialogueSystem
             float interval = RuntimeVisibilityCurve.Evaluate(Mathf.Clamp01((float)((time - StartTime + StartOffset) / (EndTime - EndOffset - StartTime))));
             return Mathf.CeilToInt(interval * Tags.GetTextLength(Text));
         }
+
 
         protected override DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner)
         {

@@ -15,6 +15,9 @@ namespace Celezt.DialogueSystem.Editor
         {
             var asset = serializedObject.targetObject as DialogueAsset;
 
+            if (!asset.IsReady)
+                return;
+
             EditorGUI.indentLevel--;
             EditorGUILayout.LabelField("Actor");
             using (new EditorGUILayout.VerticalScope())
