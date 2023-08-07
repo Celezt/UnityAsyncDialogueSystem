@@ -60,8 +60,13 @@ namespace Celezt.DialogueSystem.Editor
             EditorGUILayout.LabelField($"Text Info", new GUIStyle("PreMiniLabel"));
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField($"Length: {asset.Length}", new GUIStyle("IN ThumbnailSelection"));
+                EditorGUILayout.LabelField($"Characters: {asset.Length}", new GUIStyle("IN ThumbnailSelection"));
+            }
+            EditorGUILayout.LabelField($"Current Frame", new GUIStyle("PreMiniLabel"));
+            using (new EditorGUILayout.HorizontalScope())
+            {
                 EditorGUILayout.LabelField($"Visible: {(asset.VisibilityInterval * 100).ToString("0.#")}%", new GUIStyle("IN ThumbnailSelection"));
+                EditorGUILayout.LabelField($"Index: {Mathf.Round(asset.VisibilityInterval * asset.Length)}", new GUIStyle("IN ThumbnailSelection"));
             }
         }
     }
