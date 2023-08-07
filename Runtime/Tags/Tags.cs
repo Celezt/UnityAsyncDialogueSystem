@@ -87,9 +87,9 @@ namespace Celezt.DialogueSystem
         [Flags]
         public enum TagVariation
         {
-            Invalid = 0,
-            Custom = 1 << 0,
-            Unity = 1 << 1,
+            Invalid = 1 << 0,
+            Custom = 1 << 1,
+            Unity = 1 << 2,
         }
 
         private enum TagState
@@ -171,8 +171,11 @@ namespace Celezt.DialogueSystem
 
                     if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
                     {
-                        leftIndex = rightIndex;
-                        visibleCharacterCount += beginIndex - rightIndex + 1;
+                        for (int i = beginIndex; i < endIndex; i++)
+                        {
+                            if (!IsBackslash(text, leftIndex))
+                                visibleCharacterCount++;
+                        }
                         continue;
                     }
 
@@ -180,7 +183,11 @@ namespace Celezt.DialogueSystem
                     switch (tagVariation) // Ignore if not custom.
                     {
                         case TagVariation.Invalid:
-                            visibleCharacterCount += beginIndex - endIndex + 1;
+                            for (int i = beginIndex; i <= endIndex; i++)
+                            {
+                                if (!IsBackslash(text, leftIndex))
+                                    visibleCharacterCount++;
+                            }
                             goto case TagVariation.Unity;    // Don't include as visible characters if unity tag.
                         case TagVariation.Unity:
                             leftIndex = endIndex;
@@ -294,22 +301,27 @@ namespace Celezt.DialogueSystem
 
                     if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
                     {
-                        for (leftIndex = beginIndex; leftIndex <= rightIndex; leftIndex++)
-                            span[newLength++] = text[leftIndex];
+                        for (int i = beginIndex; i < endIndex; i++)
+                        {
+                            if (!IsBackslash(text, leftIndex))
+                                span[newLength++] = text[i];
+                        }
                         continue;
                     }
 
                     TagVariation tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
                     if (!excludeTagType.HasFlag(tagType))
                     {
-                        for (leftIndex = beginIndex; leftIndex <= endIndex; leftIndex++)
-                            span[newLength++] = text[leftIndex];
-                        leftIndex--;
+                        for (int i = beginIndex; i <= endIndex; i++)
+                        {
+                            if (!IsBackslash(text, leftIndex))
+                                span[newLength++] = text[i];
+                        }
                     }
                     else
                         leftIndex = endIndex;
                 }
-                else
+                else if (!IsBackslash(text, leftIndex))
                     span[newLength++] = text[leftIndex];
             }
 
@@ -330,19 +342,30 @@ namespace Celezt.DialogueSystem
                 {
                     beginIndex = leftIndex;
 
-                    if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
+                    if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out _))
                     {
-                        visibleCharacterCount += beginIndex - rightIndex + 1;
+                        for (int i = beginIndex; i < endIndex; i++)
+                        {
+                            if (!IsBackslash(text, leftIndex))
+                                visibleCharacterCount++;
+                        }
                         continue;
                     }
 
                     TagVariation tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
+
                     if (!excludeTagType.HasFlag(tagType))
-                        visibleCharacterCount += beginIndex - endIndex + 1;
+                    {
+                        for (int i = beginIndex; i <= endIndex; i++)
+                        {
+                            if (!IsBackslash(text, leftIndex))
+                                visibleCharacterCount++;
+                        }
+                    }
 
                     leftIndex = endIndex;
                 }
-                else
+                else if (!IsBackslash(text, leftIndex))
                     visibleCharacterCount++;
             }
 
@@ -354,6 +377,7 @@ namespace Celezt.DialogueSystem
         {
             char decoration = '\0';
             state = TagState.Start; // Start by default if it has no '/'.
+            endIndex = rightIndex = leftIndex + 1;
 
             if (!(text[leftIndex] is '<' && (leftIndex - 1 < 0 || text[leftIndex - 1] is not '\\')))
                 return false;
@@ -361,8 +385,13 @@ namespace Celezt.DialogueSystem
             if (leftIndex + 1 >= text.Length)
                 return false;
 
-            for (rightIndex = leftIndex + 1; rightIndex < text.Length; rightIndex++)
+            if (text[leftIndex + 1] is '>') // Invalid: must contain a name. <tag> ! <>
+                return false;
+
+            for (; rightIndex < text.Length; rightIndex++)
             {
+                endIndex = rightIndex;
+
                 if (text[rightIndex] is '"' or '\'' && text[rightIndex - 1] is not '\\')
                 {
                     if (text[rightIndex] == decoration)
@@ -371,20 +400,24 @@ namespace Celezt.DialogueSystem
                         decoration = text[rightIndex];
                 }
 
-                if (decoration == '\0')
+                if (decoration is '\0')
                 {
                     if (text[rightIndex] is '<' && text[rightIndex - 1] is not '\\') // Invalid: must end with >. <tag> ! <tag<
+                    {
+                        leftIndex = --rightIndex;
                         return false;
+                    }
 
                     if (text[rightIndex] is '>' && text[rightIndex - 1] is not '\\')
                         break;
                 }
 
-                if (rightIndex >= text.Length - 1)
+                if (rightIndex + 1 >= text.Length)
+                {
+                    leftIndex = --rightIndex;
                     return false;
+                }
             }
-
-            endIndex = rightIndex;
 
             if (text[leftIndex + 1] is '/' && text[rightIndex - 1] is '/')   // Invalid: not allowed to have both. ! </tag/>
                 return false;
@@ -406,6 +439,8 @@ namespace Celezt.DialogueSystem
             return true;
         }
 
+        private static bool IsBackslash(string text, int index) => text[index] is '\\' && (index <= 0 || text[index - 1] is not '\\');
+
         private static void SkipWhitespace(string text, ref int index, int maxLength)
         {
             int startIndex = index;
@@ -425,7 +460,7 @@ namespace Celezt.DialogueSystem
                 if (text[index] is ' ' or '=')    // Ends if it finds a whitespace or =.
                     break;
 
-                if (!char.IsLetter(text[index]) && text[index] != '-')    // Invalid: name must be a letter. <tag> ! <%3->
+                if (!char.IsLetter(text[index]) && text[index] is not '-' and not '\\')    // Invalid: name must be a letter. <tag> ! <%3->
                     return TagVariation.Invalid;
             }
 
