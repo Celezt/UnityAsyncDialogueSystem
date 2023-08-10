@@ -44,12 +44,12 @@ namespace Celezt.DialogueSystem.Editor
                 asset.StartOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
 
                 EditorGUI.BeginChangeCheck();
-                var curve = EditorGUILayout.CurveField(asset.VisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+                var curve = EditorGUILayout.CurveField(asset.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
 
                 if (EditorGUI.EndChangeCheck())
                 {
                     asset.RuntimeVisibilityCurve.keys = curve.keys;
-                    asset.UpdateTags(forceUpdate: true);
+                    asset.UpdateTags();
                     EditorUtility.SetDirty(asset);
                 }
 
@@ -62,11 +62,13 @@ namespace Celezt.DialogueSystem.Editor
             {
                 EditorGUILayout.LabelField($"Characters: {asset.Length}", new GUIStyle("IN ThumbnailSelection"));
             }
+            EditorGUILayout.CurveField(asset.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
             EditorGUILayout.LabelField($"Current Frame", new GUIStyle("PreMiniLabel"));
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField($"Visible: {(asset.VisibilityInterval * 100).ToString("0.#")}%", new GUIStyle("IN ThumbnailSelection"));
-                EditorGUILayout.LabelField($"Index: {Mathf.Round(asset.VisibilityInterval * asset.Length)}", new GUIStyle("IN ThumbnailSelection"));
+                float visibility = asset.VisibilityInterval;
+                EditorGUILayout.LabelField($"Visible: {(visibility * 100).ToString("0.#")}%", new GUIStyle("IN ThumbnailSelection"));
+                EditorGUILayout.LabelField($"Index: {asset.Index}", new GUIStyle("IN ThumbnailSelection"));
             }
         }
     }

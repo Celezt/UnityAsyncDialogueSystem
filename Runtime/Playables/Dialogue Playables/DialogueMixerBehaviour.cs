@@ -12,7 +12,7 @@ namespace Celezt.DialogueSystem
     public class DialogueMixerBehaviour : DSMixerBehaviour
     {
         private int _characterCount;
-        private float _previousCurrentValue = float.MaxValue;
+        private float _previousValue = float.MaxValue;
 
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
@@ -49,17 +49,17 @@ namespace Celezt.DialogueSystem
                         break;
                     case TagSingle<DialogueAsset> tagMarker when IsPlayingForward ?
                     (tagMarker.Index == 0 && asset.StartOffset > 0 ?
-                        _previousCurrentValue <= tagMarker.Index && currentValue > tagMarker.Index :
-                        _previousCurrentValue < tagMarker.Index && currentValue >= tagMarker.Index) :
+                        _previousValue <= tagMarker.Index && currentValue > tagMarker.Index :
+                        _previousValue < tagMarker.Index && currentValue >= tagMarker.Index) :
                     (tagMarker.Index == 0 && asset.StartOffset > 0 ?
-                        _previousCurrentValue > tagMarker.Index && currentValue <= tagMarker.Index :
-                        _previousCurrentValue >= tagMarker.Index && currentValue < tagMarker.Index):
+                        _previousValue > tagMarker.Index && currentValue <= tagMarker.Index :
+                        _previousValue >= tagMarker.Index && currentValue < tagMarker.Index):
                         tagMarker.OnInvoke();
                         break;
                 }
             }
 
-            _previousCurrentValue = currentValue;
+            _previousValue = currentValue;
 
             Binder.Internal_InvokeOnProcessDialogueClip(Track, behaviour);
         }
