@@ -8,8 +8,9 @@ namespace Celezt.DialogueSystem.Editor
     [CustomEditor(typeof(DialogueAsset), true)]
     public class DialogueAssetEditor : DSPlayableAssetEditor
     {
-        private static readonly GUIContent _visibilityOffsetContent = new GUIContent("s", "Visibility offset (seconds)");
-        private static readonly GUIContent _visibilityCurveContent = new GUIContent("", "Visibility curve (x: time, y: visible)");
+        private static readonly GUIContent _editorVisibilityOffsetContent = new GUIContent("s", "Editor Visibility offset (seconds)");
+        private static readonly GUIContent _editorVisibilityCurveContent = new GUIContent("", "Editor Visibility curve (x: time, y: visible)");
+        private static readonly GUIContent _runtimeVisibilityCurveContent = new GUIContent("", "Runtime Visibility curve (x: time, y: visible)");
 
         public override void BuildInspector()
         {
@@ -44,7 +45,7 @@ namespace Celezt.DialogueSystem.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUIUtility.labelWidth = 10;
-                asset.StartOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
+                asset.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
 
                 EditorGUI.BeginChangeCheck();
                 var curve = EditorGUILayout.CurveField(asset.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
@@ -56,8 +57,8 @@ namespace Celezt.DialogueSystem.Editor
                     EditorUtility.SetDirty(asset);
                 }
 
-                GUI.Box(GUILayoutUtility.GetLastRect(), _visibilityCurveContent);
-                asset.EndOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
+                GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
+                asset.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
             }
 
             EditorGUILayout.LabelField($"Text Info", infoTitleStyle);
@@ -65,8 +66,11 @@ namespace Celezt.DialogueSystem.Editor
             {
                 EditorGUILayout.LabelField($"Characters: {asset.Length}", infoStyle);
             }
-            EditorGUILayout.CurveField(asset.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+
+            EditorGUILayoutExtra.CurveField(asset.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+            GUI.Box(GUILayoutUtility.GetLastRect(), _runtimeVisibilityCurveContent);
             EditorGUILayout.LabelField($"Current Frame", infoTitleStyle);
+
             using (new EditorGUILayout.HorizontalScope())
             {
                 float visibility = asset.VisibilityInterval;

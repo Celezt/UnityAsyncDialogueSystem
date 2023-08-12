@@ -34,31 +34,7 @@ namespace Celezt.DialogueSystem.Editor
 
             EditorGUI.DrawRect(startOffsetRegion, _offsetBackgroundColour);
             EditorGUI.DrawRect(endOffsetRegion, _offsetBackgroundColour);
-            DisplayCurve(existingRegion, _timeSpeedCurveColour, asset.RuntimeVisibilityCurve);
-        }
-
-        private static void DisplayCurve(Rect rect, Color color, AnimationCurve curve, int subdivitions = 8)
-        {
-            if (curve.length < 1)
-                return;
-
-            int iterations = (int)(Mathf.Log(rect.width) * subdivitions);
-            float previousTime = 0;
-            float previousValue = 0;
-
-            Handles.color = color;
-            for (int i = 0; i <= iterations; i++)
-            {
-                float time = i / (float)iterations;
-                float value = curve.Evaluate(time);
-
-                Handles.DrawAAPolyLine(3,
-                    new Vector3(previousTime * rect.width + rect.position.x, (1 - previousValue) * rect.height, 0),
-                    new Vector3(time * rect.width + rect.position.x, (1 - value) * rect.height, 0));
-
-                previousTime = time;
-                previousValue = value;
-            }
+            EditorGUIExtra.DrawCurve(existingRegion, _timeSpeedCurveColour, asset.RuntimeVisibilityCurve);
         }
     }
 }

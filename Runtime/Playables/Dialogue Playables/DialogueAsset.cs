@@ -73,7 +73,7 @@ namespace Celezt.DialogueSystem
 
         public int Index => GetIndexByTime(Director.time);
 
-        public float Tangent => GetTangentByTime(Director.time, CurveType.Editor);
+        public float Tangent => GetTangentByTime(Director.time);
 
         /// <summary>
         /// How much time has passed in unit interval [0-1].
