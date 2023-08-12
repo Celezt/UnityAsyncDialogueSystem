@@ -68,8 +68,8 @@ namespace Celezt.DialogueSystem
 
         public double StartTime => Clip.start;
         public double EndTime => Clip.end;
-        public float TimeDurationUnscaled => (float)(EndTime - StartTime);
-        public float TimeDuration => TimeDurationUnscaled - EndOffset - StartOffset;
+        public float TimeDuration => (float)(EndTime - StartTime);
+        public float TimeDurationWithoutOffset => TimeDuration - EndOffset - StartOffset;
 
         public int Index => GetIndexByTime(Director.time);
 
@@ -104,7 +104,7 @@ namespace Celezt.DialogueSystem
                 if (_startOffset == value)
                     return;
 
-                _startOffset = Mathf.Clamp(value, 0, TimeDurationUnscaled - _endOffset);
+                _startOffset = Mathf.Clamp(value, 0, TimeDuration - _endOffset);
 
 #if UNITY_EDITOR
                 EditorUtility.SetDirty(this);
@@ -120,7 +120,7 @@ namespace Celezt.DialogueSystem
                 if (_endOffset == value)
                     return;
 
-                _endOffset = Mathf.Clamp(value, 0, TimeDurationUnscaled - _startOffset);
+                _endOffset = Mathf.Clamp(value, 0, TimeDuration - _startOffset);
 
 #if UNITY_EDITOR
                 EditorUtility.SetDirty(this);
@@ -173,7 +173,7 @@ namespace Celezt.DialogueSystem
                 _tagSequence = Tags.GetTagSequence(RawText, this);
         }
 
-        public float GetIntervalByTime(double time) => Mathf.Clamp01((float)((time - StartTime - StartOffset) / TimeDuration));
+        public float GetIntervalByTime(double time) => Mathf.Clamp01((float)((time - StartTime - StartOffset) / TimeDurationWithoutOffset));
 
         public float GetVisibilityByTime(double time, CurveType curveType = CurveType.Runtime) => curveType switch
         {
@@ -201,7 +201,7 @@ namespace Celezt.DialogueSystem
         /// </summary>
         /// <returns>If any intersections exist.</returns>
         public bool TryGetTimeByIndex(int index, out double time, out float visibility, CurveType curveType = CurveType.Runtime) 
-            => TryGetTimeByIndex(index, StartTime + StartOffset, TimeDuration, out time, out visibility, curveType);
+            => TryGetTimeByIndex(index, StartTime + StartOffset, TimeDurationWithoutOffset, out time, out visibility, curveType);
         /// <summary>
         /// Try get first intersection by index.
         /// </summary>
@@ -232,7 +232,7 @@ namespace Celezt.DialogueSystem
         /// Get all intersections by index.
         /// </summary>
         /// <returns>Intersection count.</returns>
-        public int GetTimeByIndex(int index, double startTime, double duration, IList<double> intersections)
+        public int GetTimeByIndex(int index, double startTime, double duration, IList<double> intersections, CurveType curveType = CurveType.Runtime)
         {
             double framerate = ((TimelineAsset)Director.playableAsset).editorSettings.frameRate;
             float previousValue = 0;
@@ -241,7 +241,7 @@ namespace Celezt.DialogueSystem
 
             while (time < startTime + duration && intersections.Count < count)
             {
-                float visibility = GetVisibilityByTime(time);
+                float visibility = GetVisibilityByTime(time, curveType);
                 float currentValue = visibility * Length;
 
                 if (index == 0 && StartOffset > 0 ? previousValue <= index && currentValue > index :

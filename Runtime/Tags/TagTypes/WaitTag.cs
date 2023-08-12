@@ -12,6 +12,12 @@ namespace Celezt.DialogueSystem
     {
         [Implicit]
         public float Duration { get; set; }
+
+        public override void OnCreate()
+        {
+            Debug.Assert(Duration >= 0, "Duration cannot be negative.");
+            Duration = Mathf.Max(Duration, 0);
+        }
     }
 
     [CreateTagSystem]
@@ -25,7 +31,7 @@ namespace Celezt.DialogueSystem
                 duration += entity.Duration;
 
             double startTime = binder.StartTime + binder.StartOffset;
-            float timeDuration = binder.TimeDuration;
+            float timeDuration = binder.TimeDurationWithoutOffset;
             float shrinkedTimeDuration = timeDuration - duration;
             float offsetTime = 0;
             int offsetIndex = 0;
@@ -45,39 +51,42 @@ namespace Celezt.DialogueSystem
                     curveType: CurveType.Editor))
                     continue;
 
-                float ScaledTime() => (shrinkedTimeDuration + offsetTime) / timeDuration;
+                float timeInterval = (float)(time - startTime) / timeDuration;
 
-                for (; count < keys.Length && keys[count].time * timeDuration <= time; count++)
+                for (; count < keys.Length && keys[count].time <= timeInterval; count++)
                 {
                     Keyframe key = keys[count];
-                    Scale(ref key, (shrinkedTimeDuration + offsetTime) / timeDuration);
+                    Scale(ref key, shrinkedTimeDuration / timeDuration);
+                    key.time += offsetTime / timeDuration;
                     newKeys[count + offsetIndex] = key;
                 }
 
-                //{
-                //    float inTagent = keys[count - 1].inTangent;
-                //    Keyframe key = new Keyframe((timeDuration - (float)time * (2.0f - ScaledTime())) / timeDuration, visibility, inTagent, 0);
-                //    Scale(ref key, (shrinkedTimeDuration + offsetTime) / timeDuration);
-                //    Debug.Log("first: " + key.time + " " + time); 
-                //    offsetIndices[offsetCount++] = count + offsetIndex;
-                //    newKeys[count + offsetIndex++] = key;
-                //}
+                {
+                    Keyframe key = new Keyframe(timeInterval, visibility);
+                    Scale(ref key, shrinkedTimeDuration / timeDuration);
+                    key.time += offsetTime / timeDuration;
+
+                    offsetIndices[offsetCount++] = count + offsetIndex;
+                    newKeys[count + offsetIndex++] = key;
+                }
 
                 offsetTime += entity.Duration;
 
-                //{
-                //    Keyframe key = new Keyframe((timeDuration - (float)time + offsetTime) / timeDuration, visibility, 0, 0);
-                //    Scale(ref key, (shrinkedTimeDuration + offsetTime) / timeDuration);
-                //    Debug.Log("second: " + key.time + " " + (shrinkedTimeDuration + offsetTime) / timeDuration);
-                //    offsetIndices[offsetCount++] = count + offsetIndex;
-                //    newKeys[count + offsetIndex++] = key;
-                //}
+                {
+                    Keyframe key = new Keyframe(timeInterval, visibility);
+                    Scale(ref key, shrinkedTimeDuration / timeDuration);
+                    key.time += offsetTime / timeDuration;
+
+                    offsetIndices[offsetCount++] = count + offsetIndex;
+                    newKeys[count + offsetIndex++] = key;
+                }
             }
 
             for (; count < keys.Length; count++)
             {
                 Keyframe key = keys[count];
-                Scale(ref key, (shrinkedTimeDuration + offsetTime) / timeDuration);
+                Scale(ref key, shrinkedTimeDuration / timeDuration);
+                key.time += offsetTime / timeDuration;
                 newKeys[count + offsetIndex] = key;
             }
 
@@ -92,31 +101,13 @@ namespace Celezt.DialogueSystem
                     AnimationUtility.SetKeyRightTangentMode(binder.RuntimeVisibilityCurve,
                         offsetIndices[i], AnimationUtility.TangentMode.Linear);
             }
-
-            foreach (Keyframe key in binder.RuntimeVisibilityCurve.keys)
-            {
-                //Debug.Log(key.time + " " + key.value);
-            }
         }
 
-        public static void Scale(ref Keyframe key, float scaleX)
+        private static void Scale(ref Keyframe key, float scaleX)
         {
             key.time *= scaleX;
             key.inTangent *= 1.0f / scaleX;
             key.outTangent *= 1.0f / scaleX;
-        }
-
-        public static void ScaleCurve(Span<Keyframe> keys, float scaleX, float scaleY)
-        {
-            for (int i = 0; i < keys.Length; i++)
-            {
-                Keyframe keyframe = keys[i];
-                keyframe.value = keys[i].value * scaleY;
-                keyframe.time = keys[i].time * scaleX;
-                keyframe.inTangent = keys[i].inTangent * scaleY / scaleX;
-                keyframe.outTangent = keys[i].outTangent * scaleY / scaleX;
-                keys[i] = keyframe;
-            }
         }
     }
 }
