@@ -73,6 +73,8 @@ namespace Celezt.DialogueSystem
 
         public int Index => GetIndexByTime(Director.time);
 
+        public float Tangent => GetTangentByTime(Director.time, CurveType.Editor);
+
         /// <summary>
         /// How much time has passed in unit interval [0-1].
         /// </summary>
@@ -173,16 +175,30 @@ namespace Celezt.DialogueSystem
                 _tagSequence = Tags.GetTagSequence(RawText, this);
         }
 
+        public float GetVisibilityByTime(double time, CurveType curveType = CurveType.Runtime)
+            => GetVisibilityByTimeInterval(GetIntervalByTime(time), curveType);
+
         public float GetIntervalByTime(double time) => Mathf.Clamp01((float)((time - StartTime - StartOffset) / TimeDurationWithoutOffset));
 
-        public float GetVisibilityByTime(double time, CurveType curveType = CurveType.Runtime) => curveType switch
+        public float GetVisibilityByTimeInterval(float timeInterval, CurveType curveType = CurveType.Runtime) => curveType switch
         {
-            CurveType.Editor => EditorVisibilityCurve.Evaluate(GetIntervalByTime(time)),
-            CurveType.Runtime => RuntimeVisibilityCurve.Evaluate(GetIntervalByTime(time)),
+            CurveType.Editor => EditorVisibilityCurve.Evaluate(timeInterval),
+            CurveType.Runtime => RuntimeVisibilityCurve.Evaluate(timeInterval),
             _ => throw new NotSupportedException($"{curveType} is not supported."),
         };
 
         public int GetIndexByTime(double time, CurveType curveType = CurveType.Runtime) => (int)Mathf.Round(GetVisibilityByTime(time, curveType) * Length);
+
+        public float GetTangentByTime(double time, CurveType curveType = CurveType.Runtime)
+        {
+            double framerate = ((TimelineAsset)Director.playableAsset).editorSettings.frameRate;
+            float offset = (float)(1 / framerate) / 2.0f;
+            float x1 = GetIntervalByTime(time - offset);
+            float x2 = GetIntervalByTime(time + offset);
+            float y1 = GetVisibilityByTimeInterval(x1, curveType);
+            float y2 = GetVisibilityByTimeInterval(x2, curveType);
+            return (y2 - y1) / (x2 - x1);
+        }
 
         /// <summary>
         /// Try get first intersection by index.

@@ -18,6 +18,9 @@ namespace Celezt.DialogueSystem.Editor
             if (!asset.IsReady)
                 return;
 
+            GUIStyle infoStyle = new GUIStyle("IN ThumbnailSelection");
+            GUIStyle infoTitleStyle = new GUIStyle("PreMiniLabel");
+
             EditorGUI.indentLevel--;
             EditorGUILayout.LabelField("Actor");
             using (new EditorGUILayout.VerticalScope())
@@ -57,18 +60,19 @@ namespace Celezt.DialogueSystem.Editor
                 asset.EndOffset = EditorGUILayout.FloatField(_visibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
             }
 
-            EditorGUILayout.LabelField($"Text Info", new GUIStyle("PreMiniLabel"));
+            EditorGUILayout.LabelField($"Text Info", infoTitleStyle);
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField($"Characters: {asset.Length}", new GUIStyle("IN ThumbnailSelection"));
+                EditorGUILayout.LabelField($"Characters: {asset.Length}", infoStyle);
             }
             EditorGUILayout.CurveField(asset.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
-            EditorGUILayout.LabelField($"Current Frame", new GUIStyle("PreMiniLabel"));
+            EditorGUILayout.LabelField($"Current Frame", infoTitleStyle);
             using (new EditorGUILayout.HorizontalScope())
             {
                 float visibility = asset.VisibilityInterval;
-                EditorGUILayout.LabelField($"Visible: {(visibility * 100).ToString("0.#")}%", new GUIStyle("IN ThumbnailSelection"));
-                EditorGUILayout.LabelField($"Index: {asset.Index}", new GUIStyle("IN ThumbnailSelection"));
+                EditorGUILayout.LabelField($"Visible: {(visibility * 100).ToString("0.#")}%", infoStyle);
+                EditorGUILayout.LabelField($"Tan: {asset.Tangent.ToString("0.##")}", infoStyle);
+                EditorGUILayout.LabelField($"Index: {asset.Index}", infoStyle);
             }
         }
     }
