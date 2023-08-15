@@ -25,18 +25,22 @@ namespace Celezt.DialogueSystem
     {
         public void OnCreate(IReadOnlyList<WaitTag> entities, DialogueAsset binder)
         {
-            float duration = 0;
+            float waitDuration = 0;
 
             foreach (WaitTag entity in entities)
-                duration += entity.Duration;
+                waitDuration += entity.Duration;
+
 
             double startTime = binder.StartTime + binder.StartOffset;
             float timeDuration = binder.TimeDurationWithoutOffset;
-            float shrinkedTimeDuration = timeDuration - duration;
+            float shrinkedTimeDuration = timeDuration - waitDuration;
             float offsetTime = 0;
             int offsetIndex = 0;
             int offsetCount = 0;
             int count = 0;
+
+            if (waitDuration >= timeDuration)
+                throw new Exception($"Combined wait is greater or equal to the duration: {waitDuration}s.");
 
             Span<int> offsetIndices = stackalloc int[entities.Count * 2];
             Keyframe[] keys = binder.EditorVisibilityCurve.keys;
@@ -53,6 +57,9 @@ namespace Celezt.DialogueSystem
 
                 float timeInterval = (float)(time - startTime) / timeDuration;
 
+                //
+                //  Before Points
+                //
                 for (; count < keys.Length && keys[count].time <= timeInterval; count++)
                 {
                     Keyframe key = keys[count];
@@ -61,27 +68,33 @@ namespace Celezt.DialogueSystem
                     newKeys[count + offsetIndex] = key;
                 }
 
-                {
-                    Keyframe key = new Keyframe(timeInterval, visibility);
-                    Scale(ref key, shrinkedTimeDuration / timeDuration);
-                    key.time += offsetTime / timeDuration;
+                //
+                //  Wait Points
+                //
+                float tangent = binder.GetTangentByTime(time, CurveType.Editor);
 
-                    offsetIndices[offsetCount++] = count + offsetIndex;
-                    newKeys[count + offsetIndex++] = key;
-                }
+                // First
+                Keyframe firstKey = new Keyframe(timeInterval, visibility, tangent, 0);
+                Scale(ref firstKey, shrinkedTimeDuration / timeDuration);
+                firstKey.time += offsetTime / timeDuration;
+
+                offsetIndices[offsetCount++] = count + offsetIndex;
+                newKeys[count + offsetIndex++] = firstKey;
 
                 offsetTime += entity.Duration;
 
-                {
-                    Keyframe key = new Keyframe(timeInterval, visibility);
-                    Scale(ref key, shrinkedTimeDuration / timeDuration);
-                    key.time += offsetTime / timeDuration;
+                // Second
+                Keyframe secondKey = new Keyframe(timeInterval, visibility, 0, tangent);
+                Scale(ref secondKey, shrinkedTimeDuration / timeDuration);
+                secondKey.time += offsetTime / timeDuration;
 
-                    offsetIndices[offsetCount++] = count + offsetIndex;
-                    newKeys[count + offsetIndex++] = key;
-                }
+                offsetIndices[offsetCount++] = count + offsetIndex;
+                newKeys[count + offsetIndex++] = secondKey;
             }
 
+            //
+            //  After Points
+            //
             for (; count < keys.Length; count++)
             {
                 Keyframe key = keys[count];
@@ -95,10 +108,10 @@ namespace Celezt.DialogueSystem
             for (int i = 0; i < offsetIndices.Length; i++)
             {
                 if (i % 2 == 0)
-                    AnimationUtility.SetKeyLeftTangentMode(
-                        binder.RuntimeVisibilityCurve, offsetIndices[i], AnimationUtility.TangentMode.Linear);
+                    AnimationUtility.SetKeyRightTangentMode(binder.RuntimeVisibilityCurve, 
+                        offsetIndices[i], AnimationUtility.TangentMode.Linear);
                 else
-                    AnimationUtility.SetKeyRightTangentMode(binder.RuntimeVisibilityCurve,
+                    AnimationUtility.SetKeyLeftTangentMode(binder.RuntimeVisibilityCurve,
                         offsetIndices[i], AnimationUtility.TangentMode.Linear);
             }
         }

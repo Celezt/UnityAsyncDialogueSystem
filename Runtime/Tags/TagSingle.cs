@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,7 +19,14 @@ namespace Celezt.DialogueSystem
         {
             base.Initialize(index, binder);
 
-            OnCreate(index, (T?)binder);
+            try
+            {
+                OnCreate(index, (T?)binder);
+            }
+            catch(Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
 
         public override void OnCreate() => OnCreate(Index, Binder);

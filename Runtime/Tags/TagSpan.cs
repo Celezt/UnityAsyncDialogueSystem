@@ -21,7 +21,14 @@ namespace Celezt.DialogueSystem
         {
             base.Initialize(range, binder);
 
-            OnCreate(range, (T?)binder);
+            try
+            {
+                OnCreate(range, (T?)binder);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
 
         public override void OnCreate() => OnCreate(Range, Binder);

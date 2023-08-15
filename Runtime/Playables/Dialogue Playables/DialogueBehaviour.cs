@@ -15,7 +15,12 @@ namespace Celezt.DialogueSystem
             if (!string.IsNullOrWhiteSpace(asset.RawText))
                 clip.displayName = Tags.TrimTextTags(asset.Text);
 
-            asset.UpdateTags();
+#if UNITY_EDITOR
+            if (asset.HasUpdated)
+                asset.HasUpdated = false;
+            else
+#endif
+                asset.UpdateTags();
         }
     }
 }

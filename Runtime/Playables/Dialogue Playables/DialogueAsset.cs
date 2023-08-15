@@ -65,7 +65,6 @@ namespace Celezt.DialogueSystem
                 return _tagSequence;
             }
         }
-
         public double StartTime => Clip.start;
         public double EndTime => Clip.end;
         public float TimeDuration => (float)(EndTime - StartTime);
@@ -130,6 +129,10 @@ namespace Celezt.DialogueSystem
             }
         }
 
+#if UNITY_EDITOR
+        internal bool HasUpdated { get; set; }
+#endif
+
         [SerializeField]
         private string _actor = string.Empty;
         [SerializeField, TextArea(10, int.MaxValue)]
@@ -157,6 +160,7 @@ namespace Celezt.DialogueSystem
             _tagSequence = Tags.GetTagSequence(RawText, this);
 #if UNITY_EDITOR
             EditorUtility.IsDirty(this);
+            HasUpdated = true;
 #endif
         }
 
@@ -191,10 +195,8 @@ namespace Celezt.DialogueSystem
 
         public float GetTangentByTime(double time, CurveType curveType = CurveType.Runtime)
         {
-            double framerate = ((TimelineAsset)Director.playableAsset).editorSettings.frameRate;
-            float offset = (float)(1 / framerate) / 2.0f;
-            float x1 = GetIntervalByTime(time - offset);
-            float x2 = GetIntervalByTime(time + offset);
+            float x1 = GetIntervalByTime(time - 0.001);
+            float x2 = GetIntervalByTime(time + 0.001);
             float y1 = GetVisibilityByTimeInterval(x1, curveType);
             float y2 = GetVisibilityByTimeInterval(x2, curveType);
             return (y2 - y1) / (x2 - x1);

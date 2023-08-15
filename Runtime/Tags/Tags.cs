@@ -146,7 +146,14 @@ namespace Celezt.DialogueSystem
                 foreach (var tag in tags.Where(x => x.GetType() == tagType))
                     tagList.Add(tag);
 
-                systemType.GetMethod("OnCreate").Invoke(system, new[] { tagList, binder });
+                try
+                {
+                    systemType.GetMethod("OnCreate").Invoke(system, new[] { tagList, binder });
+                }
+                catch(Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
             }
         }
 
@@ -169,7 +176,7 @@ namespace Celezt.DialogueSystem
                 {
                     beginIndex = leftIndex;
 
-                    if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
+                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
                     {
                         for (int i = beginIndex; i < endIndex; i++)
                         {
@@ -179,7 +186,7 @@ namespace Celezt.DialogueSystem
                         continue;
                     }
 
-                    TagVariation tagVariation = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out string tagName);
+                    TagVariation tagVariation = GetTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out string tagName);
                     switch (tagVariation) // Ignore if not custom.
                     {
                         case TagVariation.Invalid:
@@ -194,28 +201,28 @@ namespace Celezt.DialogueSystem
                             continue;
                     }
 
-                    (string? name, string? argument) implicitArgument = text[leftIndex++] is '=' ?  // If it has implied arguments.
-                        ExtractArgument(text, ref leftIndex, rightIndex - leftIndex + 1, isImplicit: true) : (null, null);
+                    (string? implicitName, string? implicitValue) = text[leftIndex++] is '=' ?  // If it has implied attributes.
+                        GetAttribute(text, ref leftIndex, rightIndex - leftIndex + 1, isImplicit: true) : (null, null);
 
-                    if (!string.IsNullOrEmpty(implicitArgument.name) && implicitArgument.name != "implicit")
+                    if (!string.IsNullOrEmpty(implicitName) && implicitName != "implicit")
                         throw new TagException("Implicit argument is not valid");
 
-                    void BindArguments(ITag tag)
+                    void BindAttributes(ITag tag)
                     {
-                        if (!string.IsNullOrEmpty(implicitArgument.argument))
-                            tag.Bind("implicit", implicitArgument.argument);
+                        if (!string.IsNullOrEmpty(implicitValue))
+                            tag.Bind("implicit", implicitValue);
 
                         while (leftIndex <= rightIndex)
                         {
-                            (string? name, string? argument) = ExtractArgument(text, ref leftIndex, rightIndex - leftIndex + 1);
+                            (string? name, string? value) = GetAttribute(text, ref leftIndex, rightIndex - leftIndex + 1);
 
-                            if (name is null || argument is null)   // If there is no arguments left.
+                            if (name is null || value is null)   // If there is no attributes left.
                             {
                                 leftIndex = endIndex;
                                 break;
                             }
 
-                            tag.Bind(name, argument);
+                            tag.Bind(name, value);
                         }
                     }
 
@@ -233,7 +240,7 @@ namespace Celezt.DialogueSystem
                         case TagState.Start:
                             var tag = (TagSpan)Activator.CreateInstance(tagType);
 
-                            BindArguments(tag);
+                            BindAttributes(tag);
 
                             tagOpenList.Add(tag);
                             tagRanges.Add((visibleCharacterCount, int.MinValue));
@@ -251,7 +258,7 @@ namespace Celezt.DialogueSystem
                         case TagState.Marker:
                             var tagMarker = (TagSingle)Activator.CreateInstance(tagType);
 
-                            BindArguments(tagMarker);
+                            BindAttributes(tagMarker);
 
                             tagRanges.Add((visibleCharacterCount, int.MinValue));
                             tags.Add(tagMarker);
@@ -299,7 +306,7 @@ namespace Celezt.DialogueSystem
                 {
                     beginIndex = leftIndex;
 
-                    if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
+                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
                     {
                         for (int i = beginIndex; i < endIndex; i++)
                         {
@@ -309,7 +316,7 @@ namespace Celezt.DialogueSystem
                         continue;
                     }
 
-                    TagVariation tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
+                    TagVariation tagType = GetTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
                     if (!excludeTagType.HasFlag(tagType))
                     {
                         for (int i = beginIndex; i <= endIndex; i++)
@@ -342,7 +349,7 @@ namespace Celezt.DialogueSystem
                 {
                     beginIndex = leftIndex;
 
-                    if (!IsValidTag(text, ref leftIndex, ref rightIndex, ref endIndex, out _))
+                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out _))
                     {
                         for (int i = beginIndex; i < endIndex; i++)
                         {
@@ -352,7 +359,7 @@ namespace Celezt.DialogueSystem
                         continue;
                     }
 
-                    TagVariation tagType = ExtractTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
+                    TagVariation tagType = GetTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
 
                     if (!excludeTagType.HasFlag(tagType))
                     {
@@ -373,7 +380,7 @@ namespace Celezt.DialogueSystem
         }
 
         #region Private
-        private static bool IsValidTag(string text, ref int leftIndex, ref int rightIndex, ref int endIndex, out TagState state)
+        private static bool IsTagValid(string text, ref int leftIndex, ref int rightIndex, ref int endIndex, out TagState state)
         {
             char decoration = '\0';
             state = TagState.Start; // Start by default if it has no '/'.
@@ -430,7 +437,7 @@ namespace Celezt.DialogueSystem
                 state = TagState.Marker;
                 rightIndex--; // Before /.
             }
-            else if (text[leftIndex] is '/')    // Tag is close tag. </tag>
+            else if (text[leftIndex] is '/')    // Tag is a closed tag. </tag>
             {
                 state = TagState.End;
                 leftIndex++; // After /.
@@ -449,7 +456,7 @@ namespace Celezt.DialogueSystem
                     return;
         }
 
-        private static TagVariation ExtractTagName(string text, ref int index, int length, out string tagName)
+        private static TagVariation GetTagName(string text, ref int index, int length, out string tagName)
         {
             int startIndex = index;
             int endIndex = index + length;
@@ -460,7 +467,7 @@ namespace Celezt.DialogueSystem
                 if (text[index] is ' ' or '=')    // Ends if it finds a whitespace or =.
                     break;
 
-                if (!char.IsLetter(text[index]) && text[index] is not '-' and not '\\')    // Invalid: name must be a letter. <tag> ! <%3->
+                if (!char.IsLetter(text[index]) && text[index] is not '-' and not '\\')    // Invalid: name must be a letter. <tag-name> ! <%3+>
                     return TagVariation.Invalid;
             }
 
@@ -475,7 +482,7 @@ namespace Celezt.DialogueSystem
             return TagVariation.Invalid;    // If the tag does not exist.
         }
 
-        private static (string? name, string? argument) ExtractArgument(string text, ref int index, int length, bool isImplicit = false)
+        private static (string? name, string? value) GetAttribute(string text, ref int index, int length, bool isImplicit = false)
         {
             int endIndex = index + length;
 
@@ -496,7 +503,7 @@ namespace Celezt.DialogueSystem
                         break;
 
                     if (text[index] is ' ')
-                        throw new TagException("Argument names are not allowed to end with whitespace.");
+                        throw new TagException("Attribute name are not allowed to end with whitespace.");
 
                     if (!char.IsLetter(text[index]) && text[index] != '-')    // Invalid: name must be a letter. <tag> ! <%3->
                         throw new TagException($"Name cannot contain any numbers or symbols: '{text[index]}'");
@@ -509,7 +516,7 @@ namespace Celezt.DialogueSystem
                 index++;
 
             // 
-            //  Extract Argument
+            //  Extract Attribute
             //
             char decoration = '\0';
             startIndex = index;
@@ -519,12 +526,12 @@ namespace Celezt.DialogueSystem
 
                 for (; index < endIndex; index++)
                 {
-                    // Argument ending except when having a '\' in front of it.
+                    // Attribute ending except when having a '\' in front of it.
                     if (text[index] == decoration && text[index - 1] is not '\\')
                         break;
 
                     if (index >= endIndex - 1)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
-                        throw new TagException("Arguments using \" or ' must close with the same character.");
+                        throw new TagException("Attributes using \" or ' must close with the same character.");
                 }
             }
             else if (text[index] is not ' ')    // If no decorations are present. WARNING: whitespace means end!
@@ -540,12 +547,12 @@ namespace Celezt.DialogueSystem
                 }
             }
             else
-                throw new TagException("Arguments cannot be empty");
+                throw new TagException("Attribute value cannot be empty");
 
-            string argument = text.Substring(startIndex + (decoration is '\0' ? 0 : 1), index - startIndex - (decoration is '\0' ? 0 : 1));
+            string value = text.Substring(startIndex + (decoration is '\0' ? 0 : 1), index - startIndex - (decoration is '\0' ? 0 : 1));
             index += (decoration is '\0' ? 0 : 1);
 
-            return (name, argument);
+            return (name, value);
         }
 
 #if UNITY_EDITOR
