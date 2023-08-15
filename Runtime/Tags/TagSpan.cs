@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 #nullable enable
@@ -18,18 +19,7 @@ namespace Celezt.DialogueSystem
         public virtual void OnExit(int index, RangeInt range, T? binder) { }
 
         public sealed override void Initialize(RangeInt range, object? binder)
-        {
-            base.Initialize(range, binder);
-
-            try
-            {
-                OnCreate(range, (T?)binder);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
-        }
+            => base.Initialize(range, binder);
 
         public override void OnCreate() => OnCreate(Range, Binder);
         public void OnEnter(int index) => OnEnter(index, Range, Binder);

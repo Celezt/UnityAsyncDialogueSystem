@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
-using UnityEditor.VersionControl;
-using UnityEngine.Assertions;
 using System;
-using UnityEngine.UIElements;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -169,12 +166,7 @@ namespace Celezt.DialogueSystem
             RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
 
             if (_tagSequence != null)
-            {
-                foreach (ITag tag in TagSequence)
-                    tag.OnCreate();
-
-                Tags.InvokeSystems(TagSequence, this);
-            }
+                Tags.InvokeAll(TagSequence);
             else
                 _tagSequence = Tags.GetTagSequence(RawText, this);
         }

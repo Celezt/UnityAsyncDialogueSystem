@@ -133,28 +133,52 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public static void InvokeSystems(IEnumerable<ITag> tags, object? binder)
+        /// <summary>
+        /// Invoke all tags and systems in order. Systems invokes after all of that type has been invoked.
+        /// </summary>
+        /// <param name="tags">To invoke.</param>
+        public static void InvokeAll(IEnumerable<ITag> tags)
         {
-            IEnumerable<Type> tagTypes = tags.Select(x => x.GetType()).Distinct();
+            IOrderedEnumerable<ITag> sortedTypes = tags.OrderBy(x => x.GetType().GetCustomAttribute<CreateTagAttribute>().Order);
+            Type? currentType = null;
+            object? currentBinder = null;
 
-            // Execute system if the tag type is used.
-            foreach ((Type tagType, Type systemType) in tagTypes.Where(x => SystemTypes.ContainsKey(x)).Select(x => (x, SystemTypes[x])))
+            void InvokeSystem()
             {
-                object system = Activator.CreateInstance(systemType);
-                IList tagList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(tagType));
+                if (currentType is null)
+                    return;
 
-                foreach (var tag in tags.Where(x => x.GetType() == tagType))
-                    tagList.Add(tag);
+                if (SystemTypes.TryGetValue(currentType, out var systemType))
+                {
+                    object system = Activator.CreateInstance(systemType);
+                    IList tagList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(currentType));
 
+                    foreach (var tag in tags.Where(x => x.GetType() == currentType))
+                        tagList.Add(tag);
+
+                    systemType.GetMethod("OnCreate").Invoke(system, new[] { tagList, currentBinder });
+                }
+            }
+
+            foreach (ITag tag in sortedTypes)
+            {
                 try
                 {
-                    systemType.GetMethod("OnCreate").Invoke(system, new[] { tagList, binder });
+                    if (currentType is not null && currentType != tag.GetType())    // Invoke system after all of that type is invoked.
+                        InvokeSystem();
+
+                    tag.OnCreate();
+
+                    currentType = tag.GetType();
+                    currentBinder = tag.Binder;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Debug.LogException(ex);
                 }
             }
+
+            InvokeSystem(); // Invoke on the last tag type.
         }
 
         public static List<ITag> GetTagSequence(string text, object? bind = null)
@@ -286,7 +310,7 @@ namespace Celezt.DialogueSystem
                 }
             }
 
-            InvokeSystems(tags, binder);
+            InvokeAll(tags);
 
             return tags;
         }

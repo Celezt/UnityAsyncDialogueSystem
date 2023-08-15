@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem
 {
-    [CreateTag]
+    [CreateTag(int.MinValue)]
     public class WaitTag : TagSingle<DialogueAsset>
     {
         [Implicit]
