@@ -18,7 +18,7 @@ namespace Celezt.DialogueSystem
 #endif
     public static class Tags
     {
-        private static readonly HashSet<string> _unityRichTextTags = new()
+        private static readonly HashSet<string> _unityRichTextTags = new(StringComparer.OrdinalIgnoreCase)
         {
             "a",
             "align",
@@ -325,8 +325,8 @@ namespace Celezt.DialogueSystem
                                 span[newLength++] = text[i];
                         }
                     }
-                    else
-                        leftIndex = endIndex;
+
+                    leftIndex = endIndex;
                 }
                 else if (!IsBackslash(text, leftIndex))
                     span[newLength++] = text[leftIndex];
@@ -565,7 +565,7 @@ namespace Celezt.DialogueSystem
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void Initialize()
         {
-            _types = new();
+            _types = new(StringComparer.OrdinalIgnoreCase);
             _systemTypes = new();
 
             foreach (Type tagType in ReflectionUtility.GetTypesWithAttribute<CreateTagAttribute>(AppDomain.CurrentDomain))
