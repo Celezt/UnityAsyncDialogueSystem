@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -12,8 +13,8 @@ namespace Celezt.DialogueSystem
         {
             DialogueAsset asset = Asset as DialogueAsset;
 
-            if (!string.IsNullOrWhiteSpace(asset.RawText))
-                clip.displayName = Tags.TrimTextTags(asset.Text);
+            if (!asset.RuntimeText.IsEmpty)
+                clip.displayName = Tags.TrimTextTags(asset.RuntimeText.ToString());
 
 #if UNITY_EDITOR
             if (asset.HasUpdated)

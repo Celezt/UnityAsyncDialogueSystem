@@ -16,7 +16,7 @@ namespace Celezt.DialogueSystem
 #if UNITY_EDITOR
     [InitializeOnLoad]
 #endif
-    public static class Tags
+    public static partial class Tags
     {
         private static readonly HashSet<string> _unityRichTextTags = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -92,7 +92,7 @@ namespace Celezt.DialogueSystem
             Unity = 1 << 2,
         }
 
-        private enum TagState
+        private enum ElementType
         {
             Start,
             End,
@@ -200,7 +200,7 @@ namespace Celezt.DialogueSystem
                 {
                     beginIndex = leftIndex;
 
-                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
+                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out ElementType state))
                     {
                         for (int i = beginIndex; i < endIndex; i++)
                         {
@@ -253,15 +253,15 @@ namespace Celezt.DialogueSystem
                     Type tagType = Types[tagName];
                     switch (state)
                     {
-                        case TagState.Start or TagState.End when typeof(TagSingle).IsAssignableFrom(tagType):
-                            throw new TagException($"{tagType} is a single tag and must use <.../> and not: {(state == TagState.Start ? "<...>" : "</...>")}");
-                        case TagState.Marker when typeof(TagSpan).IsAssignableFrom(tagType):
+                        case ElementType.Start or ElementType.End when typeof(TagSingle).IsAssignableFrom(tagType):
+                            throw new TagException($"{tagType} is a single tag and must use <.../> and not: {(state == ElementType.Start ? "<...>" : "</...>")}");
+                        case ElementType.Marker when typeof(TagSpan).IsAssignableFrom(tagType):
                             throw new TagException($"{tagType} is a tag span, not a single tag. It should use <...> if start or </...> if end.");
                     }
 
                     switch (state)
                     {
-                        case TagState.Start:
+                        case ElementType.Start:
                             var tag = (TagSpan)Activator.CreateInstance(tagType);
 
                             BindAttributes(tag);
@@ -270,7 +270,7 @@ namespace Celezt.DialogueSystem
                             tagRanges.Add((visibleCharacterCount, int.MinValue));
                             tags.Add(tag);
                             break;
-                        case TagState.End:
+                        case ElementType.End:
                             int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == tagType);
 
                             if (tagIndex == -1)    // No open tag of that type exist.
@@ -279,7 +279,7 @@ namespace Celezt.DialogueSystem
                             tagRanges[tagIndex] = (tagRanges[tagIndex].Item1, visibleCharacterCount);
                             tagOpenList.RemoveAt(tagIndex);    // Remove first last index of a tag.
                             break;
-                        case TagState.Marker:
+                        case ElementType.Marker:
                             var tagMarker = (TagSingle)Activator.CreateInstance(tagType);
 
                             BindAttributes(tagMarker);
@@ -330,7 +330,7 @@ namespace Celezt.DialogueSystem
                 {
                     beginIndex = leftIndex;
 
-                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out TagState state))
+                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out ElementType state))
                     {
                         for (int i = beginIndex; i < endIndex; i++)
                         {
@@ -359,7 +359,47 @@ namespace Celezt.DialogueSystem
             return span.Slice(0, newLength).ToString();
         }
 
-        public static int GetTextLength(string text, TagVariation excludeTagType = TagVariation.Custom | TagVariation.Unity)
+        public static int GetTextLength(ReadOnlySpan<char> span, TagVariation excludeTagVariants = TagVariation.Custom | TagVariation.Unity)
+        {
+            int visibleCharacterCount = 0;
+
+            for (int index = 0; index < span.Length; index++)
+            {
+                char chr = span[index];
+
+                if (chr is '<')
+                {
+                    if (index + 1 < span.Length && span[index + 1] is '<')
+                    {
+                        visibleCharacterCount++;
+                        index++;
+                        continue;
+                    }
+                        
+                    if (!TryGetValidTagSpan(span.Slice(index), out var tagSpan, out _))
+                        goto NotValid;
+
+                    if (!TryGetTagName(tagSpan, out _, out var tagVariant))
+                        goto NotValid;
+
+                    if (!excludeTagVariants.HasFlag(tagVariant))
+                        goto NotValid;
+
+                    goto Valid;
+                NotValid:
+                    visibleCharacterCount += CountVisibleCharacters(tagSpan);
+                Valid:
+                    if (!tagSpan.IsEmpty)
+                        chr = span[index += tagSpan.Length - 1];
+                }
+                else
+                    visibleCharacterCount++;
+            }
+            
+            return visibleCharacterCount;
+        }
+
+        public static int GetTextLength(string text, TagVariation excludeTagVariants = TagVariation.Custom | TagVariation.Unity)
         {
             int visibleCharacterCount = 0;
             int beginIndex = 0;
@@ -385,7 +425,7 @@ namespace Celezt.DialogueSystem
 
                     TagVariation tagType = GetTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
 
-                    if (!excludeTagType.HasFlag(tagType))
+                    if (!excludeTagVariants.HasFlag(tagType))
                     {
                         for (int i = beginIndex; i <= endIndex; i++)
                         {
@@ -401,182 +441,6 @@ namespace Celezt.DialogueSystem
             }
 
             return visibleCharacterCount;
-        }
-
-        #region Private
-        private static bool IsTagValid(string text, ref int leftIndex, ref int rightIndex, ref int endIndex, out TagState state)
-        {
-            char decoration = '\0';
-            state = TagState.Start; // Start by default if it has no '/'.
-            endIndex = rightIndex = leftIndex + 1;
-
-            if (!(text[leftIndex] is '<' && (leftIndex - 1 < 0 || text[leftIndex - 1] is not '\\')))
-                return false;
-
-            if (leftIndex + 1 >= text.Length)
-                return false;
-
-            if (text[leftIndex + 1] is '>') // Invalid: must contain a name. <tag> ! <>
-                return false;
-
-            for (; rightIndex < text.Length; rightIndex++)
-            {
-                endIndex = rightIndex;
-
-                if (text[rightIndex] is '"' or '\'' && text[rightIndex - 1] is not '\\')
-                {
-                    if (text[rightIndex] == decoration)
-                        decoration = '\0';
-                    else
-                        decoration = text[rightIndex];
-                }
-
-                if (decoration is '\0')
-                {
-                    if (text[rightIndex] is '<' && text[rightIndex - 1] is not '\\') // Invalid: must end with >. <tag> ! <tag<
-                    {
-                        leftIndex = --rightIndex;
-                        return false;
-                    }
-
-                    if (text[rightIndex] is '>' && text[rightIndex - 1] is not '\\')
-                        break;
-                }
-
-                if (rightIndex + 1 >= text.Length)
-                {
-                    leftIndex = --rightIndex;
-                    return false;
-                }
-            }
-
-            if (text[leftIndex + 1] is '/' && text[rightIndex - 1] is '/')   // Invalid: not allowed to have both. ! </tag/>
-                return false;
-
-            leftIndex++;    // After <.
-            rightIndex--;   // Before >.
-
-            if (text[rightIndex] is '/')    // Tag is a single tag. <tag/>
-            {
-                state = TagState.Marker;
-                rightIndex--; // Before /.
-            }
-            else if (text[leftIndex] is '/')    // Tag is a closed tag. </tag>
-            {
-                state = TagState.End;
-                leftIndex++; // After /.
-            }
-
-            return true;
-        }
-
-        private static bool IsBackslash(string text, int index) => text[index] is '\\' && (index <= 0 || text[index - 1] is not '\\');
-
-        private static void SkipWhitespace(string text, ref int index, int maxLength)
-        {
-            int startIndex = index;
-            for (; index < startIndex + maxLength; index++)
-                if (!char.IsWhiteSpace(text[index]))
-                    return;
-        }
-
-        private static TagVariation GetTagName(string text, ref int index, int length, out string tagName)
-        {
-            int startIndex = index;
-            int endIndex = index + length;
-            tagName = string.Empty;
-
-            for (; index < endIndex; index++) // <?=
-            {
-                if (text[index] is ' ' or '=')    // Ends if it finds a whitespace or =.
-                    break;
-
-                if (!char.IsLetter(text[index]) && text[index] is not '-' and not '\\')    // Invalid: name must be a letter. <tag-name> ! <%3+>
-                    return TagVariation.Invalid;
-            }
-
-            tagName = text.Substring(startIndex, index - startIndex);   // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
-
-            if (_unityRichTextTags.Contains(tagName))   // If name is a unity tag.
-                return TagVariation.Unity;
-
-            if (Types.ContainsKey(tagName))   // If name is of custom tag.
-                return TagVariation.Custom;
-
-            return TagVariation.Invalid;    // If the tag does not exist.
-        }
-
-        private static (string? name, string? value) GetAttribute(string text, ref int index, int length, bool isImplicit = false)
-        {
-            int endIndex = index + length;
-
-            SkipWhitespace(text, ref index, length);
-
-            if (index == endIndex)
-                return (null, null);
-
-            //
-            //  Extract Name
-            //
-            int startIndex = index;
-            if (!isImplicit)
-            {
-                for (; index < endIndex; index++) // <?=
-                {
-                    if (text[index] is '=')    // Ends if it finds a =.
-                        break;
-
-                    if (text[index] is ' ')
-                        throw new TagException("Attribute name are not allowed to end with whitespace.");
-
-                    if (!char.IsLetter(text[index]) && text[index] != '-')    // Invalid: name must be a letter. <tag> ! <%3->
-                        throw new TagException($"Name cannot contain any numbers or symbols: '{text[index]}'");
-                }
-            }
-
-            string name = isImplicit ? "implicit" : text.Substring(startIndex, index - startIndex);
-
-            if (!isImplicit) // After =.
-                index++;
-
-            // 
-            //  Extract Attribute
-            //
-            char decoration = '\0';
-            startIndex = index;
-            if (text[index] is '"' or '\'') // Ignore decoration.
-            {
-                decoration = text[index++];
-
-                for (; index < endIndex; index++)
-                {
-                    // Attribute ending except when having a '\' in front of it.
-                    if (text[index] == decoration && text[index - 1] is not '\\')
-                        break;
-
-                    if (index >= endIndex - 1)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
-                        throw new TagException("Attributes using \" or ' must close with the same character.");
-                }
-            }
-            else if (text[index] is not ' ')    // If no decorations are present. WARNING: whitespace means end!
-            {
-                for (; index < endIndex; index++)
-                {
-                    if (char.IsWhiteSpace(text[index]))
-                        break;
-
-                    // Invalid: not allowed to use these characters except when having a '\' in front of it.
-                    if (text[index] is '/' or '"' or '\'' && text[index - 1] is not '\\')
-                        throw new TagException("Not allowed to use /, \" or ' except when having a \\ in front of it.");
-                }
-            }
-            else
-                throw new TagException("Attribute value cannot be empty");
-
-            string value = text.Substring(startIndex + (decoration is '\0' ? 0 : 1), index - startIndex - (decoration is '\0' ? 0 : 1));
-            index += (decoration is '\0' ? 0 : 1);
-
-            return (name, value);
         }
 
 #if UNITY_EDITOR
@@ -619,7 +483,6 @@ namespace Celezt.DialogueSystem
                 _systemTypes[foundInterfaceType.GetGenericArguments()[0]] = systemType;
             }
         }
-        #endregion
     }
 
     public class TagException : Exception

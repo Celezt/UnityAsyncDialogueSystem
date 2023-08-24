@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using System;
+using Celezt.Text;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -21,29 +22,24 @@ namespace Celezt.DialogueSystem
             set => _actor = value;
         }
 
-        public string RawText
+        public string EditorText
         {
-            get => _text;
+            get => _editorText;
             set
             {
-                if (_text != value)
-                    Text = value;
+                _editorText = value;
+                RefreshDialogue();
             }
         }
 
-        public string Text
+        public MutString RuntimeText
         {
             get
             {
-                if (_trimmedText == null)
-                    Text = _text;
+                if (_runtimeText is null)
+                    _runtimeText = new MutString(_editorText);
 
-                return _trimmedText!;
-            }
-            set
-            {
-                _text = value;
-                RefreshDialogue();
+                return _runtimeText;
             }
         }
 
@@ -56,7 +52,7 @@ namespace Celezt.DialogueSystem
                 if (_tagSequence == null)
                 {
                     RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
-                    _tagSequence = Tags.GetTagSequence(RawText, this);
+                    _tagSequence = Tags.GetTagSequence(EditorText, this);
                 }
 
                 return _tagSequence;
@@ -133,18 +129,16 @@ namespace Celezt.DialogueSystem
         [SerializeField]
         private string _actor = string.Empty;
         [SerializeField, TextArea(10, int.MaxValue)]
-        private string _text = string.Empty;
-        [SerializeField, HideInInspector]
-        private string _trimmedText = string.Empty;
+        private string _editorText = string.Empty;
         [SerializeField, HideInInspector, Min(0)]
         private float _startOffset;
         [SerializeField, HideInInspector, Min(0)]
         private float _endOffset;
         [SerializeField, HideInInspector]
         private AnimationCurve _editorVisibilityCurve = AnimationCurve.Linear(0, 0, 1, 1);
-        [SerializeField, HideInInspector]
-        private int _length;
 
+        private int _length;
+        private MutString? _runtimeText;
         private AnimationCurve? _runtimeVisibilityCurve;
         private List<ITag>? _tagSequence;
 
@@ -152,9 +146,9 @@ namespace Celezt.DialogueSystem
         {
             RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
 
-            _trimmedText = Tags.TrimTextTags(_text, Tags.TagVariation.Custom);
-            _length = Tags.GetTextLength(_trimmedText);
-            _tagSequence = Tags.GetTagSequence(RawText, this);
+            RuntimeText.Set(Tags.TrimTextTags(_editorText, Tags.TagVariation.Custom));
+            _length = Tags.GetTextLength(RuntimeText.ReadOnlySpan);
+            _tagSequence = Tags.GetTagSequence(EditorText, this);
 #if UNITY_EDITOR
             EditorUtility.IsDirty(this);
             HasUpdated = true;
@@ -168,7 +162,7 @@ namespace Celezt.DialogueSystem
             if (_tagSequence != null)
                 Tags.InvokeAll(TagSequence);
             else
-                _tagSequence = Tags.GetTagSequence(RawText, this);
+                _tagSequence = Tags.GetTagSequence(EditorText, this);
         }
 
         public float GetVisibilityByTime(double time, CurveType curveType = CurveType.Runtime)

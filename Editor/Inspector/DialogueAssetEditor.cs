@@ -31,7 +31,7 @@ namespace Celezt.DialogueSystem.Editor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_actor"), GUIContent.none);
 
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_text"), GUIContent.none);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_editorText"), GUIContent.none);
             if (EditorGUI.EndChangeCheck())
             {
                 serializedObject.ApplyModifiedProperties();
