@@ -13,7 +13,7 @@ namespace Celezt.DialogueSystem
         [Implicit]
         public float Duration { get; set; }
 
-        public override void OnCreate()
+        public override void OnCreate(int index, DialogueAsset binder)
         {
             Debug.Assert(Duration >= 0, "Duration cannot be negative.");
             Duration = Mathf.Max(Duration, 0);

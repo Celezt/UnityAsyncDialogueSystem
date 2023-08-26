@@ -18,7 +18,7 @@ namespace Celezt.DialogueSystem
         public sealed override void Initialize(int index, object? binder)
             => base.Initialize(index, binder);
 
-        public override void OnCreate() => OnCreate(Index, Binder);
+        public sealed override void OnCreate() => OnCreate(Index, Binder);
         public void OnInvoke() => OnInvoke(Index, Binder);
     }
 

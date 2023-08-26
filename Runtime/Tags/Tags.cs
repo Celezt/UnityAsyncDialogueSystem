@@ -231,27 +231,30 @@ namespace Celezt.DialogueSystem
                         using var attributesObject = ListPool<(string Name, string Value)?>.Get(out var attributes);
                         var tag = (ITag)Activator.CreateInstance(tagType);  // Create a new tag instance of specified type.
 
-                        // Get all attributes.
-                        if (attributesSpan[0] is '=')   // If it has implied attribute.
+                        if (attributesSpan.Length > 0)
                         {
-                            var implicitAttribute = GetAttribute(attributesSpan, out var nextSpan, isImplicit: true);
-                            attributesSpan = nextSpan;
-                            attributes.Add(implicitAttribute);
+                            // Get all attributes.
+                            if (attributesSpan[0] is '=')   // If it has implied attribute.
+                            {
+                                var implicitAttribute = GetAttribute(attributesSpan, out var nextSpan, isImplicit: true);
+                                attributesSpan = nextSpan;
+                                attributes.Add(implicitAttribute);
+                            }
+
+                            for (int i = 0; i < attributesSpan.Length; i++)
+                            {
+                                var attribute = GetAttribute(attributesSpan, out var nextSpan);
+                                attributesSpan = nextSpan;
+
+                                if (attribute is null)   // If there is no attributes left.
+                                    break;
+
+                                attributes.Add(attribute);
+                            }
+
+                            foreach (var attr in attributes)
+                                Bind(tag, attr?.Name!, attr?.Value!);
                         }
-
-                        for (int i = 0; i < attributesSpan.Length; i++)
-                        {
-                            var attribute = GetAttribute(attributesSpan, out var nextSpan);
-                            attributesSpan = nextSpan;
-
-                            if (attribute is null)   // If there is no attributes left.
-                                break;
-
-                            attributes.Add(attribute);
-                        }
-
-                        foreach (var attr in attributes)
-                            Bind(tag, attr?.Name!, attr?.Value!);
 
                         if (elementType is ElementType.Start)
                             tagSpans.Add((ITagSpan)tag);
@@ -280,8 +283,6 @@ namespace Celezt.DialogueSystem
                     case ITagSpan   tagSpan:    tagSpan.Initialize(new RangeInt(start, end - start), binder);   break;
                 }
             }
-
-            InvokeAll(tags);
 
             return tags;
         }

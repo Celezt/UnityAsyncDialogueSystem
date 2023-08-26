@@ -54,12 +54,9 @@ namespace Celezt.DialogueSystem
             get
             {
                 if (_tagSequence == null)
-                {
-                    RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
-                    _tagSequence = Tags.GetTagSequence(EditorText.AsSpan(), this);
-                }
+                    UpdateTags();
 
-                return _tagSequence;
+                return _tagSequence!;
             }
         }
         public double StartTime => Clip.start;
@@ -155,10 +152,10 @@ namespace Celezt.DialogueSystem
 
             _tagSequence = Tags.GetTagSequence(span, this);
             _length = Tags.GetTextLength(span);
-
             span = Tags.TrimTextTags(span, Tags.TagVariation.Custom);
 
             RuntimeText.Set(span);
+            Tags.InvokeAll(_tagSequence);
 #if UNITY_EDITOR
             EditorUtility.IsDirty(this);
             HasUpdated = true;
@@ -169,10 +166,9 @@ namespace Celezt.DialogueSystem
         {
             RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
 
-            if (_tagSequence != null)
-                Tags.InvokeAll(TagSequence);
-            else
-                _tagSequence = Tags.GetTagSequence(EditorText.AsSpan(), this);
+            _tagSequence ??= Tags.GetTagSequence(EditorText.AsSpan(), this);
+
+            Tags.InvokeAll(_tagSequence);
         }
 
         public float GetVisibilityByTime(double time, CurveType curveType = CurveType.Runtime)
