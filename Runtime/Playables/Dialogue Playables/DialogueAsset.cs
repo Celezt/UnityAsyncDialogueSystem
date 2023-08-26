@@ -37,7 +37,11 @@ namespace Celezt.DialogueSystem
             get
             {
                 if (_runtimeText is null)
-                    _runtimeText = new MutString(_editorText);
+                {
+                    Span<char> tempSpan = stackalloc char[_editorText.Length];
+                    _editorText.AsSpan().CopyTo(tempSpan);
+                    _runtimeText = Tags.TrimTextTags(tempSpan, Tags.TagVariation.Custom);
+                }
 
                 return _runtimeText;
             }

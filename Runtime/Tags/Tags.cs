@@ -330,17 +330,8 @@ namespace Celezt.DialogueSystem
 
             for (int index = 0; index < span.Length; index++)
             {
-                char chr = span[index];
-
-                if (chr is '<')
-                {
-                    if (index + 1 < span.Length && span[index + 1] is '<')
-                    {
-                        visibleCharacterCount++;
-                        index++;
-                        continue;
-                    }
-                        
+                if (span[index] is '<')
+                {                        
                     if (!TryGetValidTagSpan(span.Slice(index), out var tagSpan, out _))
                         goto NotValid;
 
