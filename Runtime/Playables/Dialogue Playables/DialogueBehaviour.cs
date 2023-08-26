@@ -14,7 +14,7 @@ namespace Celezt.DialogueSystem
             DialogueAsset asset = Asset as DialogueAsset;
 
             if (!asset.RuntimeText.IsEmpty)
-                clip.displayName = Tags.TrimTextTags(asset.RuntimeText.ToString());
+                clip.displayName = Tags.TrimTextTags(asset.RuntimeText.ReadOnlySpan);
 
 #if UNITY_EDITOR
             if (asset.HasUpdated)

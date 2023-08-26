@@ -6,6 +6,8 @@ using System.Net.NetworkInformation;
 using System.Reflection;
 using UnityEngine;
 
+#nullable enable
+
 namespace Celezt.DialogueSystem
 {
     public static partial class Tags
@@ -68,10 +70,10 @@ namespace Celezt.DialogueSystem
             if (leftNextChar is '/' && rightPreviousChar is '/')   // Invalid: not allowed to have both. ! </tag/>
                 return false;
 
-            if (leftNextChar is '/')            // Tag is a single tag. <tag/>
-                block = ElementType.Marker;
-            else if (rightPreviousChar is '/')  // Tag is a closed tag. </tag>
+            if (leftNextChar is '/')            // Tag is a closed tag. </tag>
                 block = ElementType.End;
+            else if (rightPreviousChar is '/')  // Tag is a single tag. <tag/>
+                block = ElementType.Marker;
 
             return true;
 
@@ -146,32 +148,6 @@ namespace Celezt.DialogueSystem
             return true;
         }
 
-        private static int CountVisibleCharacters(ReadOnlySpan<char> span)
-        {
-            int count = 0;
-            char previousChar = '\0';
-
-            for (int index = 0; index < span.Length; index++)
-            {
-                char chr = span[index];
-
-                // To prevent multiple in a row (\\\). This could prevent the possibility to have visible '\' next to a tag (\\<valid>).
-                // \\ only visible in pairs. To show '\\' there needs to be a \ next to it e.g. \\\\.
-                if (chr is '\\' && previousChar is '\\')
-                {
-                    previousChar = '\0';    // Resets when in pair \\.
-                    continue;
-                }
-
-                if (previousChar is not '\\')
-                    count++;
-
-                previousChar = chr;
-            }
-
-            return count;
-        }
-
         private static bool IsBackslash(string text, int index) => text[index] is '\\' && (index <= 0 || text[index - 1] is not '\\');
 
         private static void SkipWhitespace(string text, ref int index, int maxLength)
@@ -182,20 +158,20 @@ namespace Celezt.DialogueSystem
                     return;
         }
 
-        private static bool TryGetTagName(ReadOnlySpan<char> span, out string tagName, out TagVariation tagVariant)
+        private static bool TryGetTagName(ReadOnlySpan<char> span, out ReadOnlySpan<char> attributesSpan, out string tagName, out TagVariation tagVariant)
         {
+            attributesSpan = ReadOnlySpan<char>.Empty;
             tagVariant = TagVariation.Invalid;  // Invalid by default.
             tagName = string.Empty;
             int index = 0;
-  
+
             // Skip first characters if they exist.
             if (span[index] is '<')
                 index++;
             if (span[index] is '/')
                 index++;
 
-            span = span.Slice(index);
-
+            int startIndex = index;
             for (; index < span.Length; index++) // <?=
             {
                 char chr = span[index];
@@ -207,12 +183,18 @@ namespace Celezt.DialogueSystem
                     return false;
             }
 
-            tagName = span.Slice(0, index).ToString();  // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
+            tagName = span.Slice(startIndex, index - startIndex).ToString();  // PLEASE LET US COMPARE DICTIONARY WITH A IREADONLYSPAN!!!  
 
             if (_unityRichTextTags.Contains(tagName))   // If name is a unity tag.
                 tagVariant = TagVariation.Unity;
             else if (Types.ContainsKey(tagName))        // If name is of custom tag.
                 tagVariant = TagVariation.Custom;
+
+            int length = span.Length - index - 1;   // Ignore >.
+            if (span[index + length - 1] is '/')        // Ignore /.
+                length--;
+
+            attributesSpan = span.Slice(index, length);
 
             return true;
         }
@@ -241,6 +223,87 @@ namespace Celezt.DialogueSystem
                 return TagVariation.Custom;
 
             return TagVariation.Invalid;    // If the tag does not exist.
+        }
+
+        private static (string Name, string Value)? GetAttribute(ReadOnlySpan<char> span, out ReadOnlySpan<char> nextSpan, bool isImplicit = false)
+        {
+            nextSpan = ReadOnlySpan<char>.Empty;
+            char chr = '\0';
+            int index = 0;
+
+            for (; index < span.Length; index++)
+                if (!char.IsWhiteSpace(span[index]))
+                    break;
+
+            if (index == span.Length)
+                return null;
+
+            //
+            //  Extract Name
+            //
+            int nameIndex = index;
+            if (!isImplicit)    // Skip if implicit.
+            {
+                for (; index < span.Length; index++) // <?=
+                {
+                    chr = span[index];
+
+                    if (chr is '=')    // Ends if it finds a =.
+                        break;
+
+                    if (chr is ' ')
+                        throw new TagException("Attribute name are not allowed to end with whitespace.");
+
+                    if (!char.IsLetter(chr) && chr != '-')    // Invalid: name must be a letter. <tag> ! <%3->
+                        throw new TagException($"Name cannot contain any numbers or symbols: '{chr}'.");
+                }
+            }
+
+            string name = isImplicit ? "implicit" : span.Slice(nameIndex, index - nameIndex).ToString();
+
+            // 
+            //  Extract Attribute
+            //
+            char decoration = '\0';
+            int attributeIndex = ++index;
+            chr = span[attributeIndex];
+            if (chr is '"' or '\'') // Ignore decoration.
+            {
+                decoration = span[index++];
+
+                for (; index < span.Length; index++)
+                {
+                    chr = span[index];
+
+                    if (chr == decoration) // Attribute ending.
+                        break;
+
+                    if (index + 1 == span.Length)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
+                        throw new TagException("Attributes using \" or ' must close with the same character.");
+                }
+            }
+            else if (chr is not ' ')    // If no decorations are present. WARNING: whitespace means end!
+            {
+                for (; index < span.Length; index++)
+                {
+                    chr = span[index];
+
+                    if (char.IsWhiteSpace(chr))
+                        break;
+
+                    // Invalid: not allowed to use these characters when using no decorations.
+                    if (chr is '/' or '"' or '\'')
+                        throw new TagException("Not allowed to use /, \" or ' when using no decoration.");
+                }
+            }
+            else
+                throw new TagException("Attribute value cannot be empty.");
+
+            int decorationOffset = decoration is '\0' ? 0 : 1;
+            string value = span.Slice(attributeIndex + decorationOffset, index - attributeIndex - decorationOffset).ToString();
+            nextSpan = span.Slice(index);
+
+            return (name, value);
         }
 
         private static (string? name, string? value) GetAttribute(string text, ref int index, int length, bool isImplicit = false)

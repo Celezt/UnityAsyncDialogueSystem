@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Pool;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -181,115 +182,89 @@ namespace Celezt.DialogueSystem
             InvokeSystem(); // Invoke on the last tag type.
         }
 
-        public static List<ITag> GetTagSequence(string text, object? bind = null)
-            => GetTagSequence(text, out _, bind);
-        public static List<ITag> GetTagSequence(string text, out int visibleCharacterCount, object? binder = null)
+        public static List<ITag> GetTagSequence(ReadOnlySpan<char> span, object? binder = null)
+             => GetTagSequence(span, out _, binder);
+        public static List<ITag> GetTagSequence(ReadOnlySpan<char> span, out int visibleCharacterCount, object? binder = null)
         {
             visibleCharacterCount = 0;
-            int beginIndex = 0;
-            int endIndex = 0;
-            int leftIndex = 0;
-            int rightIndex = 0;
-            var tagOpenList = new List<ITagSpan>();
+            using var openTagsObject = ListPool<ITagSpan>.Get(out var tagSpans);
+            using var tagRangesObject = ListPool<(int Start, int End)>.Get(out var tagRanges);
             var tags = new List<ITag>();
-            var tagRanges = new List<(int, int)>();
 
-            for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
+            for (int index = 0; index < span.Length; index++)
             {
-                if (text[leftIndex] is '<' && (leftIndex <= 0 || text[leftIndex - 1] is not '\\'))
+                if (span[index] is '<')
                 {
-                    beginIndex = leftIndex;
+                    if (!TryGetValidTagSpan(span.Slice(index), out var tagSpan, out var elementType))
+                        goto NotValid;
 
-                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out ElementType state))
-                    {
-                        for (int i = beginIndex; i < endIndex; i++)
-                        {
-                            if (!IsBackslash(text, leftIndex))
-                                visibleCharacterCount++;
-                        }
-                        continue;
-                    }
+                    if (!TryGetTagName(tagSpan, out var attributesSpan, out var tagName, out var tagVariant))
+                        goto NotValid;
 
-                    TagVariation tagVariation = GetTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out string tagName);
-                    switch (tagVariation) // Ignore if not custom.
-                    {
-                        case TagVariation.Invalid:
-                            for (int i = beginIndex; i <= endIndex; i++)
-                            {
-                                if (!IsBackslash(text, leftIndex))
-                                    visibleCharacterCount++;
-                            }
-                            goto case TagVariation.Unity;    // Don't include as visible characters if unity tag.
-                        case TagVariation.Unity:
-                            leftIndex = endIndex;
-                            continue;
-                    }
+                    if (tagVariant is TagVariation.Invalid)
+                        goto NotValid;
 
-                    (string? implicitName, string? implicitValue) = text[leftIndex++] is '=' ?  // If it has implied attributes.
-                        GetAttribute(text, ref leftIndex, rightIndex - leftIndex + 1, isImplicit: true) : (null, null);
-
-                    if (!string.IsNullOrEmpty(implicitName) && implicitName != "implicit")
-                        throw new TagException("Implicit argument is not valid");
-
-                    void BindAttributes(ITag tag)
-                    {
-                        if (!string.IsNullOrEmpty(implicitValue))
-                            tag.Bind("implicit", implicitValue);
-
-                        while (leftIndex <= rightIndex)
-                        {
-                            (string? name, string? value) = GetAttribute(text, ref leftIndex, rightIndex - leftIndex + 1);
-
-                            if (name is null || value is null)   // If there is no attributes left.
-                            {
-                                leftIndex = endIndex;
-                                break;
-                            }
-
-                            tag.Bind(name, value);
-                        }
-                    }
+                    if (tagVariant is TagVariation.Unity)
+                        goto Valid;
 
                     Type tagType = Types[tagName];
-                    switch (state)
+                    switch (elementType)
                     {
                         case ElementType.Start or ElementType.End when typeof(TagSingle).IsAssignableFrom(tagType):
-                            throw new TagException($"{tagType} is a single tag and must use <.../> and not: {(state == ElementType.Start ? "<...>" : "</...>")}");
+                            throw new TagException($"{tagType} is a single tag and must use <.../> and not: {(elementType == ElementType.Start ? "<...>" : "</...>")}");
                         case ElementType.Marker when typeof(TagSpan).IsAssignableFrom(tagType):
                             throw new TagException($"{tagType} is a tag span, not a single tag. It should use <...> if start or </...> if end.");
                     }
 
-                    switch (state)
+                    if (elementType is ElementType.End)
                     {
-                        case ElementType.Start:
-                            var tag = (TagSpan)Activator.CreateInstance(tagType);
+                        int tagIndex = tagSpans.FindLastIndex(0, x => x.GetType() == tagType);
 
-                            BindAttributes(tag);
+                        if (tagIndex == -1)    // No open tag of that type exist.
+                            throw new TagException("Close tags must have an open tag of the same type.");
 
-                            tagOpenList.Add(tag);
-                            tagRanges.Add((visibleCharacterCount, int.MinValue));
-                            tags.Add(tag);
-                            break;
-                        case ElementType.End:
-                            int tagIndex = tagOpenList.FindLastIndex(0, x => x.GetType() == tagType);
+                        tagRanges[tagIndex] = (tagRanges[tagIndex].Start, visibleCharacterCount);
+                        tagSpans.RemoveAt(tagIndex);    // Remove first last index of a tag.
+                    }
+                    else
+                    {
+                        using var attributesObject = ListPool<(string Name, string Value)?>.Get(out var attributes);
+                        var tag = (ITag)Activator.CreateInstance(tagType);  // Create a new tag instance of specified type.
 
-                            if (tagIndex == -1)    // No open tag of that type exist.
-                                throw new TagException("Close tags must have an open tag of the same type.");
+                        // Get all attributes.
+                        if (attributesSpan[0] is '=')   // If it has implied attribute.
+                        {
+                            var implicitAttribute = GetAttribute(attributesSpan, out var nextSpan, isImplicit: true);
+                            attributesSpan = nextSpan;
+                            attributes.Add(implicitAttribute);
+                        }
 
-                            tagRanges[tagIndex] = (tagRanges[tagIndex].Item1, visibleCharacterCount);
-                            tagOpenList.RemoveAt(tagIndex);    // Remove first last index of a tag.
-                            break;
-                        case ElementType.Marker:
-                            var tagMarker = (TagSingle)Activator.CreateInstance(tagType);
+                        for (int i = 0; i < attributesSpan.Length; i++)
+                        {
+                            var attribute = GetAttribute(attributesSpan, out var nextSpan);
+                            attributesSpan = nextSpan;
 
-                            BindAttributes(tagMarker);
+                            if (attribute is null)   // If there is no attributes left.
+                                break;
 
-                            tagRanges.Add((visibleCharacterCount, int.MinValue));
-                            tags.Add(tagMarker);
-                            break;
+                            attributes.Add(attribute);
+                        }
+
+                        foreach (var attr in attributes)
+                            Bind(tag, attr?.Name!, attr?.Value!);
+
+                        if (elementType is ElementType.Start)
+                            tagSpans.Add((ITagSpan)tag);
+
+                        tagRanges.Add((visibleCharacterCount, int.MinValue));
+                        tags.Add(tag);
                     }
 
-                    leftIndex = endIndex;
+                    goto Valid;
+                NotValid:
+                    visibleCharacterCount += tagSpan.Length;
+                Valid:
+                    index += tagSpan.Length - 1;
                 }
                 else
                     visibleCharacterCount++;
@@ -297,16 +272,12 @@ namespace Celezt.DialogueSystem
 
             for (int i = 0; i < tags.Count; i++)
             {
-                (int index, int closeIndex) = tagRanges[i];
+                (int start, int end) = tagRanges[i];
 
                 switch (tags[i])
                 {
-                    case ITagSingle tagSingle:
-                        tagSingle.Initialize(index, binder);
-                        break;
-                    case ITagSpan tagSpan:
-                        tagSpan.Initialize(new RangeInt(index, closeIndex - index), binder);
-                        break;
+                    case ITagSingle tagSingle:  tagSingle.Initialize(start, binder);                            break;
+                    case ITagSpan   tagSpan:    tagSpan.Initialize(new RangeInt(start, end - start), binder);   break;
                 }
             }
 
@@ -315,48 +286,42 @@ namespace Celezt.DialogueSystem
             return tags;
         }
 
-        public static string TrimTextTags(string text, TagVariation excludeTagType = TagVariation.Custom | TagVariation.Unity)
+        public static string TrimTextTags(ReadOnlySpan<char> span, TagVariation excludeTagVariants = TagVariation.Custom | TagVariation.Unity)
         {
-            Span<char> span = stackalloc char[text.Length];
-            int newLength = 0;
-            int beginIndex = 0;
-            int endIndex = 0;
-            int leftIndex = 0;
-            int rightIndex = 0;
+            Span<char> tempSpan = stackalloc char[span.Length];
+            span.CopyTo(tempSpan);
+            return TrimTextTags(tempSpan, excludeTagVariants).ToString();
+        }
 
-            for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
+        public static Span<char> TrimTextTags(Span<char> span, TagVariation excludeTagVariants = TagVariation.Custom | TagVariation.Unity)
+        {
+            int count = 0;
+            
+            for (int index = 0; index < span.Length; index++)
             {
-                if (text[leftIndex] is '<' && (leftIndex <= 0 || text[leftIndex - 1] is not '\\'))
+                if (span[index] is '<')
                 {
-                    beginIndex = leftIndex;
+                    if (!TryGetValidTagSpan(span.Slice(index), out var tagSpan, out _))
+                        goto Copy;
 
-                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out ElementType state))
-                    {
-                        for (int i = beginIndex; i < endIndex; i++)
-                        {
-                            if (!IsBackslash(text, leftIndex))
-                                span[newLength++] = text[i];
-                        }
-                        continue;
-                    }
+                    if (!TryGetTagName(tagSpan, out _, out _, out TagVariation tagVariant))
+                        goto Copy;
 
-                    TagVariation tagType = GetTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
-                    if (!excludeTagType.HasFlag(tagType))
-                    {
-                        for (int i = beginIndex; i <= endIndex; i++)
-                        {
-                            if (!IsBackslash(text, leftIndex))
-                                span[newLength++] = text[i];
-                        }
-                    }
+                    if (!excludeTagVariants.HasFlag(tagVariant))
+                        goto Copy;
 
-                    leftIndex = endIndex;
+                    goto Ignore;
+                Copy:
+                    tagSpan.CopyTo(span.Slice(count));
+                    count += tagSpan.Length;
+                Ignore:
+                    index += tagSpan.Length - 1;
                 }
-                else if (!IsBackslash(text, leftIndex))
-                    span[newLength++] = text[leftIndex];
+                else
+                    span[count++] = span[index];
             }
 
-            return span.Slice(0, newLength).ToString();
+            return span.Slice(0, count);
         }
 
         public static int GetTextLength(ReadOnlySpan<char> span, TagVariation excludeTagVariants = TagVariation.Custom | TagVariation.Unity)
@@ -379,7 +344,7 @@ namespace Celezt.DialogueSystem
                     if (!TryGetValidTagSpan(span.Slice(index), out var tagSpan, out _))
                         goto NotValid;
 
-                    if (!TryGetTagName(tagSpan, out _, out var tagVariant))
+                    if (!TryGetTagName(tagSpan, out _, out _, out var tagVariant))
                         goto NotValid;
 
                     if (!excludeTagVariants.HasFlag(tagVariant))
@@ -387,59 +352,14 @@ namespace Celezt.DialogueSystem
 
                     goto Valid;
                 NotValid:
-                    visibleCharacterCount += CountVisibleCharacters(tagSpan);
+                    visibleCharacterCount += tagSpan.Length;
                 Valid:
-                    if (!tagSpan.IsEmpty)
-                        chr = span[index += tagSpan.Length - 1];
+                    index += tagSpan.Length - 1;
                 }
                 else
                     visibleCharacterCount++;
             }
             
-            return visibleCharacterCount;
-        }
-
-        public static int GetTextLength(string text, TagVariation excludeTagVariants = TagVariation.Custom | TagVariation.Unity)
-        {
-            int visibleCharacterCount = 0;
-            int beginIndex = 0;
-            int endIndex = 0;
-            int leftIndex = 0;
-            int rightIndex = 0;
-
-            for (leftIndex = 0; leftIndex < text.Length; leftIndex++)
-            {
-                if (text[leftIndex] is '<' && (leftIndex <= 0 || text[leftIndex - 1] is not '\\'))
-                {
-                    beginIndex = leftIndex;
-
-                    if (!IsTagValid(text, ref leftIndex, ref rightIndex, ref endIndex, out _))
-                    {
-                        for (int i = beginIndex; i < endIndex; i++)
-                        {
-                            if (!IsBackslash(text, leftIndex))
-                                visibleCharacterCount++;
-                        }
-                        continue;
-                    }
-
-                    TagVariation tagType = GetTagName(text, ref leftIndex, rightIndex - leftIndex + 1, out _);
-
-                    if (!excludeTagVariants.HasFlag(tagType))
-                    {
-                        for (int i = beginIndex; i <= endIndex; i++)
-                        {
-                            if (!IsBackslash(text, leftIndex))
-                                visibleCharacterCount++;
-                        }
-                    }
-
-                    leftIndex = endIndex;
-                }
-                else if (!IsBackslash(text, leftIndex))
-                    visibleCharacterCount++;
-            }
-
             return visibleCharacterCount;
         }
 
