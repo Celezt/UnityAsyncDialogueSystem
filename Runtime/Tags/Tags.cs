@@ -218,7 +218,7 @@ namespace Celezt.DialogueSystem
 
                     if (elementType is ElementType.End)
                     {
-                        int tagIndex = tagSpans.FindLastIndex(0, x => x.GetType() == tagType);
+                        int tagIndex = tagSpans.Count > 0 ? tagSpans.FindLastIndex(0, x => x.GetType() == tagType) : -1;
 
                         if (tagIndex == -1)    // No open tag of that type exist.
                             throw new TagException("Close tags must have an open tag of the same type.");
@@ -257,7 +257,17 @@ namespace Celezt.DialogueSystem
                         }
 
                         if (elementType is ElementType.Start)
+                        {
+                            int tagIndex = tagSpans.Count > 0 ? tagSpans.FindLastIndex(0, x => x.GetType() == tagType) : -1;
+
+                            if (tagIndex != -1) // Close latest tag span of the same type if it hasn't been closed.
+                            {
+                                tagRanges[tagIndex] = (tagRanges[tagIndex].Start, visibleCharacterCount);
+                                tagSpans.RemoveAt(tagIndex);    // Remove first last index of a tag.
+                            }
+
                             tagSpans.Add((ITagSpan)tag);
+                        }
 
                         tagRanges.Add((visibleCharacterCount, int.MinValue));
                         tags.Add(tag);

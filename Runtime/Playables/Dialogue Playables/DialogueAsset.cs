@@ -38,9 +38,8 @@ namespace Celezt.DialogueSystem
             {
                 if (_runtimeText is null)
                 {
-                    Span<char> tempSpan = stackalloc char[_editorText.Length];
-                    _editorText.AsSpan().CopyTo(tempSpan);
-                    _runtimeText = Tags.TrimTextTags(tempSpan, Tags.TagVariation.Custom);
+                    _runtimeText = new MutString(_editorText.Length);
+                    RefreshDialogue();
                 }
 
                 return _runtimeText;
@@ -154,7 +153,7 @@ namespace Celezt.DialogueSystem
             _length = Tags.GetTextLength(span);
             span = Tags.TrimTextTags(span, Tags.TagVariation.Custom);
 
-            RuntimeText.Set(span);
+            _runtimeText?.Set(span);
             Tags.InvokeAll(_tagSequence);
 #if UNITY_EDITOR
             EditorUtility.IsDirty(this);
