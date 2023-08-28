@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
+using Celezt.Text;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -253,7 +254,8 @@ namespace Celezt.DialogueSystem
                             }
 
                             foreach (var attr in attributes)
-                                Bind(tag, attr?.Name!, attr?.Value!);
+                                if (attr is not null)
+                                    Bind(tag, attr?.Name!, attr?.Value!);
                         }
 
                         if (elementType is ElementType.Start)
@@ -363,6 +365,43 @@ namespace Celezt.DialogueSystem
             }
             
             return visibleCharacterCount;
+        }
+
+        public static int GetIndexFromVisibleIndex(ReadOnlySpan<char> span, int visibleIndex)
+        {
+            if (visibleIndex < 0)
+                throw new ArgumentException("Index cannot be negative.", nameof(visibleIndex));
+
+            int visibleCharacterCount = 0;
+
+            for (int index = 0; index < span.Length; index++)
+            {
+                if (span[index] is '<')
+                {
+                    if (!TryGetValidTagSpan(span.Slice(index), out var tagSpan, out _))
+                        goto NotValid;
+
+                    if (!TryGetTagName(tagSpan, out _, out _, out var tagVariant))
+                        goto NotValid;
+
+                    goto Valid;
+                NotValid:
+                    for (int i = 0; i < tagSpan.Length; i++)
+                    {
+                        if (visibleIndex == visibleCharacterCount++)
+                            return index + i;
+                    }
+                Valid:
+                    index += tagSpan.Length - 1;
+                }
+                else
+                {
+                    if (visibleIndex == visibleCharacterCount++)
+                        return index;
+                }
+            }
+
+            return -1;
         }
 
 #if UNITY_EDITOR

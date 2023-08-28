@@ -151,9 +151,8 @@ namespace Celezt.DialogueSystem
 
             _tagSequence = Tags.GetTagSequence(span, this);
             _length = Tags.GetTextLength(span);
-            span = Tags.TrimTextTags(span, Tags.TagVariation.Custom);
 
-            _runtimeText?.Set(span);
+            _runtimeText?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
             Tags.InvokeAll(_tagSequence);
 #if UNITY_EDITOR
             EditorUtility.IsDirty(this);
@@ -165,9 +164,28 @@ namespace Celezt.DialogueSystem
         {
             RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
 
-            _tagSequence ??= Tags.GetTagSequence(EditorText.AsSpan(), this);
+            Span<char> span = stackalloc char[_editorText.Length];
+            _editorText.AsSpan().CopyTo(span);
+            _runtimeText?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
+
+            _tagSequence ??= Tags.GetTagSequence(EditorText, this);
 
             Tags.InvokeAll(_tagSequence);
+        }
+
+        public bool TryInsertAfter(int visibleIndex, ReadOnlySpan<char> span)
+            => TryInsertBefore(visibleIndex + 1, span);
+
+        public bool TryInsertBefore(int visibleIndex, ReadOnlySpan<char> span)
+        {
+            int index = visibleIndex == 0 ? 0 : Tags.GetIndexFromVisibleIndex(RuntimeText.ReadOnlySpan, visibleIndex);
+
+            if (index < 0)
+                return false;
+
+            RuntimeText.Insert(index, span);
+
+            return true;
         }
 
         public float GetVisibilityByTime(double time, CurveType curveType = CurveType.Runtime)

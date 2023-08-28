@@ -1,3 +1,4 @@
+using Celezt.Text;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,6 +6,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Pool;
 
 #nullable enable
 
@@ -164,6 +166,10 @@ namespace Celezt.DialogueSystem
             //
             char decoration = '\0';
             int attributeIndex = ++index;
+
+            if (attributeIndex >= span.Length)
+                return null;
+
             chr = span[attributeIndex];
             if (chr is '"' or '\'') // Ignore decoration.
             {
@@ -199,7 +205,7 @@ namespace Celezt.DialogueSystem
 
             int decorationOffset = decoration is '\0' ? 0 : 1;
             string value = span.Slice(attributeIndex + decorationOffset, index - attributeIndex - decorationOffset).ToString();
-            nextSpan = span.Slice(index);
+            nextSpan = span.Slice(index + decorationOffset);
 
             return (name, value);
         }
