@@ -125,8 +125,9 @@ namespace Celezt.DialogueSystem
             return true;
         }
 
-        private static (string Name, string Value)? GetAttribute(ReadOnlySpan<char> span, out ReadOnlySpan<char> nextSpan, bool isImplicit = false)
+        private static bool TryGetAttribute(ReadOnlySpan<char> span, out ReadOnlySpan<char> nextSpan, out (string Name, string Value) attribute, bool isImplicit = false)
         {
+            attribute = default;
             nextSpan = ReadOnlySpan<char>.Empty;
             char chr = '\0';
             int index = 0;
@@ -136,7 +137,7 @@ namespace Celezt.DialogueSystem
                     break;
 
             if (index == span.Length)
-                return null;
+                return false;
 
             //
             //  Extract Name
@@ -151,11 +152,11 @@ namespace Celezt.DialogueSystem
                     if (chr is '=')    // Ends if it finds a =.
                         break;
 
-                    if (chr is ' ')
-                        throw new TagException("Attribute name are not allowed to end with whitespace.");
+                    if (chr is ' ')     // Invalid: attribute name are not allowed to end with whitespace.
+                        return false;
 
                     if (!char.IsLetter(chr) && chr != '-')    // Invalid: name must be a letter. <tag> ! <%3->
-                        throw new TagException($"Name cannot contain any numbers or symbols: '{chr}'.");
+                        return false;
                 }
             }
 
@@ -167,8 +168,8 @@ namespace Celezt.DialogueSystem
             char decoration = '\0';
             int attributeIndex = ++index;
 
-            if (attributeIndex >= span.Length)
-                return null;
+            if (attributeIndex >= span.Length)  // If only => and nothing after.
+                return false;
 
             chr = span[attributeIndex];
             if (chr is '"' or '\'') // Ignore decoration.
@@ -183,7 +184,7 @@ namespace Celezt.DialogueSystem
                         break;
 
                     if (index + 1 == span.Length)    // Invalid: must have a closure. <tag="?"> ! <tag="?>
-                        throw new TagException("Attributes using \" or ' must close with the same character.");
+                        return false;
                 }
             }
             else if (chr is not ' ')    // If no decorations are present. WARNING: whitespace means end!
@@ -197,17 +198,19 @@ namespace Celezt.DialogueSystem
 
                     // Invalid: not allowed to use these characters when using no decorations.
                     if (chr is '/' or '"' or '\'')
-                        throw new TagException("Not allowed to use /, \" or ' when using no decoration.");
+                        return false;
                 }
             }
-            else
-                throw new TagException("Attribute value cannot be empty.");
+            else // Attribute value cannot be empty.
+                return false;
 
             int decorationOffset = decoration is '\0' ? 0 : 1;
             string value = span.Slice(attributeIndex + decorationOffset, index - attributeIndex - decorationOffset).ToString();
             nextSpan = span.Slice(index + decorationOffset);
 
-            return (name, value);
+            attribute = (name, value);
+
+            return true;
         }
     }
 }

@@ -234,22 +234,20 @@ namespace Celezt.DialogueSystem
 
                         if (attributesSpan.Length > 0)
                         {
-                            // Get all attributes.
-                            if (attributesSpan[0] is '=')   // If it has implied attribute.
+                            // If it has implied attribute.
+                            if (attributesSpan[0] is '=' && TryGetAttribute(attributesSpan, out var nextSpan, out var implicitAttribute, isImplicit: true))
                             {
-                                var implicitAttribute = GetAttribute(attributesSpan, out var nextSpan, isImplicit: true);
                                 attributesSpan = nextSpan;
                                 attributes.Add(implicitAttribute);
                             }
 
+                            // Get all attributes.
                             for (int i = 0; i < attributesSpan.Length; i++)
                             {
-                                var attribute = GetAttribute(attributesSpan, out var nextSpan);
-                                attributesSpan = nextSpan;
-
-                                if (attribute is null)   // If there is no attributes left.
+                                if (!TryGetAttribute(attributesSpan, out nextSpan, out var attribute))
                                     break;
 
+                                attributesSpan = nextSpan;
                                 attributes.Add(attribute);
                             }
 
