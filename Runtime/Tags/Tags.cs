@@ -188,7 +188,7 @@ namespace Celezt.DialogueSystem
         public static List<ITag> GetTagSequence(ReadOnlySpan<char> span, out int visibleCharacterCount, object? binder = null)
         {
             visibleCharacterCount = 0;
-            using var openTagsObject = ListPool<ITagSpan>.Get(out var tagSpans);
+            using var tagSpansObject = ListPool<ITagSpan>.Get(out var tagSpans);
             using var tagRangesObject = ListPool<(int Start, int End)>.Get(out var tagRanges);
             var tags = new List<ITag>();
 
@@ -282,6 +282,9 @@ namespace Celezt.DialogueSystem
                 else
                     visibleCharacterCount++;
             }
+
+            for (int i = 0; i < tagSpans.Count; i++)                            // All tag spans not closed.
+                tagRanges[i] = (tagRanges[i].Start, visibleCharacterCount);
 
             for (int i = 0; i < tags.Count; i++)
             {
