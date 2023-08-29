@@ -16,33 +16,51 @@ namespace Celezt.DialogueSystem
             if (string.IsNullOrWhiteSpace(Color))
                 return;
 
-            var span = Color.AsSpan();
-            int index = span.IndexOf(" to ", StringComparison.OrdinalIgnoreCase);
+            var span = Color.AsSpan().Trim();
 
-            ReadOnlySpan<char> firstColorSpan = index > 0 ? span.Slice(0, index + 1).Trim() : span;
-            ReadOnlySpan<char> secondColorSpan = index > 0 ? span.Slice(index + 4).Trim() : default;
-            UnityEngine.Color firstColor = UnityEngine.Color.white;
-            UnityEngine.Color secondColor = UnityEngine.Color.white;
+            Span<Color> colors = stackalloc Color[16];
+            int count = 0;
 
-            if (!ColorUtility.TryParseHtmlString(firstColorSpan.ToString().ToLowerInvariant(), out firstColor))
-                return;
-
-            secondColor = firstColor;
-
-            if (index > 0 && !ColorUtility.TryParseHtmlString(secondColorSpan.ToString().ToLowerInvariant(), out secondColor))
-                return;
-
-            for (int i = range.start; i < range.length; i++)
+            ReadOnlySpan<char> colorsSpan = span;
+            UnityEngine.Color currentColor = UnityEngine.Color.white;
+            while (count < colors.Length && !colorsSpan.IsEmpty)
             {
-                float t = i / (float)range.length;
-                float r = Mathf.Lerp(firstColor.r, secondColor.r, t);
-                float g = Mathf.Lerp(firstColor.g, secondColor.g, t);
-                float b = Mathf.Lerp(firstColor.b, secondColor.b, t);
-                float a = Mathf.Lerp(firstColor.a, secondColor.a, t);
-                var color = new UnityEngine.Color(r, g, b, a);
+                int whiteSpaceIndex = colorsSpan.IndexOf(' ');
 
-                binder.TryInsertBefore(i, $"<color=#{ColorUtility.ToHtmlStringRGBA(color)}>");
-                binder.TryInsertAfter(i, "</color>");
+                ReadOnlySpan<char> nextColorSpan = whiteSpaceIndex > 0 ? colorsSpan.Slice(0, whiteSpaceIndex) : colorsSpan;
+                colorsSpan = whiteSpaceIndex > 0 ? colorsSpan.Slice(whiteSpaceIndex + 1).TrimStart() : default;
+
+                if (nextColorSpan.IsNumbers())
+                {
+                    int number = Mathf.Min(Mathf.Abs(int.Parse(nextColorSpan)), colors.Length - count - 1);
+
+                    while(--number > 0)
+                        colors[count++] = currentColor;
+                }
+
+                if (nextColorSpan.Equals("to", StringComparison.OrdinalIgnoreCase)) // Ignore if it is a to.
+                    continue;
+
+                if (!ColorUtility.TryParseHtmlString(nextColorSpan.ToString().ToLowerInvariant(), out currentColor))
+                    continue;
+
+                colors[count++] = currentColor;
+            }
+
+            colors.Slice(count).Fill(count > 0 ? colors[count - 1] : UnityEngine.Color.white);
+
+            for (int i = 0; i < range.length; i++)
+            {
+                float t = (i / (float)range.length) * (count - 1);
+
+                int colorIndex = Mathf.FloorToInt(t);
+                var firstColor = colors[colorIndex];
+                var secondColor = colors[colorIndex + 1];
+
+                var color = UnityEngine.Color.Lerp(firstColor, secondColor, t % 1);
+
+                binder.TryInsertBefore(range.start + i, $"<color=#{ColorUtility.ToHtmlStringRGBA(color)}>");
+                binder.TryInsertAfter(range.start + i, "</color>");
             }
         }
     }

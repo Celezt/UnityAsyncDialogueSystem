@@ -8,13 +8,61 @@ namespace Celezt.DialogueSystem
 {
     internal static class MemoryExtensions
     {
-        public static bool Any(this Span<bool> span)
+        public static bool Any(this ReadOnlySpan<bool> span, bool isTrue = true)
         {
             for (int i = 0; i < span.Length; i++)
-                if (span[i] == true)
+                if (span[i] == isTrue)
                     return true;
 
             return false;
+        }
+
+        public static bool Any<T>(this ReadOnlySpan<T> span, Func<T, bool> condition) where T : struct
+        {
+            if (span.IsEmpty) 
+                return false;
+
+            int index = 0;
+
+            if (span[index] is '-') // Is negative value.
+                index++;
+
+            for (; index < span.Length; index++)
+                if (condition(span[index]))
+                    return true;
+
+            return false;
+        }
+
+        public static bool All(this ReadOnlySpan<bool> span, bool isTrue = false)
+        {
+            for (int i = 0; i < span.Length; i++)
+                if (span[i] == !isTrue)
+                    return false;
+
+            return false;
+        }
+
+        public static bool All<T>(this ReadOnlySpan<T> span, Func<T, bool> condition) where T : struct
+        {
+            for (int i = 0; i < span.Length; i++)
+                if (!condition(span[i]))
+                    return false;
+
+            return true;
+        }
+
+        public static bool IsNumbers(this ReadOnlySpan<char> span)
+        {
+            if (span.IsEmpty)
+                return false;
+
+            int index = 0;
+
+            if (span[index] is '-') // Is negative value.
+                index++;
+
+            return span.Slice(index).All(x => char.IsNumber(x));
         }
 
         public static Span<char> Remove(this Span<char> span, int startIndex, int length)
