@@ -11,5 +11,8 @@ namespace Celezt.DialogueSystem
         public RangeInt Range { get; }
 
         public void Initialize(RangeInt range, object? bind);
+        public void OnEnter();
+        public void OnProcess(int index);
+        public void OnExit();
     }
 }

@@ -11,5 +11,6 @@ namespace Celezt.DialogueSystem
         public int Index { get; }
 
         public void Initialize(int index, object? bind);
+        public void OnInvoke();
     }
 }

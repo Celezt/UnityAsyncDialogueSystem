@@ -19,7 +19,7 @@ namespace Celezt.DialogueSystem
             => base.Initialize(index, binder);
 
         public sealed override void OnCreate() => OnCreate(Index, Binder);
-        public void OnInvoke() => OnInvoke(Index, Binder);
+        public sealed override void OnInvoke() => OnInvoke(Index, Binder);
     }
 
     public abstract class TagSingle : Tag, ITagSingle
@@ -32,5 +32,9 @@ namespace Celezt.DialogueSystem
             Binder = binder;
             Index = index;
         }
+
+        public abstract void OnInvoke();
+
+        public override string ToString() => $"{GetType().Name.TrimDecoration("Tag").ToKebabCase()} {{ {Index} }}";
     }
 }
