@@ -49,6 +49,9 @@ namespace Celezt.DialogueSystem
 
             colors.Slice(count).Fill(count > 0 ? colors[count - 1] : UnityEngine.Color.white);
 
+            if (count == 0)
+                return;
+
             for (int i = 0; i < range.length; i++)
             {
                 float t = (i / (float)range.length) * (count - 1);
@@ -59,9 +62,10 @@ namespace Celezt.DialogueSystem
 
                 var color = UnityEngine.Color.Lerp(firstColor, secondColor, t % 1);
 
-                binder.TryInsertBefore(range.start + i, $"<color=#{ColorUtility.ToHtmlStringRGBA(color)}>");
-                binder.TryInsertAfter(range.start + i, "</color>");
+                binder.TryInsertBefore(range.start + i, $"<color=#{ColorUtility.ToHtmlStringRGBA(color)}>", isWhitespaceAllowed: false);
+                binder.TryInsertAfter(range.start + i, "</color>", isWhitespaceAllowed: false);
             }
+
         }
     }
 }

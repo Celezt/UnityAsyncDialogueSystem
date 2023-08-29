@@ -173,14 +173,32 @@ namespace Celezt.DialogueSystem
             Tags.InvokeAll(_tagSequence);
         }
 
-        public bool TryInsertAfter(int visibleIndex, ReadOnlySpan<char> span)
-            => TryInsertBefore(visibleIndex + 1, span);
-
-        public bool TryInsertBefore(int visibleIndex, ReadOnlySpan<char> span)
+        public bool TryInsertAfter(int visibleIndex, ReadOnlySpan<char> span, bool isWhitespaceAllowed = true)
         {
-            int index = visibleIndex == 0 ? 0 : Tags.GetIndexFromVisibleIndex(RuntimeText.ReadOnlySpan, visibleIndex);
+            visibleIndex++;
+
+            int index = Tags.GetIndexFromVisibleIndex(RuntimeText.ReadOnlySpan, visibleIndex, out char character, out _);
 
             if (index < 0)
+                return false;
+
+            if (!isWhitespaceAllowed && character is ' ')
+                return false;
+
+            RuntimeText.Insert(index, span);
+
+            return true;
+        }
+
+        public bool TryInsertBefore(int visibleIndex, ReadOnlySpan<char> span, bool isWhitespaceAllowed = true)
+        {
+            char character = '\0';
+            int index = visibleIndex == 0 ? 0 : Tags.GetIndexFromVisibleIndex(RuntimeText.ReadOnlySpan, visibleIndex, out _, out character);
+
+            if (index < 0)
+                return false;
+
+            if (!isWhitespaceAllowed && character is ' ')
                 return false;
 
             RuntimeText.Insert(index, span);

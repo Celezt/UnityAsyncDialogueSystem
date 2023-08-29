@@ -371,7 +371,11 @@ namespace Celezt.DialogueSystem
         }
 
         public static int GetIndexFromVisibleIndex(ReadOnlySpan<char> span, int visibleIndex)
+            => GetIndexFromVisibleIndex(span, visibleIndex, out _, out _);
+        public static int GetIndexFromVisibleIndex(ReadOnlySpan<char> span, int visibleIndex, out char firstChar, out char secondChar)
         {
+            firstChar = secondChar = '\0';
+
             if (visibleIndex < 0)
                 throw new ArgumentException("Index cannot be negative.", nameof(visibleIndex));
 
@@ -392,7 +396,11 @@ namespace Celezt.DialogueSystem
                     for (int i = 0; i < tagSpan.Length; i++)
                     {
                         if (visibleIndex == visibleCharacterCount++)
+                        {
+                            firstChar = tagSpan[i];
+                            secondChar = span[index + i];
                             return index + i;
+                        }
                     }
                 Valid:
                     index += tagSpan.Length - 1;
@@ -400,7 +408,11 @@ namespace Celezt.DialogueSystem
                 else
                 {
                     if (visibleIndex == visibleCharacterCount++)
+                    {
+                        firstChar = index > 0 ? span[index - 1] : '\0';
+                        secondChar = span[index];
                         return index;
+                    }
                 }
             }
 
