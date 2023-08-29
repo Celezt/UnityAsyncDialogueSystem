@@ -189,7 +189,7 @@ namespace Celezt.DialogueSystem
         {
             visibleCharacterCount = 0;
             using var tagSpansObject = ListPool<ITagSpan>.Get(out var tagSpans);
-            using var tagRangesObject = ListPool<(int Start, int End)>.Get(out var tagRanges);
+            using var tagRangesObject = DictionaryPool<ITag, (int Start, int End)>.Get(out var tagRanges);
             var tags = new List<ITag>();
 
             for (int index = 0; index < span.Length; index++)
@@ -222,9 +222,10 @@ namespace Celezt.DialogueSystem
                         int tagIndex = tagSpans.Count > 0 ? tagSpans.FindLastIndex(0, x => x.GetType() == tagType) : -1;
 
                         if (tagIndex == -1)    // No open tag of that type exist.
-                            throw new TagException("Close tags must have an open tag of the same type.");
+                            goto NotValid;
 
-                        tagRanges[tagIndex] = (tagRanges[tagIndex].Start, visibleCharacterCount);
+                        ITagSpan foundIndex = tagSpans[tagIndex];
+                        tagRanges[foundIndex] = (tagRanges[foundIndex].Start, visibleCharacterCount);
                         tagSpans.RemoveAt(tagIndex);    // Remove first last index of a tag.
                     }
                     else
@@ -262,14 +263,15 @@ namespace Celezt.DialogueSystem
 
                             if (tagIndex != -1) // Close latest tag span of the same type if it hasn't been closed.
                             {
-                                tagRanges[tagIndex] = (tagRanges[tagIndex].Start, visibleCharacterCount);
+                                ITagSpan foundIndex = tagSpans[tagIndex];
+                                tagRanges[foundIndex] = (tagRanges[foundIndex].Start, visibleCharacterCount);
                                 tagSpans.RemoveAt(tagIndex);    // Remove first last index of a tag.
                             }
 
                             tagSpans.Add((ITagSpan)tag);
                         }
 
-                        tagRanges.Add((visibleCharacterCount, int.MinValue));
+                        tagRanges[tag] = (visibleCharacterCount, -1);
                         tags.Add(tag);
                     }
 
@@ -283,17 +285,17 @@ namespace Celezt.DialogueSystem
                     visibleCharacterCount++;
             }
 
-            for (int i = 0; i < tagSpans.Count; i++)                            // All tag spans not closed.
-                tagRanges[i] = (tagRanges[i].Start, visibleCharacterCount);
+            foreach(var tagSpan in tagSpans)    // All tag spans not closed.
+                tagRanges[tagSpan] = (tagRanges[tagSpan].Start, visibleCharacterCount);
 
-            for (int i = 0; i < tags.Count; i++)
+            foreach (var tag in tags)
             {
-                (int start, int end) = tagRanges[i];
+                (int start, int end) = tagRanges[tag];
 
-                switch (tags[i])
+                switch (tag)
                 {
                     case ITagSingle tagSingle:  tagSingle.Initialize(start, binder);                            break;
-                    case ITagSpan   tagSpan:    tagSpan.Initialize(new RangeInt(start, end - start), binder);   break;
+                    case ITagSpan tagSpan:      tagSpan.Initialize(new RangeInt(start, end - start), binder);   break;
                 }
             }
 
