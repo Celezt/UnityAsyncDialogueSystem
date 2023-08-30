@@ -8,9 +8,14 @@ namespace Celezt.DialogueSystem.Editor
     [CustomEditor(typeof(DialogueAsset), true)]
     public class DialogueAssetEditor : DSPlayableAssetEditor
     {
-        private static readonly GUIContent _editorVisibilityOffsetContent = new GUIContent("s", "Editor Visibility offset (seconds)");
-        private static readonly GUIContent _editorVisibilityCurveContent = new GUIContent("", "Editor Visibility curve (x: time, y: visible)");
-        private static readonly GUIContent _runtimeVisibilityCurveContent = new GUIContent("", "Runtime Visibility curve (x: time, y: visible)");
+        private static readonly GUIContent _editorVisibilityOffsetContent = new("s", "Editor Visibility offset (seconds)");
+        private static readonly GUIContent _editorVisibilityCurveContent = new("", "Editor Visibility curve (x: time, y: visible)");
+        private static readonly GUIContent _runtimeVisibilityCurveContent = new("", "Runtime Visibility curve (x: time, y: visible)");
+
+        private static readonly string[] _toolbar = new string[] { "Editor", "Runtime" };
+
+        private int _toolbarIndex;
+        private string _runtimeText;
 
         public override void BuildInspector()
         {
@@ -23,19 +28,17 @@ namespace Celezt.DialogueSystem.Editor
             GUIStyle infoTitleStyle = new GUIStyle("PreMiniLabel");
 
             EditorGUI.indentLevel--;
-            EditorGUILayout.LabelField("Actor");
-            using (new EditorGUILayout.VerticalScope())
-            {
-                EditorGUILayout.Space(6);
-            }
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_actor"), GUIContent.none);
 
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_editorText"), GUIContent.none);
-            if (EditorGUI.EndChangeCheck())
+            _toolbarIndex = GUILayout.Toolbar(_toolbarIndex, _toolbar);
+
+            switch(_toolbarIndex)
             {
-                serializedObject.ApplyModifiedProperties();
-                asset.RefreshDialogue();
+                case 0:
+                    EditorContent();
+                    break;
+                case 1:
+                    RuntimeContent(); 
+                    break;
             }
 
             EditorGUILayout.LabelField("Visibility Settings");
@@ -77,6 +80,40 @@ namespace Celezt.DialogueSystem.Editor
                 EditorGUILayout.LabelField($"Visible: {(visibility * 100).ToString("0.#")}%", infoStyle);
                 EditorGUILayout.LabelField($"Tan: {asset.Tangent.ToString("0.##")}", infoStyle);
                 EditorGUILayout.LabelField($"Index: {asset.Index}", infoStyle);
+            }
+
+            void EditorContent()
+            {
+                EditorGUILayout.LabelField("Actor");
+
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_actor"), GUIContent.none);
+
+                EditorGUILayout.Space(8);
+                EditorGUILayout.LabelField("Text");
+                EditorStyles.textField.wordWrap = true;
+                EditorGUI.BeginChangeCheck();
+                var textProperty = serializedObject.FindProperty("_editorText");
+                textProperty.stringValue = EditorGUILayout.TextField(textProperty.stringValue, GUILayout.MinHeight(150));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    serializedObject.ApplyModifiedProperties();
+                    asset.RefreshDialogue();
+                }
+            }
+
+            void RuntimeContent()
+            {
+                if (_runtimeText == null)
+                    _runtimeText = asset.RuntimeText.ToString();
+
+                EditorGUILayout.LabelField("Actor (Readonly)");
+
+                EditorGUILayout.LabelField(asset.Actor, EditorStyles.textField);
+
+                EditorGUILayout.Space(8);
+                EditorGUILayout.LabelField("Text (Readonly)");
+                EditorStyles.textField.wordWrap = true;
+                EditorGUILayout.LabelField(_runtimeText, EditorStyles.textField, GUILayout.MinHeight(150));
             }
         }
     }

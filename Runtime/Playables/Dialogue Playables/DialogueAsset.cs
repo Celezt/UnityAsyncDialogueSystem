@@ -177,7 +177,7 @@ namespace Celezt.DialogueSystem
         {
             visibleIndex++;
 
-            int index = Tags.GetIndexFromVisibleIndex(RuntimeText.ReadOnlySpan, visibleIndex, out char character, out _);
+            int index = Tags.GetIndexFromVisibleIndex(RuntimeText, visibleIndex, out char character, out _);
 
             if (index < 0)
                 return false;
@@ -193,7 +193,7 @@ namespace Celezt.DialogueSystem
         public bool TryInsertBefore(int visibleIndex, ReadOnlySpan<char> span, bool isWhitespaceAllowed = true)
         {
             char character = '\0';
-            int index = visibleIndex == 0 ? 0 : Tags.GetIndexFromVisibleIndex(RuntimeText.ReadOnlySpan, visibleIndex, out _, out character);
+            int index = visibleIndex == 0 ? 0 : Tags.GetIndexFromVisibleIndex(RuntimeText, visibleIndex, out _, out character);
 
             if (index < 0)
                 return false;
