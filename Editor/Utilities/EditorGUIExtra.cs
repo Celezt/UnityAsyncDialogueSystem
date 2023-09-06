@@ -52,5 +52,32 @@ namespace Celezt.DialogueSystem.Editor
             EditorGUI.DrawRect(rect, backgroundColor);
             EditorGUIExtra.DrawCurve(rect, curveColor, curve);
         }
+
+        // https://forum.unity.com/threads/horizontal-line-in-editor-window.520812/#post-8546099
+        public static void DrawUILine(Color color = default, int thickness = 1, int padding = 10, int margin = 0)
+        {
+            color = color != default ? color : Color.grey;
+            Rect r = EditorGUILayout.GetControlRect(false, GUILayout.Height(padding + thickness));
+            r.height = thickness;
+            r.y += padding * 0.5f;
+
+            switch (margin)
+            {
+                // Expand to maximum width.
+                case < 0:
+                    r.x = 0;
+                    r.width = EditorGUIUtility.currentViewWidth;
+
+                    break;
+                case > 0:
+                    // Shrink line width.
+                    r.x += margin;
+                    r.width -= margin * 2;
+
+                    break;
+            }
+
+            EditorGUI.DrawRect(r, color);
+        }
     }
 }

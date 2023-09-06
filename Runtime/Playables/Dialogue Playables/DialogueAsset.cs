@@ -122,6 +122,8 @@ namespace Celezt.DialogueSystem
             }
         }
 
+        public IReadOnlyList<IExtension> Extensions => _extensions;
+
 #if UNITY_EDITOR
         internal bool HasUpdated { get; set; }
 #endif
@@ -130,17 +132,24 @@ namespace Celezt.DialogueSystem
         private string _actor = string.Empty;
         [SerializeField, TextArea(10, int.MaxValue)]
         private string _editorText = string.Empty;
-        [SerializeField, HideInInspector, Min(0)]
+        [SerializeField, Min(0)]
         private float _startOffset;
-        [SerializeField, HideInInspector, Min(0)]
+        [SerializeField, Min(0)]
         private float _endOffset;
-        [SerializeField, HideInInspector]
+        [SerializeField]
         private AnimationCurve _editorVisibilityCurve = AnimationCurve.Linear(0, 0, 1, 1);
+        [SerializeReference]
+        private List<IExtension> _extensions = new();
 
         private int _length;
         private MutString? _runtimeText;
         private AnimationCurve? _runtimeVisibilityCurve;
         private List<ITag>? _tagSequence;
+
+        public void AddExtension(IExtension extension)
+        {
+            _extensions.Add(extension);
+        }
 
         public void RefreshDialogue()
         {
