@@ -80,6 +80,8 @@ namespace Celezt.DialogueSystem.Editor
                 }
             }
 
+            GUILayout.Space(8);
+
             var extensionProperty = serializedObject.FindProperty("_extensions");
 
             IEnumerator enumerator = extensionProperty.GetEnumerator();

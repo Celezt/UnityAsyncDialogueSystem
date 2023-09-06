@@ -19,18 +19,25 @@ namespace Celezt.DialogueSystem.Editor
             if (!_isOpens.ContainsKey(id))
                 _isOpens.Add(id, false);
 
+            GUILayout.Space(-20);
+
             EditorGUILayoutExtra.DrawUILine(color: new Color(0.102f, 0.102f, 0.102f), padding: -3);
+
             var color = GUI.backgroundColor;
             GUI.backgroundColor = new Color(1.1f, 1.1f, 1.1f);
             var content = new GUIContent(Extensions.Names[extensionType]);
             Rect rect = GUILayoutUtility.GetRect(content, EditorStyles.foldoutHeader);
             rect.x += 14.0f;
-            bool isOpen = EditorGUI.BeginFoldoutHeaderGroup(rect, _isOpens[id], content);
+            var style = EditorStyles.foldoutHeader;
+            style.fixedHeight = 20;
+            bool isOpen = EditorGUI.BeginFoldoutHeaderGroup(rect, _isOpens[id], content, style);
             EditorGUI.EndFoldoutHeaderGroup();
-            EditorGUILayoutExtra.DrawUILine(
-                color: isOpen ? new Color(0.19f, 0.19f, 0.19f) : new Color(0.102f, 0.102f, 0.102f), 
-                padding: -4);
             GUI.backgroundColor = color;
+
+            EditorGUILayoutExtra.DrawUILine(
+                color: isOpen ? new Color(0.19f, 0.19f, 0.19f) : new Color(0.102f, 0.102f, 0.102f),
+                padding: -4);
+
             EditorGUI.indentLevel++;
             if (isOpen)
             {
