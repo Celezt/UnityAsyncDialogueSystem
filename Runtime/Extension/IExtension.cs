@@ -6,6 +6,6 @@ namespace Celezt.DialogueSystem
 {
     public interface IExtension
     {
-
+        public UnityEngine.Object Reference { get; set; }
     }
 }

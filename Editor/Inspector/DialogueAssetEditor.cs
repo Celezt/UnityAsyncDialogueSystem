@@ -11,32 +11,11 @@ namespace Celezt.DialogueSystem.Editor
     [CustomEditor(typeof(DialogueAsset), true)]
     public class DialogueAssetEditor : DSPlayableAssetEditor
     {
-        public static string[] ExtensionOptions
-        {
-            get
-            {
-                if (_extensionOptions == null)
-                {
-                    IEnumerable<string> extensions = Extensions.Types.Keys;
-                   _extensionOptions = new string[extensions.Count() + 1];
-                    _extensionOptions[0] = "(Select)";
-
-                    int count = 1;
-                    foreach (string extension in extensions)
-                        _extensionOptions[count++] = extension;
-                }
-
-                return _extensionOptions;
-            }
-        }
-
         private static readonly GUIContent _editorVisibilityOffsetContent = new("s", "Editor visibility offset (seconds)");
         private static readonly GUIContent _editorVisibilityCurveContent = new("", "Editor visibility curve (x: time, y: visible)");
         private static readonly GUIContent _runtimeVisibilityCurveContent = new("", "Runtime visibility curve (x: time, y: visible)");
 
         private static readonly string[] _toolbar = new string[] { "Editor", "Runtime" };
-
-        private static string[] _extensionOptions;
 
         private int _toolbarIndex;
         private string _runtimeText;
@@ -65,39 +44,7 @@ namespace Celezt.DialogueSystem.Editor
                     break;
             }
 
-            EditorGUILayout.LabelField("Extensions", EditorStyles.boldLabel);
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                EditorGUILayout.LabelField("Add Extension");
-
-                EditorGUI.BeginChangeCheck();
-                int index = EditorGUILayout.Popup(0, ExtensionOptions);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Type type = Extensions.Types[ExtensionOptions[index]];
-
-                    asset.AddExtension((IExtension)Activator.CreateInstance(type));
-                }
-            }
-
-            GUILayout.Space(8);
-
-            var extensionProperty = serializedObject.FindProperty("_extensions");
-
-            IEnumerator enumerator = extensionProperty.GetEnumerator();
-            int depth = extensionProperty.depth;
-
-            while (enumerator.MoveNext())
-            {
-                extensionProperty = enumerator.Current as SerializedProperty;
-
-                if (extensionProperty == null || extensionProperty.depth > depth + 1)
-                    continue;
-
-                EditorGUILayout.PropertyField(extensionProperty, true);
-            }
-
-            //EditorGUILayout.PropertyField(serializedObject.FindProperty("_extensions"));
+            ExtensionEditorUtility.DrawExtensions(serializedObject);
 
             void EditorContent()
             {

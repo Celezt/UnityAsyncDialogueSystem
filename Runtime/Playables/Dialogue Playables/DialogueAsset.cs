@@ -5,6 +5,7 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using System;
 using Celezt.Text;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -14,7 +15,7 @@ using UnityEditor;
 
 namespace Celezt.DialogueSystem
 {
-    public class DialogueAsset : DSPlayableAsset, ITime
+    public class DialogueAsset : DSPlayableAsset, ITime, IExtensionCollection
     {
         public string Actor
         {
@@ -146,10 +147,19 @@ namespace Celezt.DialogueSystem
         private AnimationCurve? _runtimeVisibilityCurve;
         private List<ITag>? _tagSequence;
 
-        public void AddExtension(IExtension extension)
-        {
-            _extensions.Add(extension);
-        }
+        public void AddExtension(IExtensionCollection? extensions)
+            => ExtensionUtility.AddExtensions(this, extensions, _extensions);
+
+        public void AddExtension(IExtension? extension, UnityEngine.Object? reference = null)
+            => ExtensionUtility.AddExtension(this, extension, _extensions, reference);
+
+        public void RemoveExtension(Type type)
+            => ExtensionUtility.RemoveExtension(type, _extensions);
+
+        public bool Contains(Type type) => _extensions.Any(x => type.IsAssignableFrom(x.GetType()));
+
+        IEnumerator<IExtension> IEnumerable<IExtension>.GetEnumerator() => _extensions.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => _extensions.GetEnumerator();
 
         public void RefreshDialogue()
         {

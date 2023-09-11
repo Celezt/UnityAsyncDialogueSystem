@@ -56,9 +56,9 @@ namespace Celezt.DialogueSystem
                 if (type.GetInterface(nameof(IExtension)) == null)
                     throw new ExtensionsException($"Object with '{nameof(CreateExtensionAttribute)}' are required to be derived from '{nameof(IExtension)}'");
 
-                string name = type.Name.TrimDecoration("Extension").ToPascalCase();
-                _types[name] = type;
+                string name = ObjectNames.NicifyVariableName(type.Name.TrimDecoration("Extension"));
                 _names[type] = name;
+                _types[name] = type;
             }
         }
     }
