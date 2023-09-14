@@ -38,7 +38,8 @@ namespace Celezt.DialogueSystem.Editor
             if (_extension == null)
                 return;
 
-            _target = property.serializedObject.targetObject;
+            var serializedObject = property.serializedObject;
+            _target = serializedObject.targetObject;
             var collection = _target as IExtensionCollection;
             _extensionType = _extension.GetType();
             long rid = property.managedReferenceId;
@@ -78,9 +79,9 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     if (!ExtensionUtility.HasSelfReference(_target, newReference))
                     {
+                        Undo.RecordObject(_target, "Changed Extension Reference");
                         _extension.Reference = newReference;
                         EditorUtility.SetDirty(_target);
-                        Undo.RecordObject(_target, "Changed Extension Reference");
                     }
                 }
             }
@@ -118,10 +119,10 @@ namespace Celezt.DialogueSystem.Editor
 
                         if (_extension.Reference != null)
                         {
-                            using var serializedObject = new SerializedObject(_extension.Reference);
-                            var serializedProperty = serializedObject.FindProperty(currentProperty.propertyPath);
+                            using var referenceSerializedObject = new SerializedObject(_extension.Reference);
+                            var referenceSerializedProperty = referenceSerializedObject.FindProperty(currentProperty.propertyPath);
 
-                            ExtensionEditorUtility.DrawHasModification(currentProperty, serializedProperty);
+                            ExtensionEditorUtility.DrawHasModification(currentProperty, referenceSerializedProperty);
                         }
                     }
                 }
@@ -146,17 +147,19 @@ namespace Celezt.DialogueSystem.Editor
                     menu.AddSeparator(null);
                     menu.AddItem(new GUIContent("Remove Extension"), false, () =>
                     {
+                        Undo.RecordObject(_target, "Removed Extension");
                         collection.RemoveExtension(_extensionType);
                         EditorUtility.SetDirty(_target);
-                        Undo.RecordObject(_target, "Removed Extension");
 
                     });
                 }
                 menu.DropDown(rect);
             }
+
+            serializedObject.UpdateIfRequiredOrScript();
         }
 
-        void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
+        private void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
         {
             var serializedObject = property.serializedObject;
 
@@ -176,22 +179,27 @@ namespace Celezt.DialogueSystem.Editor
                     if (_reference is IExtensionCollection otherCollection)
                     {
                         using var otherSerializedObject = new SerializedObject(_reference);
+                        var otherTarget = otherSerializedObject.targetObject;
                         var otherProperty = otherSerializedObject.FindProperty(property.propertyPath);
                         IExtension otherExtension = otherCollection.Extensions[int.Parse(path.AsSpan(23, endIndex - 23))];
 
                         if (!SerializedProperty.DataEquals(property, otherProperty))
                         {
+                            FieldInfo info = _extensionType!
+                                .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
                             menu.AddItem(new GUIContent($"Apply to Reference '{_reference.name}'"), false, () =>
                             {
-
+                                Undo.RecordObject(otherTarget, "Applied to Reference");
+                                info.SetValue(otherExtension, info.GetValue(_extension));
+                                EditorUtility.SetDirty(otherTarget);
+                                serializedObject.Update();
                             });
                             menu.AddItem(new GUIContent("Revert"), false, () =>
                             {
-                                FieldInfo info = _extensionType!
-                                    .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                                Undo.RecordObject(_target, "Reverted Value");
                                 info.SetValue(_extension, info.GetValue(otherExtension));
                                 EditorUtility.SetDirty(_target);
-                                Undo.RecordObject(_target, "Revert");
                                 serializedObject.Update();
                             });
                         }
