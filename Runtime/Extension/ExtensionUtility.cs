@@ -43,9 +43,11 @@ namespace Celezt.DialogueSystem
             Type type = toAdd.GetType();
             if (!extensions.Any(x => x.GetType() == type))  // Duplicates are not allowed.
             {
-                toAdd.Reference = reference; 
+                toAdd.Reference = reference;
 
+#if UNITY_EDITOR
                 if (!HasSelfReference(owner, toAdd.Reference))
+#endif
                     extensions.Add(toAdd);
             }
             else

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.VersionControl;
 using UnityEngine;
@@ -15,7 +16,10 @@ namespace Celezt.DialogueSystem.Editor
     {
         private static Dictionary<long, bool> _isOpens = new();
 
-        private long _currentRid;
+        private UnityEngine.Object? _target;
+        private UnityEngine.Object? _reference;
+        private Type? _extensionType;
+        private IExtension? _extension;
 
         public ExtensionDrawer()
         {
@@ -29,18 +33,18 @@ namespace Celezt.DialogueSystem.Editor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var extension = property.managedReferenceValue as IExtension;
+            _extension = property.managedReferenceValue as IExtension;
 
-            if (extension == null)
+            if (_extension == null)
                 return;
 
-            var target = property.serializedObject.targetObject;
-            var collection = target as IExtensionCollection;
-            Type extensionType = extension.GetType();
-            _currentRid = property.managedReferenceId;
+            _target = property.serializedObject.targetObject;
+            var collection = _target as IExtensionCollection;
+            _extensionType = _extension.GetType();
+            long rid = property.managedReferenceId;
 
-            if (!_isOpens.ContainsKey(_currentRid))
-                _isOpens.Add(_currentRid, true);
+            if (!_isOpens.ContainsKey(rid))
+                _isOpens.Add(rid, true);
 
             GUILayout.Space(-20);
 
@@ -48,7 +52,7 @@ namespace Celezt.DialogueSystem.Editor
 
             var color = GUI.backgroundColor;
             GUI.backgroundColor = new Color(1.1f, 1.1f, 1.1f);
-            var content = new GUIContent(Extensions.Names[extensionType]);
+            var content = new GUIContent(Extensions.Names[_extensionType]);
             Rect foldoutRect = GUILayoutUtility.GetRect(content, EditorStyles.foldoutHeader);
             foldoutRect.x += 14.0f;
             foldoutRect.width -= 14.0f;
@@ -69,20 +73,24 @@ namespace Celezt.DialogueSystem.Editor
             if (collection != null)
             {
                 EditorGUI.BeginChangeCheck();
-                var newReference = EditorGUI.ObjectField(referenceRect, GUIContent.none, extension.Reference, typeof(ExtensionObject), false);
+                var newReference = EditorGUI.ObjectField(referenceRect, GUIContent.none, _extension.Reference, typeof(ExtensionObject), false);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    if (!ExtensionUtility.HasSelfReference(target, newReference))
-                        extension.Reference = newReference;
+                    if (!ExtensionUtility.HasSelfReference(_target, newReference))
+                    {
+                        _extension.Reference = newReference;
+                        EditorUtility.SetDirty(_target);
+                        Undo.RecordObject(_target, "Changed Extension Reference");
+                    }
                 }
             }
 
-            bool isOpen = EditorGUI.BeginFoldoutHeaderGroup(foldoutRect, _isOpens[_currentRid], content, style, ShowHeaderContextMenu);
+            bool isOpen = EditorGUI.BeginFoldoutHeaderGroup(foldoutRect, _isOpens[rid], content, style, ShowHeaderContextMenu);
             EditorGUI.EndFoldoutHeaderGroup();
 
             // Need to draw it twice, the first for interaction and the second as overlay. Thanks Unity!
             if (collection != null)
-                EditorGUI.ObjectField(referenceRect, GUIContent.none, extension.Reference, typeof(ExtensionObject), false);
+                EditorGUI.ObjectField(referenceRect, GUIContent.none, _extension.Reference, typeof(ExtensionObject), false);
 
             GUI.backgroundColor = color;
 
@@ -108,9 +116,9 @@ namespace Celezt.DialogueSystem.Editor
 
                         EditorGUILayout.PropertyField(currentProperty, true);
 
-                        if (extension.Reference != null)
+                        if (_extension.Reference != null)
                         {
-                            using var serializedObject = new SerializedObject(extension.Reference);
+                            using var serializedObject = new SerializedObject(_extension.Reference);
                             var serializedProperty = serializedObject.FindProperty(currentProperty.propertyPath);
 
                             ExtensionEditorUtility.DrawHasModification(currentProperty, serializedProperty);
@@ -120,7 +128,8 @@ namespace Celezt.DialogueSystem.Editor
                 EditorGUI.indentLevel--;
             }
 
-            _isOpens[_currentRid] = isOpen;
+            _isOpens[rid] = isOpen;
+            _reference = _extension.Reference;
 
             void ShowHeaderContextMenu(Rect rect)
             {
@@ -129,17 +138,17 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     menu.AddItem(new GUIContent("Reset"), false, () =>
                     {
-                        var newExtension = (IExtension)Activator.CreateInstance(extensionType);
-                        newExtension.Reference = extension.Reference;
+                        var newExtension = (IExtension)Activator.CreateInstance(_extensionType);
+                        newExtension.Reference = _extension.Reference;
                         property.managedReferenceValue = newExtension;
-                       
+
                     });
                     menu.AddSeparator(null);
                     menu.AddItem(new GUIContent("Remove Extension"), false, () =>
                     {
-                        collection.RemoveExtension(extensionType);
-                        EditorUtility.SetDirty(target);
-                        Undo.RecordObject(target, "Removed Extension");
+                        collection.RemoveExtension(_extensionType);
+                        EditorUtility.SetDirty(_target);
+                        Undo.RecordObject(_target, "Removed Extension");
 
                     });
                 }
@@ -149,6 +158,12 @@ namespace Celezt.DialogueSystem.Editor
 
         void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
         {
+            var serializedObject = property.serializedObject;
+
+            // If it is the current focused object.
+            if (_target == null || _target != serializedObject.targetObject)
+                return;
+
             // Only add menu item if it is a property of the extension.
             string path = property.propertyPath;
             if (path.StartsWith("_extensions.Array.data["))
@@ -158,17 +173,28 @@ namespace Celezt.DialogueSystem.Editor
 
                 if (!containSubProperties)  // Skip if it is a sub property.
                 {
-                    int arrayIndex = int.Parse(path.AsSpan(23, endIndex - 23));
-
-                    var parentProperty = property.serializedObject.FindProperty($"_extensions.Array.data[{arrayIndex}]");
-
-                    // If it is the current focused extension.
-                    if (parentProperty.managedReferenceId == _currentRid)
+                    if (_reference is IExtensionCollection otherCollection)
                     {
-                        menu.AddItem(new GUIContent("Reset"), false, () =>
-                        {
+                        using var otherSerializedObject = new SerializedObject(_reference);
+                        var otherProperty = otherSerializedObject.FindProperty(property.propertyPath);
+                        IExtension otherExtension = otherCollection.Extensions[int.Parse(path.AsSpan(23, endIndex - 23))];
 
-                        });
+                        if (!SerializedProperty.DataEquals(property, otherProperty))
+                        {
+                            menu.AddItem(new GUIContent($"Apply to Reference '{_reference.name}'"), false, () =>
+                            {
+
+                            });
+                            menu.AddItem(new GUIContent("Revert"), false, () =>
+                            {
+                                FieldInfo info = _extensionType!
+                                    .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                                info.SetValue(_extension, info.GetValue(otherExtension));
+                                EditorUtility.SetDirty(_target);
+                                Undo.RecordObject(_target, "Revert");
+                                serializedObject.Update();
+                            });
+                        }
                     }
                 }
             }
