@@ -4,14 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
-using UnityEditor.VersionControl;
 using UnityEngine;
 
 #nullable enable
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomPropertyDrawer(typeof(Extension), true)]
+    [CustomPropertyDrawer(typeof(Extension<>), true)]
     public class ExtensionDrawer : PropertyDrawer
     {
         private static Dictionary<long, bool> _isOpens = new();
@@ -144,6 +143,17 @@ namespace Celezt.DialogueSystem.Editor
                         property.managedReferenceValue = newExtension;
 
                     });
+                    if (_reference != null)
+                    {
+                        menu.AddItem(new GUIContent($"Modified Extension/Apply to Object '{_reference.name}'"), false, () =>
+                        {
+
+                        });
+                    }
+                    menu.AddItem(new GUIContent("Modified Extension/Revert"), false, () =>
+                    {
+
+                    });
                     menu.AddSeparator(null);
                     menu.AddItem(new GUIContent("Remove Extension"), false, () =>
                     {
@@ -179,7 +189,6 @@ namespace Celezt.DialogueSystem.Editor
                     if (_reference is IExtensionCollection otherCollection)
                     {
                         using var otherSerializedObject = new SerializedObject(_reference);
-                        var otherTarget = otherSerializedObject.targetObject;
                         var otherProperty = otherSerializedObject.FindProperty(property.propertyPath);
                         IExtension otherExtension = otherCollection.Extensions[int.Parse(path.AsSpan(23, endIndex - 23))];
 
@@ -190,9 +199,9 @@ namespace Celezt.DialogueSystem.Editor
 
                             menu.AddItem(new GUIContent($"Apply to Reference '{_reference.name}'"), false, () =>
                             {
-                                Undo.RecordObject(otherTarget, "Applied to Reference");
+                                Undo.RecordObject(_reference, "Applied to Reference");
                                 info.SetValue(otherExtension, info.GetValue(_extension));
-                                EditorUtility.SetDirty(otherTarget);
+                                EditorUtility.SetDirty(_reference);
                                 serializedObject.Update();
                             });
                             menu.AddItem(new GUIContent("Revert"), false, () =>

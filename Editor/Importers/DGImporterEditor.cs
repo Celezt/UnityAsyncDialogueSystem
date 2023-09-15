@@ -30,7 +30,7 @@ namespace Celezt.DialogueSystem.Editor
             if (extension.IsEmpty || extension.IsWhiteSpace())
                 return false;
 
-            if (!MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION.AsSpan(), StringComparison.Ordinal))
+            if (!System.MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION.AsSpan(), StringComparison.Ordinal))
                 return false;
 
             foreach (var w in Resources.FindObjectsOfTypeAll<DGEditorWindow>())

@@ -6,9 +6,19 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [Serializable]
-    public abstract class Extension : IExtension
+    public abstract class Extension<T> : IExtension where T : UnityEngine.Object
     {
-        public UnityEngine.Object Reference
+        public T Asset => (T)_target;
+
+        public IReadOnlyDictionary<string, bool> PropertiesModified => _propertiesModified;
+
+        UnityEngine.Object IExtension.Target
+        {
+            get => _target;
+            set => _target = value;
+        }
+
+        UnityEngine.Object IExtension.Reference
         {
             get => _reference;
             set => _reference = value;
@@ -16,5 +26,11 @@ namespace Celezt.DialogueSystem
 
         [SerializeField, HideInInspector]
         private UnityEngine.Object _reference;
+
+        [SerializeField, HideInInspector]
+        private UnityEngine.Object _target;
+
+        [SerializeField, HideInInspector]
+        private SerializableDictionary<string, bool> _propertiesModified = new();
     }
 }

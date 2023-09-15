@@ -5,7 +5,6 @@ using System.Linq;
 using UnityEditor.VersionControl;
 using UnityEditor;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
 
 #nullable enable
 
@@ -36,7 +35,8 @@ namespace Celezt.DialogueSystem.Editor
 
         public static void DrawExtensions(SerializedObject serializedObject)
         {
-            var asset = serializedObject.targetObject as IExtensionCollection;
+            var target = serializedObject.targetObject;
+            var asset = target as IExtensionCollection;
 
             if (asset == null)
                 return;
@@ -52,8 +52,11 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     Type type = Extensions.Types[ExtensionOptions[index]];
 
-                    asset.AddExtension((IExtension)Activator.CreateInstance(type));
-                    EditorUtility.SetDirty(serializedObject.targetObject);
+                    Undo.RecordObject(target, $"Added Extension '{Extensions.Names[type]}'");
+                    IExtension extension = (IExtension)Activator.CreateInstance(type);
+                    extension.Target = target;
+                    asset.AddExtension(extension);
+                    EditorUtility.SetDirty(target);
                     serializedObject.Update();
                 }
             }

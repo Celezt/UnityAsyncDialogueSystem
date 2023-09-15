@@ -45,9 +45,7 @@ namespace Celezt.DialogueSystem
             {
                 toAdd.Reference = reference;
 
-#if UNITY_EDITOR
                 if (!HasSelfReference(owner, toAdd.Reference))
-#endif
                     extensions.Add(toAdd);
             }
             else

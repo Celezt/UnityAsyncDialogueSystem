@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [CreateExtension]
-    public class ActorExtension : Extension
+    public class ActorExtension : Extension<DialogueAsset>
     {
         [SerializeField]
         private int _integer = 1;

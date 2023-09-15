@@ -105,7 +105,7 @@ namespace Celezt.DialogueSystem.Editor
             if (Path.HasExtension(path))
             {
                 ReadOnlySpan<char> extension = Path.GetExtension(path);
-                if (MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION, StringComparison.Ordinal))
+                if (System.MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION, StringComparison.Ordinal))
                     return true;
             }
 
@@ -117,7 +117,7 @@ namespace Celezt.DialogueSystem.Editor
             if (Path.HasExtension(path))
             {
                 ReadOnlySpan<char> extension = Path.GetExtension(path.AsSpan());
-                if (!MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION, StringComparison.Ordinal))
+                if (!System.MemoryExtensions.Equals(extension, DGImporter.FILE_EXTENSION, StringComparison.Ordinal))
                     return false;
             }
             else 

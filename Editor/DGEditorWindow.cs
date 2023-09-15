@@ -334,7 +334,7 @@ namespace Celezt.DialogueSystem.Editor
                 if (string.IsNullOrWhiteSpace(newFilePath))
                     return saveFilePath;
 
-                if (!MemoryExtensions.Equals(newFilePath, oldFilePath, StringComparison.Ordinal))
+                if (!System.MemoryExtensions.Equals(newFilePath, oldFilePath, StringComparison.Ordinal))
                 {
                     string serializedJSON = JsonUtility.SerializeGraph(DG_VERSION, SelectedGuid, _graphView);
 
