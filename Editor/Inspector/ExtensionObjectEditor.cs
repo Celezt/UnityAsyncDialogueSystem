@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.VersionControl;
 using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
@@ -15,7 +14,10 @@ namespace Celezt.DialogueSystem.Editor
         {
             var asset = serializedObject.targetObject as ExtensionObject;
 
-            ExtensionEditorUtility.DrawExtensions(serializedObject);
+            ExtensionEditorUtility.DrawExtensions(serializedObject, typeof(DialogueAsset));
+
+            serializedObject.ApplyModifiedProperties();
+            serializedObject.UpdateIfRequiredOrScript();
         }
     }
 }

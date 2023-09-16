@@ -12,29 +12,42 @@ namespace Celezt.DialogueSystem.Editor
 {
     internal static class ExtensionEditorUtility
     {
-        public static string[] ExtensionOptions
+        public static IReadOnlyDictionary<Type, string[]> ExtensionOptions
         {
             get
             {
                 if (_extensionOptions == null)
                 {
-                    IEnumerable<string> extensions = Extensions.Types.Keys;
-                    _extensionOptions = new string[extensions.Count() + 1];
-                    _extensionOptions[0] = "(Select)";
+                    _extensionOptions = new();
 
-                    int count = 1;
-                    foreach (string extension in extensions)
-                        _extensionOptions[count++] = extension;
+                    foreach (Type genericType in Extensions.GenericTypes)
+                    {
+                        Type argumentType = genericType.GetGenericArguments()[0];
+                        var assignableFrom = Extensions.GetAssignableFrom(genericType);
+                        var options = new string[assignableFrom.Count() + 1];
+                        options[0] = "(Select)";
+                        int count = 1;
+                        foreach (var type in assignableFrom)
+                            options[count++] = Extensions.Names[type];
+
+                        _extensionOptions[argumentType] = options;
+                    }
                 }
 
                 return _extensionOptions;
             }
         }
 
-        private static string[]? _extensionOptions;
+        private static Dictionary<Type, string[]>? _extensionOptions;
 
-        public static void DrawExtensions(SerializedObject serializedObject)
+        public static void DrawExtensions(SerializedObject serializedObject, Type targetType)
         {
+            if (!ExtensionOptions.TryGetValue(targetType, out string[] options))
+            {
+                Debug.LogError($"Target Type: {targetType} has no valid extension options");
+                return;
+            }
+
             var target = serializedObject.targetObject;
             var asset = target as IExtensionCollection;
 
@@ -47,10 +60,10 @@ namespace Celezt.DialogueSystem.Editor
                 EditorGUILayout.LabelField("Add Extension");
 
                 EditorGUI.BeginChangeCheck();
-                int index = EditorGUILayout.Popup(0, ExtensionOptions);
+                int index = EditorGUILayout.Popup(0, options);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    Type type = Extensions.Types[ExtensionOptions[index]];
+                    Type type = Extensions.Types[options[index]];
 
                     Undo.RecordObject(target, $"Added Extension '{Extensions.Names[type]}'");
                     IExtension extension = (IExtension)Activator.CreateInstance(type);

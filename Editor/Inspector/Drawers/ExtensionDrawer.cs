@@ -165,8 +165,6 @@ namespace Celezt.DialogueSystem.Editor
                 }
                 menu.DropDown(rect);
             }
-
-            serializedObject.UpdateIfRequiredOrScript();
         }
 
         private void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)

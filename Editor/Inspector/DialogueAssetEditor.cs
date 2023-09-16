@@ -44,7 +44,10 @@ namespace Celezt.DialogueSystem.Editor
                     break;
             }
 
-            ExtensionEditorUtility.DrawExtensions(serializedObject);
+            ExtensionEditorUtility.DrawExtensions(serializedObject, typeof(DialogueAsset));
+
+            serializedObject.ApplyModifiedProperties();
+            serializedObject.UpdateIfRequiredOrScript();
 
             void EditorContent()
             {

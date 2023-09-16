@@ -13,6 +13,20 @@ namespace Celezt.DialogueSystem
     [CreateExtension]
     public class TextExtension : Extension<DialogueAsset>
     {
+        public int Index => GetIndexByTime(Asset.Director.time);
+
+        public float Tangent => GetTangentByTime(Asset.Director.time);
+
+        /// <summary>
+        /// How much time has passed in unit interval [0-1].
+        /// </summary>
+        public float Interval => GetIntervalByTime(Asset.Director.time);
+
+        /// <summary>
+        /// The ratio of visible characters in unit interval [0-1].
+        /// </summary>
+        public float VisibilityInterval => GetVisibilityByTime(Asset.Director.time);
+
         public AnimationCurve EditorVisibilityCurve => _editorVisibilityCurve;
 
         public AnimationCurve RuntimeVisibilityCurve
@@ -52,8 +66,46 @@ namespace Celezt.DialogueSystem
             }
         }
 
+        public float TimeDurationWithoutOffset => Asset.TimeDuration - EndOffset - StartOffset;
+
+        public float StartOffset
+        {
+            get => _startOffset;
+            set
+            {
+                if (_startOffset == value)
+                    return;
+
+                _startOffset = Mathf.Clamp(value, 0, Asset.TimeDuration - _endOffset);
+
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(Asset);
+#endif
+            }
+        }
+
+        public float EndOffset
+        {
+            get => _endOffset;
+            set
+            {
+                if (_endOffset == value)
+                    return;
+
+                _endOffset = Mathf.Clamp(value, 0, Asset.TimeDuration - _startOffset);
+
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(Asset);
+#endif
+            }
+        }
+
         [SerializeField, TextArea(10, int.MaxValue)]
         private string _editorText = string.Empty;
+        [SerializeField, Min(0)]
+        private float _startOffset;
+        [SerializeField, Min(0)]
+        private float _endOffset;
         [SerializeField]
         private AnimationCurve _editorVisibilityCurve = AnimationCurve.Linear(0, 0, 1, 1);
 
@@ -129,7 +181,7 @@ namespace Celezt.DialogueSystem
         public float GetVisibilityByTime(double time, CurveType curveType = CurveType.Runtime)
             => GetVisibilityByTimeInterval(GetIntervalByTime(time), curveType);
 
-        public float GetIntervalByTime(double time) => Mathf.Clamp01((float)((time - Asset.StartTime - Asset.StartOffset) / Asset.TimeDurationWithoutOffset));
+        public float GetIntervalByTime(double time) => Mathf.Clamp01((float)((time - Asset.StartTime - StartOffset) / TimeDurationWithoutOffset));
 
         public float GetVisibilityByTimeInterval(float timeInterval, CurveType curveType = CurveType.Runtime) => curveType switch
         {
@@ -166,7 +218,7 @@ namespace Celezt.DialogueSystem
         /// </summary>
         /// <returns>If any intersections exist.</returns>
         public bool TryGetTimeByIndex(int index, out double time, out float visibility, CurveType curveType = CurveType.Runtime)
-            => TryGetTimeByIndex(index, Asset.StartTime + Asset.StartOffset, Asset.TimeDurationWithoutOffset, out time, out visibility, curveType);
+            => TryGetTimeByIndex(index, Asset.StartTime + StartOffset, TimeDurationWithoutOffset, out time, out visibility, curveType);
         /// <summary>
         /// Try get first intersection by index.
         /// </summary>
@@ -183,7 +235,7 @@ namespace Celezt.DialogueSystem
                 visibility = GetVisibilityByTime(time, curveType);
                 float currentValue = visibility * Length;
 
-                if (index == 0 && Asset.StartOffset > 0 ? previousValue <= index && currentValue > index :
+                if (index == 0 && StartOffset > 0 ? previousValue <= index && currentValue > index :
                                                     previousValue < index && currentValue >= index)
                     return true;
 

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [Serializable]
-    public abstract class Extension<T> : IExtension where T : UnityEngine.Object
+    public abstract class Extension<T> : IExtension<T> where T : UnityEngine.Object
     {
         public T Asset => (T)_target;
 

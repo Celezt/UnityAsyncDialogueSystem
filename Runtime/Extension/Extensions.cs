@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -35,8 +36,29 @@ namespace Celezt.DialogueSystem
             }
         }
 
+        public static IReadOnlyCollection<Type> GenericTypes
+        {
+            get
+            {
+                if (_genericTypes == null)
+                    Initialize();
+
+                return _genericTypes!;
+            }
+        }
+
         private static Dictionary<string, Type>? _types;
         private static Dictionary<Type, string>? _names;
+        private static HashSet<Type>? _genericTypes;
+
+        public static IEnumerable<Type> GetAssignableFrom(Type assignableFrom)
+        {
+            foreach (var type in Types.Values)
+            {
+                if (assignableFrom.IsAssignableFrom(type))
+                    yield return type;
+            }
+        }
 
 #if UNITY_EDITOR
         static Extensions()
@@ -50,6 +72,7 @@ namespace Celezt.DialogueSystem
         {
             _types = new(StringComparer.OrdinalIgnoreCase);
             _names = new();
+            _genericTypes = new();
 
             foreach (Type type in ReflectionUtility.GetTypesWithAttribute<CreateExtensionAttribute>(AppDomain.CurrentDomain))
             {
@@ -59,6 +82,11 @@ namespace Celezt.DialogueSystem
                 string name = ObjectNames.NicifyVariableName(type.Name.TrimDecoration("Extension"));
                 _names[type] = name;
                 _types[name] = type;
+
+                // If it inherits IExtension<>.
+                Type? genericType = type.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IExtension<>));
+                if (genericType != null)
+                    _genericTypes.Add(genericType);
             }
         }
     }
