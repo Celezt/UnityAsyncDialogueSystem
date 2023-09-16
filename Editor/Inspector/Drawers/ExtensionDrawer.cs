@@ -17,7 +17,6 @@ namespace Celezt.DialogueSystem.Editor
 
         private UnityEngine.Object? _target;
         private UnityEngine.Object? _reference;
-        private Type? _extensionType;
         private IExtension? _extension;
 
         public ExtensionDrawer()
@@ -30,7 +29,32 @@ namespace Celezt.DialogueSystem.Editor
             EditorApplication.contextualPropertyMenu -= OnPropertyContextMenu;
         }
 
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        public virtual void OnGUI(Rect position, SerializedProperty property, GUIContent label, IExtension extension) 
+        {
+            var iteratorProperty = property.Copy();
+            IEnumerator enumerator = iteratorProperty.GetEnumerator();
+            int depth = property.depth;
+
+            while (enumerator.MoveNext())
+            {
+                var currentProperty = enumerator.Current as SerializedProperty;
+
+                if (currentProperty == null || currentProperty.depth > depth + 1)
+                    continue;
+
+                EditorGUILayout.PropertyField(currentProperty, true);
+
+                if (extension.Reference != null)
+                {
+                    using var referenceSerializedObject = new SerializedObject(extension.Reference);
+                    var referenceSerializedProperty = referenceSerializedObject.FindProperty(currentProperty.propertyPath);
+
+                    ExtensionEditorUtility.DrawHasModification(currentProperty, referenceSerializedProperty);
+                }
+            }
+        }
+
+        public sealed override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             _extension = property.managedReferenceValue as IExtension;
 
@@ -40,7 +64,7 @@ namespace Celezt.DialogueSystem.Editor
             var serializedObject = property.serializedObject;
             _target = serializedObject.targetObject;
             var collection = _target as IExtensionCollection;
-            _extensionType = _extension.GetType();
+            Type extensionType = _extension.GetType();
             long rid = property.managedReferenceId;
 
             if (!_isOpens.ContainsKey(rid))
@@ -52,7 +76,7 @@ namespace Celezt.DialogueSystem.Editor
 
             var color = GUI.backgroundColor;
             GUI.backgroundColor = new Color(1.1f, 1.1f, 1.1f);
-            var content = new GUIContent(Extensions.Names[_extensionType]);
+            var content = new GUIContent(Extensions.Names[extensionType]);
             Rect foldoutRect = GUILayoutUtility.GetRect(content, EditorStyles.foldoutHeader);
             foldoutRect.x += 14.0f;
             foldoutRect.width -= 14.0f;
@@ -101,30 +125,9 @@ namespace Celezt.DialogueSystem.Editor
             if (isOpen)
             {
                 EditorGUI.indentLevel++;
-                if (GetType() == typeof(ExtensionDrawer))             // If not inherited.
-                {
-                    var iteratorProperty = property.Copy();
-                    IEnumerator enumerator = iteratorProperty.GetEnumerator();
-                    int depth = property.depth;
 
-                    while (enumerator.MoveNext())
-                    {
-                        var currentProperty = enumerator.Current as SerializedProperty;
+                OnGUI(position, property, label, _extension);
 
-                        if (currentProperty == null || currentProperty.depth > depth + 1)
-                            continue;
-
-                        EditorGUILayout.PropertyField(currentProperty, true);
-
-                        if (_extension.Reference != null)
-                        {
-                            using var referenceSerializedObject = new SerializedObject(_extension.Reference);
-                            var referenceSerializedProperty = referenceSerializedObject.FindProperty(currentProperty.propertyPath);
-
-                            ExtensionEditorUtility.DrawHasModification(currentProperty, referenceSerializedProperty);
-                        }
-                    }
-                }
                 EditorGUI.indentLevel--;
             }
 
@@ -138,7 +141,7 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     menu.AddItem(new GUIContent("Reset"), false, () =>
                     {
-                        var newExtension = (IExtension)Activator.CreateInstance(_extensionType);
+                        var newExtension = (IExtension)Activator.CreateInstance(extensionType);
                         newExtension.Reference = _extension.Reference;
                         property.managedReferenceValue = newExtension;
 
@@ -158,7 +161,7 @@ namespace Celezt.DialogueSystem.Editor
                     menu.AddItem(new GUIContent("Remove Extension"), false, () =>
                     {
                         Undo.RecordObject(_target, "Removed Extension");
-                        collection.RemoveExtension(_extensionType);
+                        collection.RemoveExtension(extensionType);
                         EditorUtility.SetDirty(_target);
 
                     });
@@ -192,7 +195,7 @@ namespace Celezt.DialogueSystem.Editor
 
                         if (!SerializedProperty.DataEquals(property, otherProperty))
                         {
-                            FieldInfo info = _extensionType!
+                            FieldInfo info = _extension!.GetType()
                                 .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
                             menu.AddItem(new GUIContent($"Apply to Reference '{_reference.name}'"), false, () =>
