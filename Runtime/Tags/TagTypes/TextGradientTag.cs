@@ -6,12 +6,12 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
     [CreateTag]
-    public class TextGradientTag : TagSpan<DialogueAsset>
+    public class TextGradientTag : TagSpan<ITagText>
     {
         [Implicit]
         public string Color { get; set; }
 
-        public override void OnCreate(RangeInt range, DialogueAsset binder)
+        public override void OnCreate(RangeInt range, ITagText binder)
         {
             if (string.IsNullOrWhiteSpace(Color))
                 return;

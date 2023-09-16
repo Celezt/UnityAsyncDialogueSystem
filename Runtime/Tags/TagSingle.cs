@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    public class TagSingle<T> : TagSingle where T : new()
+    public class TagSingle<T> : TagSingle
     {
         [NonSerialized]
         public new T? Binder => (T?)base.Binder;

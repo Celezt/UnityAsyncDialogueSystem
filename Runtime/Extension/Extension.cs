@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
@@ -24,6 +26,10 @@ namespace Celezt.DialogueSystem
             set => _reference = value;
         }
 
+        IReadOnlyDictionary<string, bool> IExtension.PropertiesModified => throw new NotImplementedException();
+
+        T IExtension<T>.Asset => throw new NotImplementedException();
+
         [SerializeField, HideInInspector]
         private UnityEngine.Object _reference;
 
@@ -32,5 +38,30 @@ namespace Celezt.DialogueSystem
 
         [SerializeField, HideInInspector]
         private SerializableDictionary<string, bool> _propertiesModified = new();
+
+        protected virtual void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip) { }
+        protected virtual void OnEnter(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData) { }
+        protected virtual void OnProcess(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData) { }
+        protected virtual void OnExit(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData) { }
+
+        void IExtension.OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip)
+        {
+            OnCreate(graph, go, clip);
+        }
+
+        void IExtension.OnEnter(Playable playable , FrameData info, IPlayableBehaviour mixer, object playerData)
+        {
+            OnEnter(playable, info, (DSMixerBehaviour)mixer, playerData);
+        }
+
+        void IExtension.OnProcess(Playable playable, FrameData info, IPlayableBehaviour mixer, object playerData)
+        {
+            OnProcess(playable,info, (DSMixerBehaviour)mixer, playerData);
+        }
+
+        void IExtension.OnExit(Playable playable, FrameData info, IPlayableBehaviour mixer, object playerData)
+        {
+            OnExit(playable, info, (DSMixerBehaviour)mixer, playerData);
+        }
     }
 }

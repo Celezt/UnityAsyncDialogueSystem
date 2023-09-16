@@ -14,27 +14,31 @@ namespace Celezt.DialogueSystem
         protected override void OnEnterClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             var asset = (DialogueAsset)behaviour.Asset;
-            float currentValue = asset.VisibilityInterval * asset.Length;
 
-            foreach (ITag tag in asset.TagSequence)
-            {
-                if (tag is ITagSpan tagSpan)
-                {
-                    var range = tagSpan.Range;
+            foreach (var extension in asset.Extensions)
+                extension.OnEnter(playable, info, this, playerData);
 
-                    if (asset.StartOffset == 0 && range.start == 0 && currentValue < 1 ||
-                        asset.EndOffset == 0 && range.end == asset.Length && currentValue > asset.Length - 1)
-                        tagSpan.OnEnter();
-                }
-                else if (tag is ITagSingle tagSingle)
-                {
-                    int index = tagSingle.Index;
+            //float currentValue = asset.VisibilityInterval * asset.Length;
 
-                    if (asset.StartOffset == 0 && index == 0 && currentValue < 1 ||
-                        asset.EndOffset == 0 && index == asset.Length && currentValue > asset.Length - 1)
-                        tagSingle.OnInvoke();
-                }
-            }
+            //foreach (ITag tag in asset.TagSequence)
+            //{
+            //    if (tag is ITagSpan tagSpan)
+            //    {
+            //        var range = tagSpan.Range;
+
+            //        if (asset.StartOffset == 0 && range.start == 0 && currentValue < 1 ||
+            //            asset.EndOffset == 0 && range.end == asset.Length && currentValue > asset.Length - 1)
+            //            tagSpan.OnEnter();
+            //    }
+            //    else if (tag is ITagSingle tagSingle)
+            //    {
+            //        int index = tagSingle.Index;
+
+            //        if (asset.StartOffset == 0 && index == 0 && currentValue < 1 ||
+            //            asset.EndOffset == 0 && index == asset.Length && currentValue > asset.Length - 1)
+            //            tagSingle.OnInvoke();
+            //    }
+            //}
 
             Binder.Internal_InvokeOnEnterDialogueClip(Track, behaviour);
         }
@@ -42,49 +46,53 @@ namespace Celezt.DialogueSystem
         protected override void OnProcessClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             var asset = (DialogueAsset)behaviour.Asset;
-            float currentValue = asset.VisibilityInterval * asset.Length;
 
-            foreach (ITag tag in asset.TagSequence)
-            {
-                if (tag is ITagSpan tagSpan)
-                {
-                    var range = tagSpan.Range;
+            foreach (var extension in asset.Extensions)
+                extension.OnProcess(playable, info, this, playerData);
 
-                    if (IsPlayingForward ? 
-                        (range.start == 0 && asset.StartOffset > 0 ?
-                            _previousValue <= range.start && currentValue > range.start :
-                            _previousValue < range.start && currentValue >= range.start) :
-                        (range.end == 0 && asset.StartOffset > 0 ?
-                            _previousValue > range.end && currentValue <= range.end :
-                            _previousValue >= range.end && currentValue < range.end))
-                        tagSpan.OnEnter();
-                    else if (IsPlayingForward ?
-                        (range.end == 0 && asset.StartOffset > 0 ?
-                            _previousValue <= range.end && currentValue > range.end :
-                            _previousValue < range.end && currentValue >= range.end) :
-                        (range.start == 0 && asset.StartOffset > 0 ?
-                            _previousValue > range.start && currentValue <= range.start :
-                            _previousValue >= range.start && currentValue < range.start))
-                        tagSpan.OnExit();
-                    else if (currentValue > range.start && currentValue < range.end)
-                        tagSpan.OnProcess(Mathf.RoundToInt(currentValue));
-                }
-                else if (tag is ITagSingle tagSingle)
-                {
-                    int index = tagSingle.Index;
+            //float currentValue = asset.VisibilityInterval * asset.Length;
 
-                    if (IsPlayingForward ?
-                    (index == 0 && asset.StartOffset > 0 ?
-                        _previousValue <= index && currentValue > index :
-                        _previousValue < index && currentValue >= index) :
-                    (index == 0 && asset.StartOffset > 0 ?
-                        _previousValue > index && currentValue <= index :
-                        _previousValue >= index && currentValue < index))
-                        tagSingle.OnInvoke();
-                }
-            }
+            //foreach (ITag tag in asset.TagSequence)
+            //{
+            //    if (tag is ITagSpan tagSpan)
+            //    {
+            //        var range = tagSpan.Range;
 
-            _previousValue = currentValue;
+            //        if (IsPlayingForward ? 
+            //            (range.start == 0 && asset.StartOffset > 0 ?
+            //                _previousValue <= range.start && currentValue > range.start :
+            //                _previousValue < range.start && currentValue >= range.start) :
+            //            (range.end == 0 && asset.StartOffset > 0 ?
+            //                _previousValue > range.end && currentValue <= range.end :
+            //                _previousValue >= range.end && currentValue < range.end))
+            //            tagSpan.OnEnter();
+            //        else if (IsPlayingForward ?
+            //            (range.end == 0 && asset.StartOffset > 0 ?
+            //                _previousValue <= range.end && currentValue > range.end :
+            //                _previousValue < range.end && currentValue >= range.end) :
+            //            (range.start == 0 && asset.StartOffset > 0 ?
+            //                _previousValue > range.start && currentValue <= range.start :
+            //                _previousValue >= range.start && currentValue < range.start))
+            //            tagSpan.OnExit();
+            //        else if (currentValue > range.start && currentValue < range.end)
+            //            tagSpan.OnProcess(Mathf.RoundToInt(currentValue));
+            //    }
+            //    else if (tag is ITagSingle tagSingle)
+            //    {
+            //        int index = tagSingle.Index;
+
+            //        if (IsPlayingForward ?
+            //        (index == 0 && asset.StartOffset > 0 ?
+            //            _previousValue <= index && currentValue > index :
+            //            _previousValue < index && currentValue >= index) :
+            //        (index == 0 && asset.StartOffset > 0 ?
+            //            _previousValue > index && currentValue <= index :
+            //            _previousValue >= index && currentValue < index))
+            //            tagSingle.OnInvoke();
+            //    }
+            //}
+
+            //_previousValue = currentValue;
 
             Binder.Internal_InvokeOnProcessDialogueClip(Track, behaviour);
         }
@@ -92,27 +100,31 @@ namespace Celezt.DialogueSystem
         protected override void OnExitClip(Playable playable, DSPlayableBehaviour behaviour, FrameData info, object playerData)
         {
             var asset = (DialogueAsset)behaviour.Asset;
-            float currentValue = asset.VisibilityInterval * asset.Length;
 
-            foreach (ITag tag in asset.TagSequence)
-            {
-                if (tag is ITagSpan tagSpan)
-                {
-                    var range = tagSpan.Range;
+            foreach (var extension in asset.Extensions)
+                extension.OnExit(playable, info, this, playerData);
 
-                    if (asset.EndOffset == 0 && range.end == asset.Length && currentValue > asset.Length - 1 ||
-                        asset.StartOffset == 0 && range.start == 0 && currentValue < 1)
-                        tagSpan.OnExit();
-                }
-                else if (tag is ITagSingle tagSingle)
-                {
-                    int index = tagSingle.Index;
+            //float currentValue = asset.VisibilityInterval * asset.Length;
 
-                    if (asset.EndOffset == 0 && index == asset.Length && currentValue > asset.Length - 1 ||
-                        asset.StartOffset == 0 && index == 0 && currentValue < 1)
-                        tagSingle.OnInvoke();
-                }
-            }
+            //foreach (ITag tag in asset.TagSequence)
+            //{
+            //    if (tag is ITagSpan tagSpan)
+            //    {
+            //        var range = tagSpan.Range;
+
+            //        if (asset.EndOffset == 0 && range.end == asset.Length && currentValue > asset.Length - 1 ||
+            //            asset.StartOffset == 0 && range.start == 0 && currentValue < 1)
+            //            tagSpan.OnExit();
+            //    }
+            //    else if (tag is ITagSingle tagSingle)
+            //    {
+            //        int index = tagSingle.Index;
+
+            //        if (asset.EndOffset == 0 && index == asset.Length && currentValue > asset.Length - 1 ||
+            //            asset.StartOffset == 0 && index == 0 && currentValue < 1)
+            //            tagSingle.OnInvoke();
+            //    }
+            //}
 
             Binder.Internal_InvokeOnExitDialogueClip(Track, behaviour);
         }

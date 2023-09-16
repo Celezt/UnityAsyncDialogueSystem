@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 #nullable enable
@@ -17,6 +18,32 @@ namespace Celezt.DialogueSystem
         public void MoveUpExtension(Type type);
         public void MoveDownExtension(Type type);
 
-        public bool Contains(Type type);
+        public bool TryGetExtension<T>(out T? extension) where T : class
+        {
+            extension = null;
+
+            if (TryGetExtension(typeof(T), out var e))
+                extension = e as T;
+
+            return extension != null;
+        }
+
+        public bool TryGetExtension(Type type, out IExtension? extension)
+        {
+            extension = Extensions.FirstOrDefault(x => x.GetType().IsAssignableFrom(type));
+
+            return extension != null;
+        }
+
+        public IExtension? GetExtension(Type type)
+        {
+            if (TryGetExtension(type, out var extension))
+                return extension;
+
+            return null;
+        }
+
+        public bool Contains(Type type)
+            => Extensions.Any(x => type.IsAssignableFrom(x.GetType()));
     }
 }

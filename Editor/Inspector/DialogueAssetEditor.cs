@@ -34,6 +34,8 @@ namespace Celezt.DialogueSystem.Editor
 
             _toolbarIndex = GUILayout.Toolbar(_toolbarIndex, _toolbar);
 
+            EditorGUILayout.Space(20);
+
             switch (_toolbarIndex)
             {
                 case 0:
@@ -51,83 +53,83 @@ namespace Celezt.DialogueSystem.Editor
             serializedObject.ApplyModifiedProperties();
             serializedObject.UpdateIfRequiredOrScript();
 
-            void EditorContent()
-            {
-                EditorGUILayout.LabelField("Actor");
+            //void EditorContent()
+            //{
+            //    EditorGUILayout.LabelField("Actor");
 
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("_actor"), GUIContent.none);
+            //    EditorGUILayout.PropertyField(serializedObject.FindProperty("_actor"), GUIContent.none);
 
-                EditorGUILayout.Space(8);
-                EditorGUILayout.LabelField("Text");
-                EditorStyles.textField.wordWrap = true;
-                EditorGUI.BeginChangeCheck();
-                var textProperty = serializedObject.FindProperty("_editorText");
-                textProperty.stringValue = EditorGUILayout.TextArea(textProperty.stringValue, GUILayout.MinHeight(150));
-                if (EditorGUI.EndChangeCheck())
-                {
-                    serializedObject.ApplyModifiedProperties();
-                    asset.RefreshDialogue();
-                }
+            //    EditorGUILayout.Space(8);
+            //    EditorGUILayout.LabelField("Text");
+            //    EditorStyles.textField.wordWrap = true;
+            //    EditorGUI.BeginChangeCheck();
+            //    var textProperty = serializedObject.FindProperty("_editorText");
+            //    textProperty.stringValue = EditorGUILayout.TextArea(textProperty.stringValue, GUILayout.MinHeight(150));
+            //    if (EditorGUI.EndChangeCheck())
+            //    {
+            //        serializedObject.ApplyModifiedProperties();
+            //        asset.RefreshDialogue();
+            //    }
 
-                EditorGUILayout.LabelField("Visibility Settings", EditorStyles.boldLabel);
-                using (new EditorGUILayout.VerticalScope())
-                    EditorGUILayout.Space(6);
+            //    EditorGUILayout.LabelField("Visibility Settings", EditorStyles.boldLabel);
+            //    using (new EditorGUILayout.VerticalScope())
+            //        EditorGUILayout.Space(6);
 
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    float labelWidth = EditorGUIUtility.labelWidth;
-                    EditorGUIUtility.labelWidth = 10;
-                    asset.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
+            //    using (new EditorGUILayout.HorizontalScope())
+            //    {
+            //        float labelWidth = EditorGUIUtility.labelWidth;
+            //        EditorGUIUtility.labelWidth = 10;
+            //        asset.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
 
-                    EditorGUI.BeginChangeCheck();
-                    var curve = EditorGUILayout.CurveField(asset.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+            //        EditorGUI.BeginChangeCheck();
+            //        var curve = EditorGUILayout.CurveField(asset.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
 
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        Undo.RecordObject(asset, "Curve Modified");
-                        asset.RuntimeVisibilityCurve.keys = curve.keys;
-                        asset.UpdateTags();
-                        EditorUtility.SetDirty(asset);
-                    }
+            //        if (EditorGUI.EndChangeCheck())
+            //        {
+            //            Undo.RecordObject(asset, "Curve Modified");
+            //            asset.RuntimeVisibilityCurve.keys = curve.keys;
+            //            asset.UpdateTags();
+            //            EditorUtility.SetDirty(asset);
+            //        }
 
-                    GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
-                    asset.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
-                    EditorGUIUtility.labelWidth = labelWidth;
-                }
-            }
+            //        GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
+            //        asset.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
+            //        EditorGUIUtility.labelWidth = labelWidth;
+            //    }
+            //}
 
-            void RuntimeContent()
-            {
-                if (_runtimeText == null)
-                    _runtimeText = asset.RuntimeText.ToString();
+            //void RuntimeContent()
+            //{
+            //    if (_runtimeText == null)
+            //        _runtimeText = asset.RuntimeText.ToString();
 
-                EditorGUILayout.LabelField("Actor (Readonly)");
+            //    EditorGUILayout.LabelField("Actor (Readonly)");
 
-                EditorGUILayout.LabelField(asset.Actor, EditorStyles.textField);
+            //    EditorGUILayout.LabelField(asset.Actor, EditorStyles.textField);
 
-                EditorGUILayout.Space(8);
-                EditorGUILayout.LabelField("Text (Readonly)");
-                EditorStyles.textField.wordWrap = true;
-                EditorGUILayout.TextArea(_runtimeText, EditorStyles.textField, GUILayout.MinHeight(150));
+            //    EditorGUILayout.Space(8);
+            //    EditorGUILayout.LabelField("Text (Readonly)");
+            //    EditorStyles.textField.wordWrap = true;
+            //    EditorGUILayout.TextArea(_runtimeText, EditorStyles.textField, GUILayout.MinHeight(150));
 
-                EditorGUILayout.LabelField($"Text Info", infoTitleStyle);
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.LabelField($"Characters: {asset.Length}", infoStyle);
-                }
+            //    EditorGUILayout.LabelField($"Text Info", infoTitleStyle);
+            //    using (new EditorGUILayout.HorizontalScope())
+            //    {
+            //        EditorGUILayout.LabelField($"Characters: {asset.Length}", infoStyle);
+            //    }
 
-                EditorGUILayoutExtra.CurveField(asset.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
-                GUI.Box(GUILayoutUtility.GetLastRect(), _runtimeVisibilityCurveContent);
-                EditorGUILayout.LabelField($"Current Frame", infoTitleStyle);
+            //    EditorGUILayoutExtra.CurveField(asset.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+            //    GUI.Box(GUILayoutUtility.GetLastRect(), _runtimeVisibilityCurveContent);
+            //    EditorGUILayout.LabelField($"Current Frame", infoTitleStyle);
 
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    float visibility = asset.VisibilityInterval;
-                    EditorGUILayout.LabelField($"Visible: {(visibility * 100).ToString("0.#")}%", infoStyle);
-                    EditorGUILayout.LabelField($"Tan: {asset.Tangent.ToString("0.##")}", infoStyle);
-                    EditorGUILayout.LabelField($"Index: {asset.Index}", infoStyle);
-                }
-            }
+            //    using (new EditorGUILayout.HorizontalScope())
+            //    {
+            //        float visibility = asset.VisibilityInterval;
+            //        EditorGUILayout.LabelField($"Visible: {(visibility * 100).ToString("0.#")}%", infoStyle);
+            //        EditorGUILayout.LabelField($"Tan: {asset.Tangent.ToString("0.##")}", infoStyle);
+            //        EditorGUILayout.LabelField($"Index: {asset.Index}", infoStyle);
+            //    }
+            //}
         }
     }
 }

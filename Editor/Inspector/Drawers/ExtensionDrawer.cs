@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.Timeline;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 #nullable enable
 
@@ -29,7 +31,9 @@ namespace Celezt.DialogueSystem.Editor
             EditorApplication.contextualPropertyMenu -= OnPropertyContextMenu;
         }
 
-        public virtual void OnGUI(Rect position, SerializedProperty property, GUIContent label, IExtension extension) 
+        protected virtual void OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension) { }
+
+        protected virtual void OnDrawProperties(Rect position, SerializedProperty property, GUIContent label, IExtension extension) 
         {
             var iteratorProperty = property.Copy();
             IEnumerator enumerator = iteratorProperty.GetEnumerator();
@@ -129,11 +133,13 @@ namespace Celezt.DialogueSystem.Editor
 
             if (isOpen)
             {
+                EditorGUILayout.Space(4);
                 EditorGUI.indentLevel++;
 
-                OnGUI(position, property, label, _extension);
+                OnDrawProperties(position, property, label, _extension);
 
                 EditorGUI.indentLevel--;
+                EditorGUILayout.Space(10);
             }
 
             _isOpens[rid] = isOpen;
@@ -185,6 +191,11 @@ namespace Celezt.DialogueSystem.Editor
                 }
                 menu.DropDown(rect);
             }
+        }
+
+        internal void Internal_OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension)
+        {
+            OnDrawBackground(clip, region, extension);
         }
 
         private void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)

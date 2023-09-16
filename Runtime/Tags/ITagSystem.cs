@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    public interface ITagSystem<TTag, TBinder> where TTag : ITag where TBinder : new()
+    public interface ITagSystem<TTag, TBinder> where TTag : ITag
     {
         public void OnCreate(IReadOnlyList<TTag> entities, TBinder? binder);
     }

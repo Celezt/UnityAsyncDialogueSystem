@@ -41,10 +41,10 @@ namespace Celezt.DialogueSystem
             {
                 var asset = _dialogueClip.asset as DialogueAsset;
 
-                asset.EditorText = text;
-                asset.Actor = actorID;
-                asset.EditorVisibilityCurve.keys = timeSpeed.keys;
-                asset.EndOffset = endOffset;
+                //asset.EditorText = text;
+                //asset.Actor = actorID;
+                //asset.EditorVisibilityCurve.keys = timeSpeed.keys;
+                //asset.EndOffset = endOffset;
 
                 duration *= 1 / (speed * 15f);
                 duration += endOffset;

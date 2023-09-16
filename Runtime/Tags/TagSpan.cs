@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    public class TagSpan<T> : TagSpan where T : new()
+    public class TagSpan<T> : TagSpan
     {
         [NonSerialized]
         public new T? Binder => (T?)base.Binder;

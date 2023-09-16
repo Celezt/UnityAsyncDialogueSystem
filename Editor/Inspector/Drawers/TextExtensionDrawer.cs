@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Timeline;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -12,9 +14,34 @@ namespace Celezt.DialogueSystem.Editor
         private static readonly GUIContent _editorVisibilityCurveContent = new("", "Editor visibility curve (x: time, y: visible)");
         private static readonly GUIContent _runtimeVisibilityCurveContent = new("", "Runtime visibility curve (x: time, y: visible)");
 
+        private static readonly Color _offsetBackgroundColour = new Color(0f, 0f, 0f, 0.2f);
+        private static readonly Color _timeSpeedCurveColour = new Color(0.7f, 0.9f, 1f, 0.2f);
+
         private string _runtimeText;
 
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label, IExtension extension)
+        protected override void OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension)
+        {
+            var asset = extension as TextExtension;
+
+            float length = (float)(clip.end - clip.start);
+            float ratio = (float)(region.endTime - region.startTime) / length;
+            float width = region.position.width / ratio;
+            float startWidthOffset = width * (float)(asset.StartOffset / length);
+            float endWidthOffset = width * (float)(asset.EndOffset / length);
+            float existingWidth = width - startWidthOffset - endWidthOffset;
+            var startOffsetRegion = new Rect(0, 0,
+                                        startWidthOffset, region.position.height);
+            var endOffsetRegion = new Rect(width - endWidthOffset, 0,
+                                        endWidthOffset, region.position.height);
+            var existingRegion = new Rect(0 + startWidthOffset, 0,
+                                        existingWidth, region.position.height);
+
+            EditorGUI.DrawRect(startOffsetRegion, _offsetBackgroundColour);
+            EditorGUI.DrawRect(endOffsetRegion, _offsetBackgroundColour);
+            EditorGUIExtra.DrawCurve(existingRegion, _timeSpeedCurveColour, asset.RuntimeVisibilityCurve);
+        }
+
+        protected override void OnDrawProperties(Rect position, SerializedProperty property, GUIContent label, IExtension extension)
         {
             var serializedObject = property.serializedObject;
             var target = serializedObject.targetObject;
@@ -25,15 +52,12 @@ namespace Celezt.DialogueSystem.Editor
             else
                 RuntimeContent();
 
-            EditorGUILayout.Space(10);
-
             void EditorContent()
             {
-                EditorGUILayout.Space(8);
                 EditorGUILayout.LabelField("Text");
                 EditorStyles.textField.wordWrap = true;
                 EditorGUI.BeginChangeCheck();
-                var textProperty = serializedObject.FindProperty("_editorText");
+                var textProperty = property.FindPropertyRelative("_editorText");
                 textProperty.stringValue = EditorGUILayout.TextArea(textProperty.stringValue, GUILayout.MinHeight(150));
                 if (EditorGUI.EndChangeCheck())
                 {
@@ -75,7 +99,6 @@ namespace Celezt.DialogueSystem.Editor
                 if (_runtimeText == null)
                     _runtimeText = textExtension.RuntimeText.ToString();
 
-                EditorGUILayout.Space(8);
                 EditorGUILayout.LabelField("Text (Readonly)");
                 EditorStyles.textField.wordWrap = true;
                 GUI.enabled = false;

@@ -8,12 +8,12 @@ using UnityEngine.UIElements;
 namespace Celezt.DialogueSystem
 {
     [CreateTag(int.MinValue)]
-    public class WaitTag : TagSingle<DialogueAsset>
+    public class WaitTag : TagSingle<ITimeIndex>
     {
         [Implicit]
         public float Duration { get; set; }
 
-        public override void OnCreate(int index, DialogueAsset binder)
+        public override void OnCreate(int index, ITimeIndex binder)
         {
             Debug.Assert(Duration >= 0, "Duration cannot be negative.");
             Duration = Mathf.Max(Duration, 0);
@@ -21,9 +21,9 @@ namespace Celezt.DialogueSystem
     }
 
     [CreateTagSystem]
-    public class WaitTagSystem : ITagSystem<WaitTag, DialogueAsset>
+    public class WaitTagSystem : ITagSystem<WaitTag, ITimeIndex>
     {
-        public void OnCreate(IReadOnlyList<WaitTag> entities, DialogueAsset binder)
+        public void OnCreate(IReadOnlyList<WaitTag> entities, ITimeIndex binder)
         {
             float waitDuration = 0;
 
