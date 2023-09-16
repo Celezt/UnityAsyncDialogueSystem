@@ -54,12 +54,24 @@ namespace Celezt.DialogueSystem
 
         public static void RemoveExtension(Type type, IList<IExtension> extensions)
         {
-            int indexExtension = extensions.FindIndex(x => type.IsAssignableFrom(x.GetType()));
+            int index = extensions.FindIndex(x => type.IsAssignableFrom(x.GetType()));
 
-            if (indexExtension < 0)
+            if (index < 0)
                 return;
 
-            extensions.RemoveAt(indexExtension);
+            extensions.RemoveAt(index);
+        }
+
+        public static void MoveUpExtension(Type type, IList<IExtension> extensions)
+        {
+            int index = extensions.FindIndex(x => type.IsAssignableFrom(x.GetType()));
+            extensions.Move(index, index - 1);  // Index 0 is at top.
+        }
+
+        public static void MoveDownExtension(Type type, IList<IExtension> extensions)
+        {
+            int index = extensions.FindIndex(x => type.IsAssignableFrom(x.GetType()));
+            extensions.Move(index, index + 1);  // Index 0 is at top.
         }
 
         public static bool HasSelfReference(UnityEngine.Object owner, UnityEngine.Object? reference)

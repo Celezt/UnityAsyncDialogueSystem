@@ -34,15 +34,15 @@ namespace Celezt.DialogueSystem.Editor
 
             _toolbarIndex = GUILayout.Toolbar(_toolbarIndex, _toolbar);
 
-            switch(_toolbarIndex)
+            switch (_toolbarIndex)
             {
                 case 0:
                     EditorOrRuntime.IsEditor = true;
-                    EditorContent();
+                    //EditorContent();
                     break;
                 case 1:
                     EditorOrRuntime.IsRuntime = true;
-                    RuntimeContent(); 
+                    //RuntimeContent();
                     break;
             }
 

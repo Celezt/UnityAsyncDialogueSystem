@@ -156,6 +156,11 @@ namespace Celezt.DialogueSystem
         public void RemoveExtension(Type type)
             => ExtensionUtility.RemoveExtension(type, _extensions);
 
+        public void MoveUpExtension(Type type)
+            => ExtensionUtility.MoveUpExtension(type, _extensions);
+        public void MoveDownExtension(Type type)
+            => ExtensionUtility.MoveDownExtension(type, _extensions);
+
         public bool Contains(Type type) => _extensions.Any(x => type.IsAssignableFrom(x.GetType()));
 
         IEnumerator<IExtension> IEnumerable<IExtension>.GetEnumerator() => _extensions.GetEnumerator();

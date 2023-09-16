@@ -14,6 +14,8 @@ namespace Celezt.DialogueSystem
         public void AddExtension(IExtensionCollection? extensions);
         public void AddExtension(IExtension? extension, UnityEngine.Object? reference = null);
         public void RemoveExtension(Type type);
+        public void MoveUpExtension(Type type);
+        public void MoveDownExtension(Type type);
 
         public bool Contains(Type type);
     }

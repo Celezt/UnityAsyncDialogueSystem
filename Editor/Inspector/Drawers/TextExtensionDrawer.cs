@@ -1,8 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.UIElements;
-using UnityEditor.VersionControl;
 using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
@@ -19,12 +17,15 @@ namespace Celezt.DialogueSystem.Editor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label, IExtension extension)
         {
             var serializedObject = property.serializedObject;
-            var asset = serializedObject.targetObject as DialogueAsset;
+            var target = serializedObject.targetObject;
+            var textExtension = extension as TextExtension;
 
             if (EditorOrRuntime.IsEditor)
                 EditorContent();
             else
                 RuntimeContent();
+
+            EditorGUILayout.Space(10);
 
             void EditorContent()
             {
@@ -37,7 +38,7 @@ namespace Celezt.DialogueSystem.Editor
                 if (EditorGUI.EndChangeCheck())
                 {
                     serializedObject.ApplyModifiedProperties();
-                    asset.RefreshDialogue();
+                    textExtension.RefreshDialogue();
                 }
 
                 EditorGUILayout.LabelField("Visibility Settings", EditorStyles.boldLabel);
@@ -50,21 +51,20 @@ namespace Celezt.DialogueSystem.Editor
                     EditorGUILayout.Space(14, false);
                     float labelWidth = EditorGUIUtility.labelWidth;
                     EditorGUIUtility.labelWidth = 10;
-                    asset.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
+                    textExtension.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
 
                     EditorGUI.BeginChangeCheck();
-                    var curve = EditorGUILayout.CurveField(asset.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
-
+                    var curve = EditorGUILayout.CurveField(textExtension.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
                     if (EditorGUI.EndChangeCheck())
                     {
-                        Undo.RecordObject(asset, "Curve Modified");
-                        asset.RuntimeVisibilityCurve.keys = curve.keys;
-                        asset.UpdateTags();
-                        EditorUtility.SetDirty(asset);
+                        Undo.RecordObject(target, "Curve Modified");
+                        textExtension.RuntimeVisibilityCurve.keys = curve.keys;
+                        textExtension.UpdateTags();
+                        EditorUtility.SetDirty(target);
                     }
 
                     GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
-                    asset.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
+                    textExtension.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
                     EditorGUIUtility.labelWidth = labelWidth;
                 }
                 EditorGUI.indentLevel++;
@@ -73,7 +73,7 @@ namespace Celezt.DialogueSystem.Editor
             void RuntimeContent()
             {
                 if (_runtimeText == null)
-                    _runtimeText = asset.RuntimeText.ToString();
+                    _runtimeText = textExtension.RuntimeText.ToString();
 
                 EditorGUILayout.Space(8);
                 EditorGUILayout.LabelField("Text (Readonly)");
@@ -93,14 +93,14 @@ namespace Celezt.DialogueSystem.Editor
                     float labelWidth = EditorGUIUtility.labelWidth;
                     EditorGUIUtility.labelWidth = 10;
                     GUI.enabled = false;
-                    EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.StartOffset, GUILayout.Width(50));
+                    EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
                     GUI.enabled = true;
 
-                    EditorGUILayoutExtra.CurveField(asset.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
+                    EditorGUILayoutExtra.CurveField(textExtension.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
                     GUI.Box(GUILayoutUtility.GetLastRect(), _runtimeVisibilityCurveContent);
 
                     GUI.enabled = false;
-                    EditorGUILayout.FloatField(_editorVisibilityOffsetContent, asset.EndOffset, GUILayout.Width(50));
+                    EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
                     GUI.enabled = true;
                     EditorGUIUtility.labelWidth = labelWidth;
                 }

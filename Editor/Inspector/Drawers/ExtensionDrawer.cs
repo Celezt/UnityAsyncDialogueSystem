@@ -35,6 +35,9 @@ namespace Celezt.DialogueSystem.Editor
             IEnumerator enumerator = iteratorProperty.GetEnumerator();
             int depth = property.depth;
 
+            if (EditorOrRuntime.IsRuntime)
+                GUI.enabled = false;
+
             while (enumerator.MoveNext())
             {
                 var currentProperty = enumerator.Current as SerializedProperty;
@@ -52,6 +55,8 @@ namespace Celezt.DialogueSystem.Editor
                     ExtensionEditorUtility.DrawHasModification(currentProperty, referenceSerializedProperty);
                 }
             }
+
+            GUI.enabled = true;
         }
 
         public sealed override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -160,10 +165,22 @@ namespace Celezt.DialogueSystem.Editor
                     menu.AddSeparator(null);
                     menu.AddItem(new GUIContent("Remove Extension"), false, () =>
                     {
-                        Undo.RecordObject(_target, "Removed Extension");
+                        Undo.RecordObject(_target, $"Removed Extension '{Extensions.Names[extensionType]}'");
                         collection.RemoveExtension(extensionType);
                         EditorUtility.SetDirty(_target);
 
+                    });
+                    menu.AddItem(new GUIContent("Move Up"), false, () =>
+                    {
+                        Undo.RecordObject(_target, $"Moved Up Extension '{Extensions.Names[extensionType]}'");
+                        collection.MoveUpExtension(extensionType);
+                        EditorUtility.SetDirty(_target);
+                    });
+                    menu.AddItem(new GUIContent("Move Down"), false, () =>
+                    {
+                        Undo.RecordObject(_target, $"Moved Down Extension '{Extensions.Names[extensionType]}'");
+                        collection.MoveDownExtension(extensionType);
+                        EditorUtility.SetDirty(_target);
                     });
                 }
                 menu.DropDown(rect);

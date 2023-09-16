@@ -121,7 +121,7 @@ namespace Celezt.DialogueSystem
             Span<char> span = stackalloc char[_editorText.Length];
             _editorText.AsSpan().CopyTo(span);
 
-            _tagSequence = Tags.GetTagSequence(span, this);
+            _tagSequence = Tags.GetTagSequence(span, Asset);
             _length = Tags.GetTextLength(span);
 
             _runtimeText?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
