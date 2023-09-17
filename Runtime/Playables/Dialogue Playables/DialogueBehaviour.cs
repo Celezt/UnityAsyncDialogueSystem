@@ -14,16 +14,6 @@ namespace Celezt.DialogueSystem
 
             foreach (var extension in asset.Extensions)
                 extension.OnCreate(graph, go, clip);
-
-            //            if (!asset.RuntimeText.IsEmpty)
-            //                clip.displayName = Tags.TrimTextTags(asset.RuntimeText.ReadOnlySpan);
-
-            //#if UNITY_EDITOR
-            //            if (asset.HasUpdated)
-            //                asset.HasUpdated = false;
-            //            else
-            //#endif
-            //                asset.UpdateTags();
         }
     }
 }

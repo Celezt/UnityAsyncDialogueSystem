@@ -15,6 +15,8 @@ namespace Celezt.DialogueSystem.Editor
     [CustomPropertyDrawer(typeof(Extension<>), true)]
     public class ExtensionDrawer : PropertyDrawer
     {
+        public virtual int Order => 0;
+
         private static Dictionary<long, bool> _isOpens = new();
 
         private UnityEngine.Object? _target;

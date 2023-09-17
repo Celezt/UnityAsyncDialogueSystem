@@ -102,9 +102,7 @@ namespace Celezt.DialogueSystem
         double ITime.Time => Asset.Director.time;
         double ITime.StartTime => Asset.StartTime;
         double ITime.EndTime => Asset.EndTime;
-
         double ITime.FrameRate => ((TimelineAsset)Asset.Director.playableAsset).editorSettings.frameRate;
-
 
         [SerializeField, TextArea(10, int.MaxValue)]
         private string _editorText = string.Empty;
