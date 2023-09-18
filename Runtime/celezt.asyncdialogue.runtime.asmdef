@@ -3,7 +3,8 @@
     "rootNamespace": "Celezt.DialogueSystem",
     "references": [
         "GUID:f06555f75b070af458a003d92f9efb00",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:afc64bd2d0b5b8d46bd27e8d8e151d68"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

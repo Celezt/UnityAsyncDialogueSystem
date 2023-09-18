@@ -6,6 +6,7 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.Events;
 using System;
+using Celezt.Timeline;
 
 namespace Celezt.DialogueSystem
 {

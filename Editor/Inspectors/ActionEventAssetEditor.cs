@@ -3,11 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Celezt.Timeline.Editor;
 
 namespace Celezt.DialogueSystem.Editor
 {
     [CustomEditor(typeof(ActionEventAsset), true)]
-    public class ActionEventAssetEditor : DSPlayableAssetEditor
+    public class ActionEventAssetEditor : PlayableAssetExtendedEditor
     {
         public override void BuildInspector()
         {

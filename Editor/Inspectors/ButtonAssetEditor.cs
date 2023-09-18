@@ -1,3 +1,4 @@
+using Celezt.Timeline.Editor;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem.Editor
 {
     [CustomEditor(typeof(ButtonAsset))]
-    public class ButtonAssetEditor : DSPlayableAssetEditor
+    public class ButtonAssetEditor : PlayableAssetExtendedEditor
     {
         public override void BuildInspector()
         {

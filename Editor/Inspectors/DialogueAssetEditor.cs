@@ -1,3 +1,4 @@
+using Celezt.Timeline.Editor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using UnityEngine.UIElements;
 namespace Celezt.DialogueSystem.Editor
 {
     [CustomEditor(typeof(DialogueAsset), true)]
-    public class DialogueAssetEditor : DSPlayableAssetEditor
+    public class DialogueAssetEditor : PlayableAssetExtendedEditor
     {
         private static readonly string[] _toolbar = new string[] { "Editor", "Runtime" };
 

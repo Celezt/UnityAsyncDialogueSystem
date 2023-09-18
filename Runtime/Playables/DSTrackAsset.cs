@@ -1,3 +1,4 @@
+using Celezt.Timeline;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,7 +15,6 @@ namespace Celezt.DialogueSystem
             GetBinder(graph);
 
             var template = new DSMixerBehaviour();
-            template.Binder = _binder;
 
             return template;
         }

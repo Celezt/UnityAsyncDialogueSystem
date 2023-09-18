@@ -1,3 +1,4 @@
+using Celezt.Timeline;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,7 +7,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
-using UnityEngine.UI;
 
 namespace Celezt.DialogueSystem
 {
@@ -103,7 +103,7 @@ namespace Celezt.DialogueSystem
                 _isActive.Value = true;
         }
 
-        public override void EnterClip(Playable playable, FrameData info, DialogueSystemBinder binder)
+        public override void EnterClip(Playable playable, FrameData info, object playerData)
         {
             ButtonAsset asset = Asset as ButtonAsset;
 
@@ -117,12 +117,12 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public override void ProcessFrame(Playable playable, FrameData info, DialogueSystemBinder binder)
+        public override void ProcessFrame(Playable playable, FrameData info, object playerData)
         {
             ProcessVisibility();
         }
 
-        public override void ExitClip(Playable playable, FrameData info, DialogueSystemBinder binder)
+        public override void ExitClip(Playable playable, FrameData info, object playerData)
         {
             Hide();
             BindButton();
