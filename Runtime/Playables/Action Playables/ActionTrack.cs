@@ -9,10 +9,10 @@ namespace Celezt.DialogueSystem
     [TrackColor(0.7f, 0.2f, 0.2f)]
     [TrackClipType(typeof(ActionAsset))]
     [TrackBindingType(typeof(ActionReceiver))]
-    public class ActionTrack : DSTrack
+    public class ActionTrack : TrackAssetExtended
     {
         protected ActionReceiver _receiver;
-        protected override DSMixerBehaviour CreateTrackMixer(PlayableGraph graph, PlayableDirector director, GameObject go, int inputCount)
+        protected override MixerBehaviourExtended CreateTrackMixer(PlayableGraph graph, PlayableDirector director, GameObject go, int inputCount)
         {
             GetReceiver(graph);
 

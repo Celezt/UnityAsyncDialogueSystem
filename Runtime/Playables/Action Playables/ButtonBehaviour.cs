@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace Celezt.DialogueSystem
 {
-    public class ButtonBehaviour : DSPlayableBehaviour
+    public class ButtonBehaviour : PlayableBehaviourExtended
     {
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
 

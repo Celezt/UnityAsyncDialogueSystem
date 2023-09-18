@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomEditor(typeof(DSTrack), true)]
+    [CustomEditor(typeof(TrackAssetExtended), true)]
     public class DSTrackEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()

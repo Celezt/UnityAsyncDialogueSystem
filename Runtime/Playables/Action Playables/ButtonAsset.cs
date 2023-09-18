@@ -22,7 +22,7 @@ namespace Celezt.DialogueSystem
         public AssetProcessor Condition;
         public ActionPlayableSettings Settings;
 
-        protected override DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner)
+        protected override PlayableBehaviourExtended CreateBehaviour(PlayableGraph graph, GameObject owner)
         {
             return new ButtonBehaviour();
         }

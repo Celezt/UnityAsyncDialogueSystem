@@ -7,34 +7,34 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
-    public abstract class DSTrack : TrackAsset
+    public abstract class TrackAssetExtended : UnityEngine.Timeline.TrackAsset
     {
-        public DSMixerBehaviour Mixer { get; internal set; }
+        public MixerBehaviourExtended Mixer { get; internal set; }
 
         protected PlayableDirector _director;
 
-        private HashSet<DSPlayableAsset> _pendingOnCreate = new HashSet<DSPlayableAsset>();
+        private HashSet<PlayableAssetExtended> _pendingOnCreate = new HashSet<PlayableAssetExtended>();
 
-        protected virtual DSMixerBehaviour CreateTrackMixer(PlayableGraph graph, PlayableDirector director, GameObject go, int inputCount) => new DSMixerBehaviour();
+        protected virtual MixerBehaviourExtended CreateTrackMixer(PlayableGraph graph, PlayableDirector director, GameObject go, int inputCount) => new MixerBehaviourExtended();
 
         public sealed override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)
         {
             if (_director == null)
                 _director = graph.GetResolver() as PlayableDirector;
 
-            DSMixerBehaviour template = CreateTrackMixer(graph, _director, go, inputCount);
+            MixerBehaviourExtended template = CreateTrackMixer(graph, _director, go, inputCount);
             template.Track = this;
 
             foreach (TimelineClip clip in GetClips())
             {
-                if (clip.asset is DSPlayableAsset)
+                if (clip.asset is PlayableAssetExtended)
                 {
-                    DSPlayableAsset asset = clip.asset as DSPlayableAsset;
+                    PlayableAssetExtended asset = clip.asset as PlayableAssetExtended;
                     asset.Clip = clip;
                     asset.Director = _director;
                     asset.IsReady = true;
 
-                    DSPlayableBehaviour behaviour = null;
+                    PlayableBehaviourExtended behaviour = null;
                     if (asset.BehaviourReference == null)
                         behaviour = asset.Initialization(graph, go);
                     else
@@ -56,12 +56,12 @@ namespace Celezt.DialogueSystem
                 }
             }
 
-            return ScriptPlayable<DSMixerBehaviour>.Create(graph, template, inputCount);
+            return ScriptPlayable<MixerBehaviourExtended>.Create(graph, template, inputCount);
         }
 
         protected override void OnCreateClip(TimelineClip clip)
         {
-            if (clip.asset is DSPlayableAsset asset)    // Waiting on being created.
+            if (clip.asset is PlayableAssetExtended asset)    // Waiting on being created.
                 _pendingOnCreate.Add(asset);
         }
     }

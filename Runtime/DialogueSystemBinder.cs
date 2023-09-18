@@ -33,7 +33,7 @@ namespace Celezt.DialogueSystem
         [SerializeField] private UnityEvent<Callback> OnProcessDialogueClip = new UnityEvent<Callback>();
         [SerializeField] private UnityEvent OnDeleteTimeline = new UnityEvent();
 
-        private Dictionary<DSTrack, object> _trackProperties = new Dictionary<DSTrack, object>();
+        private Dictionary<TrackAssetExtended, object> _trackProperties = new Dictionary<TrackAssetExtended, object>();
 
         private PlayableDirector _director;
 
@@ -63,12 +63,12 @@ namespace Celezt.DialogueSystem
             public readonly int Index;
             public readonly DialogueSystemBinder Binder;
             public readonly PlayableDirector Director;
-            public readonly DSPlayableAsset Asset;
-            public readonly DSPlayableBehaviour Behaviour;
-            public readonly DSTrack Track;
+            public readonly PlayableAssetExtended Asset;
+            public readonly PlayableBehaviourExtended Behaviour;
+            public readonly TrackAssetExtended Track;
             public readonly TimelineClip Clip;
 
-            internal Callback(DialogueSystemBinder binder, DSTrack track, DSPlayableBehaviour behaviour)
+            internal Callback(DialogueSystemBinder binder, TrackAssetExtended track, PlayableBehaviourExtended behaviour)
             {
                 Binder = binder;
                 Director = binder.Director;
@@ -82,19 +82,19 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        internal void Internal_InvokeOnEnterDialogueClip(DSTrack track, DSPlayableBehaviour behaviour)
+        internal void Internal_InvokeOnEnterDialogueClip(TrackAssetExtended track, PlayableBehaviourExtended behaviour)
         {
             OnEnterDialogueClip.Invoke(new Callback(this, track, behaviour));
             OnEnterDialogueClipCallback(new Callback(this, track, behaviour));
         }
 
-        internal void Internal_InvokeOnExitDialogueClip(DSTrack track, DSPlayableBehaviour behaviour)
+        internal void Internal_InvokeOnExitDialogueClip(TrackAssetExtended track, PlayableBehaviourExtended behaviour)
         {
             OnExitDialogueClip.Invoke(new Callback(this, track, behaviour));
             OnExitDialogueClipCallback(new Callback(this, track, behaviour));
         }
 
-        internal void Internal_InvokeOnProcessDialogueClip(DSTrack track, DSPlayableBehaviour behaviour)
+        internal void Internal_InvokeOnProcessDialogueClip(TrackAssetExtended track, PlayableBehaviourExtended behaviour)
         {
             OnProcessDialogueClip.Invoke(new Callback(this, track, behaviour));
             OnProcessDialogueClipCallback(new Callback(this, track, behaviour));
@@ -106,7 +106,7 @@ namespace Celezt.DialogueSystem
             OnDeleteTimelineCallback();
         }
 
-        internal DialogueSystemBinder Internal_Add(DialogueTrack track)
+        internal DialogueSystemBinder Internal_Add(TrackAssetExtended track)
         {
             if (!_trackProperties.ContainsKey(track))
                 _trackProperties.Add(track, null);
@@ -114,7 +114,7 @@ namespace Celezt.DialogueSystem
             return this;
         }
 
-        internal bool Internal_Remove(DialogueTrack track)
+        internal bool Internal_Remove(TrackAssetExtended track)
         {
             return _trackProperties.Remove(track);
         }

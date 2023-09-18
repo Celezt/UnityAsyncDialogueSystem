@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomEditor(typeof(DSPlayableAsset), true)]
+    [CustomEditor(typeof(PlayableAssetExtended), true)]
     public class DSPlayableAssetEditor : UnityEditor.Editor
     {
         public virtual void BuildInspector() { }

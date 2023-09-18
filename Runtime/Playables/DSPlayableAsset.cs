@@ -1,39 +1,42 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.Timeline;
 
-namespace Celezt.DialogueSystem 
+#nullable enable
+
+namespace Celezt.DialogueSystem
 {
-    /// <summary>
-    /// A base class for assets that can be used to instantiate a Playable at runtime.
-    /// </summary>
-    public abstract class DSPlayableAsset : PlayableAsset, ITimelineClipAsset
+    public abstract class DSPlayableAsset : PlayableAssetExtended, IExtensionCollection
     {
-        public new virtual string name => GetType().Name.Replace("Asset", "");
-        public virtual ClipCaps clipCaps => ClipCaps.None;
+        public double StartTime => Clip.start;
+        public double EndTime => Clip.end;
+        public float TimeDuration => (float)(EndTime - StartTime);
+        public IReadOnlyList<IExtension> Extensions => _extensions;
 
-        public bool IsReady { get; internal set; }
-        public TimelineClip Clip { get; internal set; }
-        public PlayableDirector Director { get; internal set; }
+#if UNITY_EDITOR
+        internal bool HasUpdated { get; set; }
+#endif
 
-        public DSPlayableBehaviour BehaviourReference => _template;
+        [SerializeReference]
+        private List<IExtension> _extensions = new();
 
-        [SerializeReference, HideInInspector]
-        private DSPlayableBehaviour _template;
-        
-        protected abstract DSPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner);
-         
-        public sealed override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
-        {
-            return ScriptPlayable<DSPlayableBehaviour>.Create(graph, _template);
-        }
+        public void AddExtension(IExtensionCollection? extensions)
+            => ExtensionUtility.AddExtensions(this, extensions, _extensions);
 
-        internal DSPlayableBehaviour Initialization(PlayableGraph graph, GameObject owner)
-        {
-            _template = CreateBehaviour(graph, owner);
-            return _template;
-        }
+        public void AddExtension(IExtension? extension, UnityEngine.Object? reference = null)
+            => ExtensionUtility.AddExtension(this, extension, _extensions, reference);
+
+        public void RemoveExtension(Type type)
+            => ExtensionUtility.RemoveExtension(type, _extensions);
+
+        public void MoveUpExtension(Type type)
+            => ExtensionUtility.MoveUpExtension(type, _extensions);
+        public void MoveDownExtension(Type type)
+            => ExtensionUtility.MoveDownExtension(type, _extensions);
+
+        IEnumerator<IExtension> IEnumerable<IExtension>.GetEnumerator() => _extensions.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => _extensions.GetEnumerator();
     }
 }

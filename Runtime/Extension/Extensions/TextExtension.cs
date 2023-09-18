@@ -164,7 +164,7 @@ namespace Celezt.DialogueSystem
                 UpdateTags();
         }
 
-        protected override void OnEnter(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData)
+        protected override void OnEnter(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData)
         {
             float currentValue = ((ITime)this).VisibilityInterval * Length;
 
@@ -189,7 +189,7 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        protected override void OnProcess(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData)
+        protected override void OnProcess(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData)
         {
             float currentValue = ((ITime)this).VisibilityInterval * Length;
 
@@ -236,7 +236,7 @@ namespace Celezt.DialogueSystem
             _previousValue = currentValue;
         }
 
-        protected override void OnExit(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData)
+        protected override void OnExit(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData)
         {
             float currentValue = ((ITime)this).VisibilityInterval * Length;
 

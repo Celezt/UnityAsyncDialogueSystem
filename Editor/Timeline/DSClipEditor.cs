@@ -6,12 +6,12 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.Timeline;
-using UnityEngine;
 using UnityEngine.Timeline;
+using UnityEngine;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomTimelineEditor(typeof(DialogueAsset))]
+    [CustomTimelineEditor(typeof(DSPlayableAsset))]
     public class DSClipEditor : ClipEditor
     {
         private static readonly Dictionary<Type, ExtensionDrawer> _extensionDrawers;

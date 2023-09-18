@@ -8,7 +8,7 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
-    public class ActionEventBehaviour : DSPlayableBehaviour
+    public class ActionEventBehaviour : PlayableBehaviourExtended
     {
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {

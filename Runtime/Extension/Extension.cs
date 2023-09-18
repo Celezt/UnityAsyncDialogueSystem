@@ -40,9 +40,9 @@ namespace Celezt.DialogueSystem
         private SerializableDictionary<string, bool> _propertiesModified = new();
 
         protected virtual void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip) { }
-        protected virtual void OnEnter(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData) { }
-        protected virtual void OnProcess(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData) { }
-        protected virtual void OnExit(Playable playable, FrameData info, DSMixerBehaviour mixer, object playerData) { }
+        protected virtual void OnEnter(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData) { }
+        protected virtual void OnProcess(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData) { }
+        protected virtual void OnExit(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData) { }
 
         void IExtension.OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
@@ -51,17 +51,17 @@ namespace Celezt.DialogueSystem
 
         void IExtension.OnEnter(Playable playable , FrameData info, IPlayableBehaviour mixer, object playerData)
         {
-            OnEnter(playable, info, (DSMixerBehaviour)mixer, playerData);
+            OnEnter(playable, info, (MixerBehaviourExtended)mixer, playerData);
         }
 
         void IExtension.OnProcess(Playable playable, FrameData info, IPlayableBehaviour mixer, object playerData)
         {
-            OnProcess(playable,info, (DSMixerBehaviour)mixer, playerData);
+            OnProcess(playable,info, (MixerBehaviourExtended)mixer, playerData);
         }
 
         void IExtension.OnExit(Playable playable, FrameData info, IPlayableBehaviour mixer, object playerData)
         {
-            OnExit(playable, info, (DSMixerBehaviour)mixer, playerData);
+            OnExit(playable, info, (MixerBehaviourExtended)mixer, playerData);
         }
     }
 }

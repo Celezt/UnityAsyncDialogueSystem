@@ -30,7 +30,7 @@ namespace Celezt.DialogueSystem
             int choiceCount = Convert.ToInt32(currentNode.Values["_choices"]);
 
             IEnumerable<DialogueTrack> dialogueTracks = timeline.GetOutputTracks().OfType<DialogueTrack>();
-            TrackAsset dialogueTrack = dialogueTracks.First();
+            UnityEngine.Timeline.TrackAsset dialogueTrack = dialogueTracks.First();
             double maxEnd = dialogueTracks.Max(x => x.end);
 
             double duration = text.Length;

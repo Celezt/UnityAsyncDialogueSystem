@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    public abstract class ActionAsset : DSPlayableAsset
+    public abstract class ActionAsset : PlayableAssetExtended
     {
 
     }

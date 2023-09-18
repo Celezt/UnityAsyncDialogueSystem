@@ -16,12 +16,12 @@ namespace Celezt.DialogueSystem
 
         private struct SnappedTrack : IEquatable<SnappedTrack>
         {
-            public TrackAsset Track;
+            public UnityEngine.Timeline.TrackAsset Track;
             public double End;
 
             public bool Equals(SnappedTrack other) => other.Track == Track;
 
-            public static implicit operator SnappedTrack(TrackAsset track) => new SnappedTrack { Track = track };
+            public static implicit operator SnappedTrack(UnityEngine.Timeline.TrackAsset track) => new SnappedTrack { Track = track };
         }
 
         protected override void OnInterpret(DSNode currentNode, DSNode previousNode, Dialogue dialogue, DialogueSystem system, TimelineAsset timeline)
@@ -98,7 +98,7 @@ namespace Celezt.DialogueSystem
                 // Offset dialogue clip.
                 //
                 {
-                    TrackAsset blendTrack = _availableDialogueTracks.FirstOrDefault(x => x.End <= _interpreter.DialogueClip.start - offsetBlend).Track;  // Find valid from before clip.
+                    UnityEngine.Timeline.TrackAsset blendTrack = _availableDialogueTracks.FirstOrDefault(x => x.End <= _interpreter.DialogueClip.start - offsetBlend).Track;  // Find valid from before clip.
                     _availableDialogueTracks.Remove(blendTrack);   // Remove available if found.
 
                     if (blendTrack == null)
@@ -123,7 +123,7 @@ namespace Celezt.DialogueSystem
                             {
                                 foreach (var clip in actionInterpreter.ActionClips.Last())
                                 {
-                                    TrackAsset blendTrack = _availableActionTracks.FirstOrDefault(x => x.End <= clip.start - offsetBlend).Track;  // Find valid from before clip.
+                                    UnityEngine.Timeline.TrackAsset blendTrack = _availableActionTracks.FirstOrDefault(x => x.End <= clip.start - offsetBlend).Track;  // Find valid from before clip.
                                     _availableActionTracks.Remove(blendTrack);   // Remove available if found.
 
                                     if (blendTrack == null)
@@ -148,7 +148,7 @@ namespace Celezt.DialogueSystem
                 {
                     foreach (var clip in _interpreter.ActionClips)
                     {
-                        TrackAsset blendTrack = _availableActionTracks.FirstOrDefault(x => x.End <= clip.start - offsetBlend).Track;  // Find valid from before clip.
+                        UnityEngine.Timeline.TrackAsset blendTrack = _availableActionTracks.FirstOrDefault(x => x.End <= clip.start - offsetBlend).Track;  // Find valid from before clip.
                         _availableActionTracks.Remove(blendTrack);   // Remove available if found.
 
                         if (blendTrack == null)

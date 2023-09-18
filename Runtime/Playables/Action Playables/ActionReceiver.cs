@@ -10,10 +10,10 @@ namespace Celezt.DialogueSystem
     [DisallowMultipleComponent]
     public class ActionReceiver : MonoBehaviour
     {
-        public SerializableDictionary<PlayableAsset, ActionBinder> ActionBinderDictionary => _actionBinderDictionary;
+        public SerializableDictionary<UnityEngine.Playables.PlayableAsset, ActionBinder> ActionBinderDictionary => _actionBinderDictionary;
 
         [SerializeField]
-        private SerializableDictionary<PlayableAsset, ActionBinder> _actionBinderDictionary = new SerializableDictionary<PlayableAsset, ActionBinder>();
+        private SerializableDictionary<UnityEngine.Playables.PlayableAsset, ActionBinder> _actionBinderDictionary = new SerializableDictionary<UnityEngine.Playables.PlayableAsset, ActionBinder>();
 
         [Serializable]
         public struct ActionBinder
