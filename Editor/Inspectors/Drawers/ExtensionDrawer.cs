@@ -12,7 +12,7 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem.Editor
 {
-    [CustomPropertyDrawer(typeof(Extension<>), true)]
+    [CustomPropertyDrawer(typeof(IExtension), true)]
     public class ExtensionDrawer : PropertyDrawer
     {
         public virtual int Order => 0;
@@ -31,6 +31,17 @@ namespace Celezt.DialogueSystem.Editor
         ~ExtensionDrawer()
         {
             EditorApplication.contextualPropertyMenu -= OnPropertyContextMenu;
+        }
+
+        protected void DrawHasModification(Rect rect, UnityEngine.Object? reference, SerializedProperty property)
+        {
+            if (reference == null)
+                return;
+
+            using var referenceSerializedObject = new SerializedObject(reference);
+            var referenceSerializedProperty = referenceSerializedObject.FindProperty(property.propertyPath);
+
+            ExtensionEditorUtility.DrawHasModification(rect, property, referenceSerializedProperty);
         }
 
         protected virtual void OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension) { }
@@ -58,7 +69,7 @@ namespace Celezt.DialogueSystem.Editor
                     using var referenceSerializedObject = new SerializedObject(extension.Reference);
                     var referenceSerializedProperty = referenceSerializedObject.FindProperty(currentProperty.propertyPath);
 
-                    ExtensionEditorUtility.DrawHasModification(currentProperty, referenceSerializedProperty);
+                    ExtensionEditorUtility.DrawHasModification(GUILayoutUtility.GetLastRect(), currentProperty, referenceSerializedProperty);
                 }
             }
 

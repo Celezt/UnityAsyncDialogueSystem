@@ -48,7 +48,7 @@ namespace Celezt.DialogueSystem
             set
             {
                 _editorText = value;
-                RefreshDialogue();
+                RefreshText();
             }
         }
 
@@ -59,7 +59,7 @@ namespace Celezt.DialogueSystem
                 if (_runtimeText is null)
                 {
                     _runtimeText = new MutString(_editorText.Length);
-                    RefreshDialogue();
+                    RefreshText();
                 }
 
                 return _runtimeText;
@@ -124,7 +124,7 @@ namespace Celezt.DialogueSystem
 
         private float _previousValue = float.MaxValue;
 
-        public void RefreshDialogue()
+        public void RefreshText()
         {
             RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
 

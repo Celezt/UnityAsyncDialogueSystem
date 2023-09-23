@@ -16,6 +16,8 @@ namespace Celezt.DialogueSystem
         public string EditorText { get; set; }
         public MutString RuntimeText { get; }
 
+        public void RefreshText();
+
         public bool TryInsertAfter(int visibleIndex, ReadOnlySpan<char> span, bool isWhitespaceAllowed = true)
         {
             visibleIndex++;

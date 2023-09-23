@@ -62,8 +62,9 @@ namespace Celezt.DialogueSystem.Editor
                 if (EditorGUI.EndChangeCheck())
                 {
                     serializedObject.ApplyModifiedProperties();
-                    textExtension.RefreshDialogue();
+                    textExtension.RefreshText();
                 }
+                DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, textProperty);
 
                 EditorGUILayout.LabelField("Visibility Settings", EditorStyles.boldLabel);
                 using (new EditorGUILayout.VerticalScope())
@@ -76,6 +77,8 @@ namespace Celezt.DialogueSystem.Editor
                     float labelWidth = EditorGUIUtility.labelWidth;
                     EditorGUIUtility.labelWidth = 10;
                     textExtension.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
+                    var startOffsetProperty = property.FindPropertyRelative("_startOffset");
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, startOffsetProperty);
 
                     EditorGUI.BeginChangeCheck();
                     var curve = EditorGUILayout.CurveField(textExtension.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
@@ -86,9 +89,14 @@ namespace Celezt.DialogueSystem.Editor
                         textExtension.UpdateTags();
                         EditorUtility.SetDirty(target);
                     }
+                    var editorVisibilityCurve = property.FindPropertyRelative("_editorVisibilityCurve");
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, editorVisibilityCurve);
 
                     GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
                     textExtension.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
+                    var endOffsetProperty = property.FindPropertyRelative("_endOffset");
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, endOffsetProperty);
+
                     EditorGUIUtility.labelWidth = labelWidth;
                 }
                 EditorGUI.indentLevel++;

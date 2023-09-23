@@ -11,7 +11,7 @@ namespace Celezt.DialogueSystem
     [Serializable]
     public abstract class Extension<T> : IExtension<T> where T : UnityEngine.Object
     {
-        public T Asset => (T)_target;
+        public T Asset => _target as T;
 
         public IReadOnlyDictionary<string, bool> PropertiesModified => _propertiesModified;
 

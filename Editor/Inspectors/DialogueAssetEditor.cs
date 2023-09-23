@@ -34,5 +34,10 @@ namespace Celezt.DialogueSystem.Editor
             serializedObject.ApplyModifiedProperties();
             serializedObject.UpdateIfRequiredOrScript();
         }
+
+        private void OnDestroy()
+        {
+            EditorOrRuntime.IsEditor = true;
+        }
     }
 }
