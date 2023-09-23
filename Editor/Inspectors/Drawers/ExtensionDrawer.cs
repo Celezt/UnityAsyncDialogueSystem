@@ -33,13 +33,32 @@ namespace Celezt.DialogueSystem.Editor
             EditorApplication.contextualPropertyMenu -= OnPropertyContextMenu;
         }
 
-        protected void DrawHasModification(Rect rect, UnityEngine.Object? reference, SerializedProperty property)
+        protected void DrawHasModification(Rect rect, UnityEngine.Object? reference, SerializedProperty property, bool clickable = true)
         {
             if (reference == null)
                 return;
 
             using var referenceSerializedObject = new SerializedObject(reference);
             var referenceSerializedProperty = referenceSerializedObject.FindProperty(property.propertyPath);
+
+            rect.x = 0;
+            rect.width = 20;
+
+            if (clickable)
+            {
+                var color = GUI.color;
+                GUI.color = Color.clear;
+                if (GUI.Button(rect, GUIContent.none, GUI.skin.box))
+                {
+                    if (Event.current.button == 1)
+                    {
+                        var menu = new GenericMenu();
+                        OnPropertyContextMenu(menu, property);
+                        menu.DropDown(rect);
+                    }
+                }
+                GUI.color = color;
+            }
 
             ExtensionEditorUtility.DrawHasModification(rect, property, referenceSerializedProperty);
         }
@@ -206,12 +225,7 @@ namespace Celezt.DialogueSystem.Editor
             }
         }
 
-        internal void Internal_OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension)
-        {
-            OnDrawBackground(clip, region, extension);
-        }
-
-        private void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
+        public void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
         {
             var serializedObject = property.serializedObject;
 
@@ -257,6 +271,11 @@ namespace Celezt.DialogueSystem.Editor
                     }
                 }
             }
+        }
+
+        internal void Internal_OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension)
+        {
+            OnDrawBackground(clip, region, extension);
         }
     }
 }

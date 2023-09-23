@@ -40,8 +40,8 @@ namespace Celezt.DialogueSystem.Editor
                 if (_runtimeText == null)
                     _runtimeText = actorExtension.RuntimeText.ToString();
 
-                GUI.enabled = false;
                 EditorGUILayout.LabelField(_runtimeActorContent);
+                GUI.enabled = false;
                 EditorStyles.textField.wordWrap = true;
                 EditorGUILayout.TextArea(_runtimeText);
                 GUI.enabled = true;

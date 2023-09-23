@@ -78,7 +78,7 @@ namespace Celezt.DialogueSystem.Editor
                     EditorGUIUtility.labelWidth = 10;
                     textExtension.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
                     var startOffsetProperty = property.FindPropertyRelative("_startOffset");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, startOffsetProperty);
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, startOffsetProperty, false);
 
                     EditorGUI.BeginChangeCheck();
                     var curve = EditorGUILayout.CurveField(textExtension.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
@@ -90,12 +90,12 @@ namespace Celezt.DialogueSystem.Editor
                         EditorUtility.SetDirty(target);
                     }
                     var editorVisibilityCurve = property.FindPropertyRelative("_editorVisibilityCurve");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, editorVisibilityCurve);
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, editorVisibilityCurve, false);
 
                     GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
                     textExtension.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
                     var endOffsetProperty = property.FindPropertyRelative("_endOffset");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, endOffsetProperty);
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, endOffsetProperty, false);
 
                     EditorGUIUtility.labelWidth = labelWidth;
                 }
@@ -112,6 +112,8 @@ namespace Celezt.DialogueSystem.Editor
                 GUI.enabled = false;
                 EditorGUILayout.TextArea(_runtimeText, GUILayout.MinHeight(150));
                 GUI.enabled = true;
+                var textProperty = property.FindPropertyRelative("_editorText");
+                DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, textProperty);
 
                 EditorGUILayout.LabelField("Visibility Settings (Readonly)", EditorStyles.boldLabel);
                 using (new EditorGUILayout.VerticalScope())
@@ -126,13 +128,20 @@ namespace Celezt.DialogueSystem.Editor
                     GUI.enabled = false;
                     EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
                     GUI.enabled = true;
+                    var startOffsetProperty = property.FindPropertyRelative("_startOffset");
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, startOffsetProperty, false);
 
                     EditorGUILayoutExtra.CurveField(textExtension.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
                     GUI.Box(GUILayoutUtility.GetLastRect(), _runtimeVisibilityCurveContent);
+                    var editorVisibilityCurve = property.FindPropertyRelative("_editorVisibilityCurve");
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, editorVisibilityCurve, false);
 
                     GUI.enabled = false;
                     EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
                     GUI.enabled = true;
+                    var endOffsetProperty = property.FindPropertyRelative("_endOffset");
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, endOffsetProperty, false);
+
                     EditorGUIUtility.labelWidth = labelWidth;
                 }
                 EditorGUI.indentLevel++;
