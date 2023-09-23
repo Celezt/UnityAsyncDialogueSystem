@@ -18,14 +18,6 @@ namespace Celezt.DialogueSystem.Editor
 
         public override void BuildInspector()
         {
-            var asset = serializedObject.targetObject as DialogueAsset;
-
-            if (!asset.IsReady)
-                return;
-
-            GUIStyle infoStyle = new GUIStyle("IN ThumbnailSelection");
-            GUIStyle infoTitleStyle = new GUIStyle("PreMiniLabel");
-
             EditorGUI.indentLevel--;
 
             _toolbarIndex = GUILayout.Toolbar(_toolbarIndex, _toolbar);

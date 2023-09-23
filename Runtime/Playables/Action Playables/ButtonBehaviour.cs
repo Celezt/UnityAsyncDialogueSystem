@@ -10,7 +10,7 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
-    public class ButtonBehaviour : PlayableBehaviourExtended
+    public class ButtonBehaviour : EPlayableBehaviour
     {
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
 
@@ -45,7 +45,7 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public override void OnCreateClip()
+        public override void OnCreate()
         {
             ButtonAsset asset = Asset as ButtonAsset;
             if (asset.Settings == null)   // Get previous clip's setting if it exist.
@@ -103,7 +103,7 @@ namespace Celezt.DialogueSystem
                 _isActive.Value = true;
         }
 
-        public override void EnterClip(Playable playable, FrameData info, object playerData)
+        public override void OnEnter(Playable playable, FrameData info, float weight, object playerData)
         {
             ButtonAsset asset = Asset as ButtonAsset;
 
@@ -117,12 +117,12 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public override void ProcessFrame(Playable playable, FrameData info, object playerData)
+        public override void OnProcess(Playable playable, FrameData info, float weight, object playerData)
         {
             ProcessVisibility();
         }
 
-        public override void ExitClip(Playable playable, FrameData info, object playerData)
+        public override void OnExited(Playable playable, FrameData info, float weight, object playerData)
         {
             Hide();
             BindButton();

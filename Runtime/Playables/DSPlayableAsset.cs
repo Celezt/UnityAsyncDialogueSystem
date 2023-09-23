@@ -2,6 +2,7 @@ using Celezt.Timeline;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -9,16 +10,12 @@ using UnityEngine.Playables;
 
 namespace Celezt.DialogueSystem
 {
-    public abstract class DSPlayableAsset : PlayableAssetExtended, IExtensionCollection
+    public abstract class DSPlayableAsset : EPlayableAsset, IExtensionCollection
     {
         public double StartTime => Clip.start;
         public double EndTime => Clip.end;
         public float TimeDuration => (float)(EndTime - StartTime);
         public IReadOnlyList<IExtension> Extensions => _extensions;
-
-#if UNITY_EDITOR
-        internal bool HasUpdated { get; set; }
-#endif
 
         [SerializeReference]
         private List<IExtension> _extensions = new();
@@ -36,6 +33,32 @@ namespace Celezt.DialogueSystem
             => ExtensionUtility.MoveUpExtension(type, _extensions);
         public void MoveDownExtension(Type type)
             => ExtensionUtility.MoveDownExtension(type, _extensions);
+
+        public bool TryGetExtension<T>(out T? extension) where T : class
+        {
+            extension = null;
+
+            if (TryGetExtension(typeof(T), out var e))
+                extension = e as T;
+
+            return extension != null;
+        }
+        public bool TryGetExtension(Type type, out IExtension? extension)
+        {
+            extension = Extensions.FirstOrDefault(x => x.GetType().IsAssignableFrom(type));
+
+            return extension != null;
+        }
+        public IExtension? GetExtension(Type type)
+        {
+            if (TryGetExtension(type, out var extension))
+                return extension;
+
+            return null;
+        }
+
+        public bool Contains(Type type)
+            => Extensions.Any(x => type.IsAssignableFrom(x.GetType()));
 
         IEnumerator<IExtension> IEnumerable<IExtension>.GetEnumerator() => _extensions.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _extensions.GetEnumerator();

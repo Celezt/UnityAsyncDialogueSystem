@@ -7,7 +7,7 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
-    public class DSPlayableBehaviour : PlayableBehaviourExtended
+    public class DSPlayableBehaviour : EPlayableBehaviour
     {
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {

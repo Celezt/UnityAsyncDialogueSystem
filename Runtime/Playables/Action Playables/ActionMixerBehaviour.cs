@@ -8,7 +8,7 @@ using UnityEngine.Playables;
 
 namespace Celezt.DialogueSystem
 {
-    public class ActionMixerBehaviour : MixerBehaviourExtended
+    public class ActionMixerBehaviour : EMixerBehaviour
     {
 
     }

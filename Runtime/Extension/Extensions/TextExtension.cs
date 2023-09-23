@@ -114,6 +114,9 @@ namespace Celezt.DialogueSystem
         [SerializeField]
         private AnimationCurve _editorVisibilityCurve = AnimationCurve.Linear(0, 0, 1, 1);
 
+#if UNITY_EDITOR
+        private bool _hasUpdated;
+#endif
         private int _length;
         private MutString? _runtimeText;
         private AnimationCurve? _runtimeVisibilityCurve;
@@ -135,7 +138,7 @@ namespace Celezt.DialogueSystem
             Tags.InvokeAll(_tagSequence);
 #if UNITY_EDITOR
             EditorUtility.IsDirty(Asset);
-            Asset.HasUpdated = true;
+            _hasUpdated = true;
 #endif
         }
 
@@ -158,14 +161,14 @@ namespace Celezt.DialogueSystem
                 clip.displayName = Tags.TrimTextTags(RuntimeText.ReadOnlySpan);
 
 #if UNITY_EDITOR
-            if (Asset.HasUpdated)
-                Asset.HasUpdated = false;
+            if (_hasUpdated)
+                _hasUpdated = false;
             else
 #endif
                 UpdateTags();
         }
 
-        protected override void OnEnter(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData)
+        protected override void OnEnter(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData)
         {
             float currentValue = ((ITime)this).VisibilityInterval * Length;
 
@@ -190,7 +193,7 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        protected override void OnProcess(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData)
+        protected override void OnProcess(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData)
         {
             float currentValue = ((ITime)this).VisibilityInterval * Length;
 
@@ -237,7 +240,7 @@ namespace Celezt.DialogueSystem
             _previousValue = currentValue;
         }
 
-        protected override void OnExit(Playable playable, FrameData info, MixerBehaviourExtended mixer, object playerData)
+        protected override void OnExit(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData)
         {
             float currentValue = ((ITime)this).VisibilityInterval * Length;
 

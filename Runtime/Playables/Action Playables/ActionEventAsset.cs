@@ -48,7 +48,7 @@ namespace Celezt.DialogueSystem
 
         private ActionReceiver _receiver;
 
-        protected override PlayableBehaviourExtended CreateBehaviour(PlayableGraph graph, GameObject owner)
+        protected override EPlayableBehaviour CreateBehaviour(PlayableGraph graph, GameObject owner)
         {   
             return new ActionEventBehaviour();
         }

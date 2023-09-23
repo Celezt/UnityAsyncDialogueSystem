@@ -6,22 +6,17 @@ using UnityEngine.Playables;
 
 namespace Celezt.DialogueSystem
 {
-    public abstract class DSTrackAsset : TrackAssetExtended
+    public abstract class DSTrackAsset : ETrackAsset
     {
         protected DialogueSystemBinder _binder;
 
-        protected override MixerBehaviourExtended CreateTrackMixer(PlayableGraph graph, PlayableDirector director, GameObject go, int inputCount)
+        protected override EMixerBehaviour CreateTrackMixer(PlayableGraph graph, PlayableDirector director, GameObject go, int inputCount)
         {
             GetBinder(graph);
 
             var template = new DSMixerBehaviour();
 
             return template;
-        }
-
-        private void OnDestroy()
-        {
-            _binder?.Internal_Remove(this);
         }
 
         private void GetBinder(in PlayableGraph graph)
@@ -44,8 +39,6 @@ namespace Celezt.DialogueSystem
                 _binder = _director.gameObject.AddComponent<DialogueSystemBinder>();
                 _director.SetGenericBinding(this, _binder);
             }
-
-            _binder.Internal_Add(this);
         }
     }
 }

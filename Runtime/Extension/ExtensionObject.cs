@@ -30,7 +30,31 @@ namespace Celezt.DialogueSystem
         public void MoveDownExtension(Type type)
             => ExtensionUtility.MoveDownExtension(type, _extensions);
 
-        public bool Contains(Type type) => _extensions.Any(x => type.IsAssignableFrom(x.GetType())); 
+        public bool TryGetExtension<T>(out T? extension) where T : class
+        {
+            extension = null;
+
+            if (TryGetExtension(typeof(T), out var e))
+                extension = e as T;
+
+            return extension != null;
+        }
+        public bool TryGetExtension(Type type, out IExtension? extension)
+        {
+            extension = Extensions.FirstOrDefault(x => x.GetType().IsAssignableFrom(type));
+
+            return extension != null;
+        }
+        public IExtension? GetExtension(Type type)
+        {
+            if (TryGetExtension(type, out var extension))
+                return extension;
+
+            return null;
+        }
+
+        public bool Contains(Type type)
+            => Extensions.Any(x => type.IsAssignableFrom(x.GetType()));
 
         IEnumerator<IExtension> IEnumerable<IExtension>.GetEnumerator() => _extensions.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _extensions.GetEnumerator();

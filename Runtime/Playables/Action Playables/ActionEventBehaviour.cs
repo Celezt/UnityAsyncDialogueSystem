@@ -9,7 +9,7 @@ using UnityEngine.Timeline;
 
 namespace Celezt.DialogueSystem
 {
-    public class ActionEventBehaviour : PlayableBehaviourExtended
+    public class ActionEventBehaviour : EPlayableBehaviour
     {
         public override void OnCreateTrackMixer(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
@@ -18,14 +18,14 @@ namespace Celezt.DialogueSystem
                 asset.Receiver.ActionBinderDictionary[Asset] = new ActionReceiver.ActionBinder { OnEnter = new UnityEvent(), OnExit = new UnityEvent()};  
         }
 
-        public override void EnterClip(Playable playable, FrameData info, object playerData)
+        public override void OnEnter(Playable playable, FrameData info, float weight, object playerData)
         {
             ActionEventAsset asset = Asset as ActionEventAsset;
             if (asset.Receiver.ActionBinderDictionary.TryGetValue(Asset, out var value))
                 value.OnEnter.Invoke();
         }
 
-        public override void ExitClip(Playable playable, FrameData info, object playerData)
+        public override void OnExited(Playable playable, FrameData info, float weight, object playerData)
         {
             ActionEventAsset asset = Asset as ActionEventAsset;
             if (asset.Receiver.ActionBinderDictionary.TryGetValue(Asset, out var value))

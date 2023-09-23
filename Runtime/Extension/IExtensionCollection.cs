@@ -15,6 +15,7 @@ namespace Celezt.DialogueSystem
         public void AddExtension(IExtensionCollection? extensions);
         public void AddExtension(IExtension? extension, UnityEngine.Object? reference = null);
         public void RemoveExtension(Type type);
+
         public void MoveUpExtension(Type type);
         public void MoveDownExtension(Type type);
 
@@ -27,14 +28,12 @@ namespace Celezt.DialogueSystem
 
             return extension != null;
         }
-
         public bool TryGetExtension(Type type, out IExtension? extension)
         {
             extension = Extensions.FirstOrDefault(x => x.GetType().IsAssignableFrom(type));
 
             return extension != null;
         }
-
         public IExtension? GetExtension(Type type)
         {
             if (TryGetExtension(type, out var extension))

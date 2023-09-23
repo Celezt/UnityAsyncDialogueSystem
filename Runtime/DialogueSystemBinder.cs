@@ -34,8 +34,6 @@ namespace Celezt.DialogueSystem
         [SerializeField] private UnityEvent<Callback> OnProcessDialogueClip = new UnityEvent<Callback>();
         [SerializeField] private UnityEvent OnDeleteTimeline = new UnityEvent();
 
-        private Dictionary<TrackAssetExtended, object> _trackProperties = new Dictionary<TrackAssetExtended, object>();
-
         private PlayableDirector _director;
 
         public readonly struct Callback
@@ -44,58 +42,43 @@ namespace Celezt.DialogueSystem
             /// How much time has passed in unit interval [0-1].
             /// </summary>
             public float Interval => Asset is ITime asset ?
-                asset.Interval : Mathf.Clamp01((float)((Time - Start) / (End - Start)));
-
-            /// <summary>
-            /// The ratio of visible characters in unit interval [0-1].
-            /// </summary>
-            public float VisibilityInterval => Asset is ITime asset ? 
-                asset.VisibilityInterval: Interval;
+                asset.Interval : Mathf.Clamp01((float)((Time - StartTime) / (End - StartTime)));
 
             public double Time => Director.time;
-            public double Start => Clip.start;
-            public double End => Clip.end;
-            public object UserData
-            {
-                get => Binder._trackProperties[Track];
-                set => Binder._trackProperties[Track] = value; 
-            }
+            public double StartTime => Asset.StartTime;
+            public double End => Asset.EndTime;
 
-            public readonly int Index;
+            public readonly int TrackIndex;
             public readonly DialogueSystemBinder Binder;
             public readonly PlayableDirector Director;
-            public readonly PlayableAssetExtended Asset;
-            public readonly PlayableBehaviourExtended Behaviour;
-            public readonly TrackAssetExtended Track;
-            public readonly TimelineClip Clip;
+            public readonly DSPlayableAsset Asset;
+            public readonly ETrackAsset Track;
 
-            internal Callback(DialogueSystemBinder binder, TrackAssetExtended track, PlayableBehaviourExtended behaviour)
+            internal Callback(DialogueSystemBinder binder, ETrackAsset track, EPlayableBehaviour behaviour)
             {
                 Binder = binder;
                 Director = binder.Director;
-                Asset = behaviour.Asset;
+                Asset = (DSPlayableAsset)behaviour.Asset;
                 Track = track;
-                Behaviour = behaviour;
-                Clip = behaviour.Clip;
 
                 TimelineAsset timeline = Director.playableAsset as TimelineAsset;
-                Index = timeline.IndexOf(Track);
+                TrackIndex = timeline.IndexOf(Track);
             }
         }
 
-        internal void Internal_InvokeOnEnterDialogueClip(TrackAssetExtended track, PlayableBehaviourExtended behaviour)
+        internal void Internal_InvokeOnEnterDialogueClip(ETrackAsset track, EPlayableBehaviour behaviour)
         {
             OnEnterDialogueClip.Invoke(new Callback(this, track, behaviour));
             OnEnterDialogueClipCallback(new Callback(this, track, behaviour));
         }
 
-        internal void Internal_InvokeOnExitDialogueClip(TrackAssetExtended track, PlayableBehaviourExtended behaviour)
+        internal void Internal_InvokeOnExitDialogueClip(ETrackAsset track, EPlayableBehaviour behaviour)
         {
             OnExitDialogueClip.Invoke(new Callback(this, track, behaviour));
             OnExitDialogueClipCallback(new Callback(this, track, behaviour));
         }
 
-        internal void Internal_InvokeOnProcessDialogueClip(TrackAssetExtended track, PlayableBehaviourExtended behaviour)
+        internal void Internal_InvokeOnProcessDialogueClip(ETrackAsset track, EPlayableBehaviour behaviour)
         {
             OnProcessDialogueClip.Invoke(new Callback(this, track, behaviour));
             OnProcessDialogueClipCallback(new Callback(this, track, behaviour));
@@ -105,19 +88,6 @@ namespace Celezt.DialogueSystem
         {
             OnDeleteTimeline.Invoke();
             OnDeleteTimelineCallback();
-        }
-
-        internal DialogueSystemBinder Internal_Add(TrackAssetExtended track)
-        {
-            if (!_trackProperties.ContainsKey(track))
-                _trackProperties.Add(track, null);
-
-            return this;
-        }
-
-        internal bool Internal_Remove(TrackAssetExtended track)
-        {
-            return _trackProperties.Remove(track);
         }
 
         private void Start()
