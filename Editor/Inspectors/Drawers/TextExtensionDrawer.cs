@@ -17,6 +17,11 @@ namespace Celezt.DialogueSystem.Editor
         private static readonly Color _offsetBackgroundColour = new Color(0f, 0f, 0f, 0.2f);
         private static readonly Color _timeSpeedCurveColour = new Color(0.7f, 0.9f, 1f, 0.2f);
 
+        private SerializedProperty _textProperty;
+        private SerializedProperty _startOffsetProperty;
+        private SerializedProperty _endOffsetProperty;
+        private SerializedProperty _editorVisibilityCurve;
+
         private string _runtimeText;
 
         protected override void OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension)
@@ -47,39 +52,53 @@ namespace Celezt.DialogueSystem.Editor
             var target = serializedObject.targetObject;
             var textExtension = extension as TextExtension;
 
-            if (EditorOrRuntime.IsEditor)
-                EditorContent();
-            else
-                RuntimeContent();
+            _textProperty ??= property.FindPropertyRelative("_editorText");
+            _startOffsetProperty ??= property.FindPropertyRelative("_startOffset");
+            _endOffsetProperty ??= property.FindPropertyRelative("_endOffset");
+            _editorVisibilityCurve ??= property.FindPropertyRelative("_editorVisibilityCurve");
 
-            void EditorContent()
+            EditorGUILayout.LabelField(EditorOrRuntime.IsEditor ? "Text" : "Text (Readonly)");
+
+            EditorStyles.textField.wordWrap = true;
+            
+            if (EditorOrRuntime.IsEditor)
             {
-                EditorGUILayout.LabelField("Text");
-                EditorStyles.textField.wordWrap = true;
                 EditorGUI.BeginChangeCheck();
-                var textProperty = property.FindPropertyRelative("_editorText");
-                textProperty.stringValue = EditorGUILayout.TextArea(textProperty.stringValue, GUILayout.MinHeight(150));
+                _textProperty.stringValue = EditorGUILayout.TextArea(_textProperty.stringValue, GUILayout.MinHeight(150));
                 if (EditorGUI.EndChangeCheck())
                 {
                     serializedObject.ApplyModifiedProperties();
                     textExtension.RefreshText();
                 }
-                DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, textProperty);
+            }
+            else
+            {
+                if (!System.MemoryExtensions.Equals(_runtimeText, textExtension.RuntimeText, System.StringComparison.Ordinal))
+                    _runtimeText = textExtension.RuntimeText.ToString();
 
-                EditorGUILayout.LabelField("Visibility Settings", EditorStyles.boldLabel);
-                using (new EditorGUILayout.VerticalScope())
-                    EditorGUILayout.Space(6);
+                using(EditorGUIExtra.Disable.Scope())
+                    EditorGUILayout.TextArea(_runtimeText, GUILayout.MinHeight(150));
+            }
+            DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, _textProperty);
 
-                EditorGUI.indentLevel--;
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.Space(14, false);
-                    float labelWidth = EditorGUIUtility.labelWidth;
-                    EditorGUIUtility.labelWidth = 10;
+            EditorGUILayout.LabelField(EditorOrRuntime.IsEditor ? "Visibility Settings" : "Visibility Settings (Readonly)", EditorStyles.boldLabel);
+            using (new EditorGUILayout.VerticalScope())
+                EditorGUILayout.Space(6);
+
+            EditorGUI.indentLevel--;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.Space(14, false);
+                float labelWidth = EditorGUIUtility.labelWidth;
+                EditorGUIUtility.labelWidth = 10;
+
+                using (EditorGUIExtra.Disable.Scope(EditorOrRuntime.IsRuntime))
                     textExtension.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
-                    var startOffsetProperty = property.FindPropertyRelative("_startOffset");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, startOffsetProperty, false);
+                Rect modificationRect = GUILayoutUtility.GetLastRect();
+                DrawHasModification(modificationRect, extension.Reference, _startOffsetProperty);
 
+                if (EditorOrRuntime.IsEditor)
+                {
                     EditorGUI.BeginChangeCheck();
                     var curve = EditorGUILayout.CurveField(textExtension.EditorVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
                     if (EditorGUI.EndChangeCheck())
@@ -89,63 +108,22 @@ namespace Celezt.DialogueSystem.Editor
                         textExtension.UpdateTags();
                         EditorUtility.SetDirty(target);
                     }
-                    var editorVisibilityCurve = property.FindPropertyRelative("_editorVisibilityCurve");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, editorVisibilityCurve, false);
-
-                    GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
-                    textExtension.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
-                    var endOffsetProperty = property.FindPropertyRelative("_endOffset");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, endOffsetProperty, false);
-
-                    EditorGUIUtility.labelWidth = labelWidth;
                 }
-                EditorGUI.indentLevel++;
-            }
-
-            void RuntimeContent()
-            {
-                if (_runtimeText == null)
-                    _runtimeText = textExtension.RuntimeText.ToString();
-
-                EditorGUILayout.LabelField("Text (Readonly)");
-                EditorStyles.textField.wordWrap = true;
-                GUI.enabled = false;
-                EditorGUILayout.TextArea(_runtimeText, GUILayout.MinHeight(150));
-                GUI.enabled = true;
-                var textProperty = property.FindPropertyRelative("_editorText");
-                DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, textProperty);
-
-                EditorGUILayout.LabelField("Visibility Settings (Readonly)", EditorStyles.boldLabel);
-                using (new EditorGUILayout.VerticalScope())
-                    EditorGUILayout.Space(6);
-
-                EditorGUI.indentLevel--;
-                using (new EditorGUILayout.HorizontalScope())
+                else
                 {
-                    EditorGUILayout.Space(14, false);
-                    float labelWidth = EditorGUIUtility.labelWidth;
-                    EditorGUIUtility.labelWidth = 10;
-                    GUI.enabled = false;
-                    EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
-                    GUI.enabled = true;
-                    var startOffsetProperty = property.FindPropertyRelative("_startOffset");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, startOffsetProperty, false);
-
                     EditorGUILayoutExtra.CurveField(textExtension.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
                     GUI.Box(GUILayoutUtility.GetLastRect(), _runtimeVisibilityCurveContent);
-                    var editorVisibilityCurve = property.FindPropertyRelative("_editorVisibilityCurve");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, editorVisibilityCurve, false);
-
-                    GUI.enabled = false;
-                    EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
-                    GUI.enabled = true;
-                    var endOffsetProperty = property.FindPropertyRelative("_endOffset");
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, endOffsetProperty, false);
-
-                    EditorGUIUtility.labelWidth = labelWidth;
                 }
-                EditorGUI.indentLevel++;
+                DrawHasModification(modificationRect, extension.Reference, _editorVisibilityCurve);
+                GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
+
+                using (EditorGUIExtra.Disable.Scope(EditorOrRuntime.IsRuntime))
+                    textExtension.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
+                DrawHasModification(modificationRect, extension.Reference, _endOffsetProperty);
+
+                EditorGUIUtility.labelWidth = labelWidth;
             }
+            EditorGUI.indentLevel++;
         }
     }
 }

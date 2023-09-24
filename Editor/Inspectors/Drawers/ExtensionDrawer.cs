@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Timeline;
+using UnityEngine.UIElements;
 
 #nullable enable
 
@@ -22,6 +23,10 @@ namespace Celezt.DialogueSystem.Editor
         private UnityEngine.Object? _target;
         private UnityEngine.Object? _reference;
         private IExtension? _extension;
+
+        private GenericMenu? _propertyContextMenu;
+        private Rect _propertyContextMenuRect;
+        private List<(Rect Rect, SerializedProperty Property)> _contextMenuProperties = new();
 
         public ExtensionDrawer()
         {
@@ -45,22 +50,26 @@ namespace Celezt.DialogueSystem.Editor
             rect.width = 20;
 
             if (clickable)
-            {
-                var color = GUI.color;
-                GUI.color = Color.clear;
-                if (GUI.Button(rect, GUIContent.none, GUI.skin.box))
-                {
-                    if (Event.current.button == 1)
-                    {
-                        var menu = new GenericMenu();
-                        OnPropertyContextMenu(menu, property);
-                        menu.DropDown(rect);
-                    }
-                }
-                GUI.color = color;
-            }
+                AddPropertyToContextMenu(rect, property);
 
             ExtensionEditorUtility.DrawHasModification(rect, property, referenceSerializedProperty);
+        }
+
+        protected void AddPropertyToContextMenu(Rect rect, SerializedProperty property)
+        {
+            var defaultColor = GUI.color;
+            GUI.color = Color.clear;
+            if (GUI.Button(rect, GUIContent.none, GUI.skin.box))
+            {
+                if (Event.current.button == 1)
+                {
+                    _propertyContextMenuRect = rect;
+                    _propertyContextMenu ??= new GenericMenu();
+                }
+            }
+            GUI.color = defaultColor;
+
+            _contextMenuProperties.Add((rect, property));
         }
 
         protected virtual void OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension) { }
@@ -177,6 +186,28 @@ namespace Celezt.DialogueSystem.Editor
             _isOpens[rid] = isOpen;
             _reference = _extension.Reference;
 
+            // Drop down property context menu if there exist any.
+            if (_propertyContextMenu != null)
+            {
+                var propertiesToUse = _contextMenuProperties.Where(x => _propertyContextMenuRect.Overlaps(x.Rect));
+                int count = propertiesToUse.Count();
+                bool hasMultiple = count > 1;
+                foreach (var (rect, prop) in propertiesToUse)
+                {
+                    _propertyContextMenu.allowDuplicateNames = true;
+                    OnPropertyContextMenu(_propertyContextMenu, prop, hasMultiple);
+
+                    if (--count > 0)
+                        _propertyContextMenu.AddSeparator("");
+                }
+
+                _propertyContextMenu?.DropDown(_propertyContextMenuRect);
+            }
+
+            _propertyContextMenu = null;
+            _propertyContextMenuRect = default;
+            _contextMenuProperties.Clear();
+
             void ShowHeaderContextMenu(Rect rect)
             {
                 var menu = new GenericMenu();
@@ -226,7 +257,10 @@ namespace Celezt.DialogueSystem.Editor
         }
 
         public void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
+            => OnPropertyContextMenu(menu, property, false);
+        public void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property, bool displayPropertyName)
         {
+            string propertyDisplayName = displayPropertyName ? property.displayName + ": " : string.Empty;
             var serializedObject = property.serializedObject;
 
             // If it is the current focused object.
@@ -253,14 +287,14 @@ namespace Celezt.DialogueSystem.Editor
                             FieldInfo info = _extension!.GetType()
                                 .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
-                            menu.AddItem(new GUIContent($"Apply to Reference '{_reference.name}'"), false, () =>
+                            menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{_reference.name}'"), false, () =>
                             {
                                 Undo.RecordObject(_reference, "Applied to Reference");
                                 info.SetValue(otherExtension, info.GetValue(_extension));
                                 EditorUtility.SetDirty(_reference);
                                 serializedObject.Update();
                             });
-                            menu.AddItem(new GUIContent("Revert"), false, () =>
+                            menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
                             {
                                 Undo.RecordObject(_target, "Reverted Value");
                                 info.SetValue(_extension, info.GetValue(otherExtension));

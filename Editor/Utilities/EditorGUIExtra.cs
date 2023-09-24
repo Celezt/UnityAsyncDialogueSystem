@@ -11,6 +11,26 @@ namespace Celezt.DialogueSystem.Editor
 {
     public static class EditorGUIExtra
     {
+        public struct Disable : IDisposable
+        {
+            public void Dispose()
+            {
+                GUI.enabled = true;
+            }
+
+            public static Disable Scope()
+            {
+                GUI.enabled = false;
+                return new Disable();
+            }
+
+            public static Disable Scope(bool disable)
+            {
+                GUI.enabled = !disable;
+                return new Disable();
+            }
+        }
+
         public static void DrawCurve(Rect rect, Color color, AnimationCurve curve, int subdivitions = 8)
         {
             if (curve.length < 1)
