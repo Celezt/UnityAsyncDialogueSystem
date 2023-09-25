@@ -189,15 +189,18 @@ namespace Celezt.DialogueSystem.Editor
             // Drop down property context menu if there exist any.
             if (_propertyContextMenu != null)
             {
+                _propertyContextMenu.allowDuplicateNames = true;
                 var propertiesToUse = _contextMenuProperties.Where(x => _propertyContextMenuRect.Overlaps(x.Rect));
                 int count = propertiesToUse.Count();
                 bool hasMultiple = count > 1;
                 foreach (var (rect, prop) in propertiesToUse)
                 {
-                    _propertyContextMenu.allowDuplicateNames = true;
-                    OnPropertyContextMenu(_propertyContextMenu, prop, hasMultiple);
+                    count--;
 
-                    if (--count > 0)
+                    if (!OnPropertyContextMenu(_propertyContextMenu, prop, hasMultiple))
+                        continue;
+
+                    if (count > 0)
                         _propertyContextMenu.AddSeparator("");
                 }
 
@@ -258,14 +261,15 @@ namespace Celezt.DialogueSystem.Editor
 
         public void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
             => OnPropertyContextMenu(menu, property, false);
-        public void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property, bool displayPropertyName)
+        public bool OnPropertyContextMenu(GenericMenu menu, SerializedProperty property, bool displayPropertyName)
         {
-            string propertyDisplayName = displayPropertyName ? property.displayName + ": " : string.Empty;
             var serializedObject = property.serializedObject;
 
             // If it is the current focused object.
             if (_target == null || _target != serializedObject.targetObject)
-                return;
+                return false;
+
+            string propertyDisplayName = displayPropertyName ? property.displayName + ": " : string.Empty;
 
             // Only add menu item if it is a property of the extension.
             string path = property.propertyPath;
@@ -282,29 +286,31 @@ namespace Celezt.DialogueSystem.Editor
                         var otherProperty = otherSerializedObject.FindProperty(property.propertyPath);
                         IExtension otherExtension = otherCollection.Extensions[int.Parse(path.AsSpan(23, endIndex - 23))];
 
-                        if (!SerializedProperty.DataEquals(property, otherProperty))
-                        {
-                            FieldInfo info = _extension!.GetType()
-                                .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (SerializedProperty.DataEquals(property, otherProperty))
+                            return false;
 
-                            menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{_reference.name}'"), false, () =>
-                            {
-                                Undo.RecordObject(_reference, "Applied to Reference");
-                                info.SetValue(otherExtension, info.GetValue(_extension));
-                                EditorUtility.SetDirty(_reference);
-                                serializedObject.Update();
-                            });
-                            menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
-                            {
-                                Undo.RecordObject(_target, "Reverted Value");
-                                info.SetValue(_extension, info.GetValue(otherExtension));
-                                EditorUtility.SetDirty(_target);
-                                serializedObject.Update();
-                            });
-                        }
+                        FieldInfo info = _extension!.GetType()
+                            .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+                        menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{_reference.name}'"), false, () =>
+                        {
+                            Undo.RecordObject(_reference, "Applied to Reference");
+                            info.SetValue(otherExtension, info.GetValue(_extension));
+                            EditorUtility.SetDirty(_reference);
+                            serializedObject.Update();
+                        });
+                        menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
+                        {
+                            Undo.RecordObject(_target, "Reverted Value");
+                            info.SetValue(_extension, info.GetValue(otherExtension));
+                            EditorUtility.SetDirty(_target);
+                            serializedObject.Update();
+                        });
                     }
                 }
             }
+
+            return true;
         }
 
         internal void Internal_OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension)
