@@ -12,13 +12,11 @@ using UnityEngine;
 namespace Celezt.DialogueSystem.Editor
 {
     [CustomTimelineEditor(typeof(DSPlayableAsset))]
-    public class DSClipEditor : ClipEditor
+    public class DSClipEditor : ClipEditor 
     {
-        private static readonly Dictionary<Type, ExtensionDrawer> _extensionDrawers;
-        private static readonly FieldInfo _typeInfo = typeof(CustomPropertyDrawer)
-                                                        .GetField("m_Type", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly Dictionary<Type, IExtensionClipEditor> _extensionClipEditors;
 
-        private static (ExtensionDrawer Drawer, IExtension Extension)[] _drawBuffer = new (ExtensionDrawer, IExtension)[128];
+        private static (Type Type, IExtension Extension)[] _drawBuffer = new (Type, IExtension)[128];
 
         public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region)
         {
@@ -29,28 +27,27 @@ namespace Celezt.DialogueSystem.Editor
             {
                 Type type = extension.GetType();
 
-                if (_extensionDrawers.TryGetValue(type, out var drawer))
-                    _drawBuffer[count++] = (drawer, extension);
+                if (_extensionClipEditors.TryGetValue(type, out var editor))
+                    _drawBuffer[count++] = (type, extension);
             }
 
             // Sort and draw based on the order.
-            foreach (var (drawer, extension) in _drawBuffer.Take(count).OrderBy(x => x.Drawer.Order))
-                drawer.Internal_OnDrawBackground(clip, region, extension);
+            foreach (var (type, extension) in _drawBuffer.Take(count).OrderBy(x => _extensionClipEditors[x.Type].Order))
+                _extensionClipEditors[type].OnDrawBackground(clip, region, extension);
         }
 
         static DSClipEditor()
         {
-            _extensionDrawers = new();
+            _extensionClipEditors = new();
 
-            foreach (Type type in ReflectionUtility.GetTypesWithAttribute<CustomPropertyDrawer>(AppDomain.CurrentDomain))
+            foreach (Type type in ReflectionUtility.GetTypesWithAttribute<CustomExtensionClipEditorAttribute>(AppDomain.CurrentDomain))
             {
-                if (type == typeof(ExtensionDrawer) || !typeof(ExtensionDrawer).IsAssignableFrom(type))
+                if (type.GetInterface(nameof(IExtensionClipEditor)) == null)
                     continue;
 
-                var attribute = (CustomPropertyDrawer)Attribute.GetCustomAttribute(type, typeof(CustomPropertyDrawer));
-                Type objectType = (Type)_typeInfo.GetValue(attribute);
-
-                _extensionDrawers[objectType] = (ExtensionDrawer)Activator.CreateInstance(type);
+                var attribute = (CustomExtensionClipEditorAttribute)Attribute.GetCustomAttribute(type, typeof(CustomExtensionClipEditorAttribute));
+        
+                _extensionClipEditors[attribute.BindType] = (IExtensionClipEditor)Activator.CreateInstance(type);
             }
         }
     }

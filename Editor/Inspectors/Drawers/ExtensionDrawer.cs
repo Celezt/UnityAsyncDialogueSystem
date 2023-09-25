@@ -16,8 +16,6 @@ namespace Celezt.DialogueSystem.Editor
     [CustomPropertyDrawer(typeof(IExtension), true)]
     public class ExtensionDrawer : PropertyDrawer
     {
-        public virtual int Order => 0;
-
         private static Dictionary<long, bool> _isOpens = new();
 
         private UnityEngine.Object? _target;
@@ -72,8 +70,6 @@ namespace Celezt.DialogueSystem.Editor
             _contextMenuProperties.Add((rect, property));
         }
 
-        protected virtual void OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension) { }
-
         protected virtual void OnDrawProperties(Rect position, SerializedProperty property, GUIContent label, IExtension extension) 
         {
             var iteratorProperty = property.Copy();
@@ -93,12 +89,7 @@ namespace Celezt.DialogueSystem.Editor
                 EditorGUILayout.PropertyField(currentProperty, true);
 
                 if (extension.Reference != null)
-                {
-                    using var referenceSerializedObject = new SerializedObject(extension.Reference);
-                    var referenceSerializedProperty = referenceSerializedObject.FindProperty(currentProperty.propertyPath);
-
-                    ExtensionEditorUtility.DrawHasModification(GUILayoutUtility.GetLastRect(), currentProperty, referenceSerializedProperty);
-                }
+                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, currentProperty);
             }
 
             GUI.enabled = true;
@@ -183,9 +174,6 @@ namespace Celezt.DialogueSystem.Editor
                 EditorGUILayout.Space(10);
             }
 
-            _isOpens[rid] = isOpen;
-            _reference = _extension.Reference;
-
             // Drop down property context menu if there exist any.
             if (_propertyContextMenu != null)
             {
@@ -210,6 +198,9 @@ namespace Celezt.DialogueSystem.Editor
             _propertyContextMenu = null;
             _propertyContextMenuRect = default;
             _contextMenuProperties.Clear();
+
+            _isOpens[rid] = isOpen;
+            _reference = _extension.Reference;
 
             void ShowHeaderContextMenu(Rect rect)
             {
@@ -311,11 +302,6 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             return true;
-        }
-
-        internal void Internal_OnDrawBackground(TimelineClip clip, ClipBackgroundRegion region, IExtension extension)
-        {
-            OnDrawBackground(clip, region, extension);
         }
     }
 }
