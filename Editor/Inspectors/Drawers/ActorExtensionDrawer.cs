@@ -8,46 +8,39 @@ namespace Celezt.DialogueSystem.Editor
     [CustomPropertyDrawer(typeof(ActorExtension), true)]
     public class ActorExtensionDrawer : ExtensionDrawer
     {
-        private static readonly GUIContent _editorActorContent = new("Actor");
-        private static readonly GUIContent _runtimeActorContent = new("Actor (Readonly)");
+        private SerializedProperty _actorProperty;
 
-        private string _runtimeText;
+        private string _runtimeActor;
 
         protected override void OnDrawProperties(Rect position, SerializedProperty property, GUIContent label, IExtension extension)
         {
             var serializedObject = property.serializedObject;
             var actorExtension = extension as ActorExtension;
 
-            var actorProperty = property.FindPropertyRelative("_editorActor");
+            _actorProperty ??= property.FindPropertyRelative("_editorActor");
+
+            EditorGUILayout.LabelField(EditorOrRuntime.IsEditor ? "Actor" : "Actor (Readonly)");
+            EditorStyles.textField.wordWrap = true;
 
             if (EditorOrRuntime.IsEditor)
             {
-                EditorGUILayout.LabelField(_editorActorContent);
-                EditorStyles.textField.wordWrap = true;
                 EditorGUI.BeginChangeCheck();
-                var textProperty = property.FindPropertyRelative("_editorActor");
-                textProperty.stringValue = EditorGUILayout.TextArea(textProperty.stringValue);
+                _actorProperty.stringValue = EditorGUILayout.TextArea(_actorProperty.stringValue);
                 if (EditorGUI.EndChangeCheck())
                 {
                     serializedObject.ApplyModifiedProperties();
                     actorExtension.RefreshText();
                 }
-
-                DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, actorProperty);
             }
             else
             {
-                if (_runtimeText == null)
-                    _runtimeText = actorExtension.RuntimeText.ToString();
+                if (!System.MemoryExtensions.Equals(_runtimeActor, actorExtension.RuntimeText, System.StringComparison.Ordinal))
+                    _runtimeActor = actorExtension.RuntimeText.ToString();
 
-                EditorGUILayout.LabelField(_runtimeActorContent);
-                GUI.enabled = false;
-                EditorStyles.textField.wordWrap = true;
-                EditorGUILayout.TextArea(_runtimeText);
-                GUI.enabled = true;
-
-                DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, actorProperty);
+                using (EditorGUIExtra.Disable.Scope())
+                    EditorGUILayout.TextArea(_runtimeActor);
             }
+            DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, _actorProperty);
         }
     }
 }
