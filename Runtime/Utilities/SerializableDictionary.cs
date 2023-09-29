@@ -8,16 +8,11 @@ using UnityEngine.Serialization;
 namespace Celezt.DialogueSystem
 {
     //https://pastebin.com/zsy1tNRb
-    public class SerializableDictionary
-    {
-
-    }
-
     [Serializable]
-    public class SerializableDictionary<TKey, TValue> : SerializableDictionary, IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
+    public class SerializableDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
     {
         [SerializeField]
-        private List<SerializableKeyValuePair> list = new List<SerializableKeyValuePair>();
+        private List<SerializableKeyValuePair> _list = new List<SerializableKeyValuePair>();
 
         [Serializable]
         public struct SerializableKeyValuePair
@@ -38,6 +33,7 @@ namespace Celezt.DialogueSystem
         }
 
         private Dictionary<TKey, uint> KeyPositions => _keyPositions.Value;
+
         private Lazy<Dictionary<TKey, uint>> _keyPositions;
 
         public SerializableDictionary()
@@ -62,13 +58,13 @@ namespace Celezt.DialogueSystem
 
         private Dictionary<TKey, uint> MakeKeyPositions()
         {
-            int numEntries = list.Count;
+            int numEntries = _list.Count;
 
             Dictionary<TKey, uint> result = new Dictionary<TKey, uint>(numEntries);
 
             for (int i = 0; i < numEntries; ++i)
             {
-                result[list[i].Key] = (uint)i;
+                result[_list[i].Key] = (uint)i;
             }
 
             return result;
@@ -87,24 +83,24 @@ namespace Celezt.DialogueSystem
         #region IDictionary
         public TValue this[TKey key]
         {
-            get => list[(int)KeyPositions[key]].Value;
+            get => _list[(int)KeyPositions[key]].Value;
             set
             {
                 if (KeyPositions.TryGetValue(key, out uint index))
                 {
-                    list[(int)index].SetValue(value);
+                    _list[(int)index].SetValue(value);
                 }
                 else
                 {
-                    KeyPositions[key] = (uint)list.Count;
+                    KeyPositions[key] = (uint)_list.Count;
 
-                    list.Add(new SerializableKeyValuePair(key, value));
+                    _list.Add(new SerializableKeyValuePair(key, value));
                 }
             }
         }
 
-        public ICollection<TKey> Keys => list.Select(tuple => tuple.Key).ToArray();
-        public ICollection<TValue> Values => list.Select(tuple => tuple.Value).ToArray();
+        public ICollection<TKey> Keys => _list.Select(tuple => tuple.Key).ToArray();
+        public ICollection<TValue> Values => _list.Select(tuple => tuple.Value).ToArray();
 
         public void Add(TKey key, TValue value)
         {
@@ -114,9 +110,9 @@ namespace Celezt.DialogueSystem
             }
             else
             {
-                KeyPositions[key] = (uint)list.Count;
+                KeyPositions[key] = (uint)_list.Count;
 
-                list.Add(new SerializableKeyValuePair(key, value));
+                _list.Add(new SerializableKeyValuePair(key, value));
             }
         }
 
@@ -130,13 +126,13 @@ namespace Celezt.DialogueSystem
 
                 kp.Remove(key);
 
-                list.RemoveAt((int)index);
+                _list.RemoveAt((int)index);
 
-                int numEntries = list.Count;
+                int numEntries = _list.Count;
 
                 for (uint i = index; i < numEntries; i++)
                 {
-                    kp[list[(int)i].Key] = i;
+                    kp[_list[(int)i].Key] = i;
                 }
 
                 return true;
@@ -149,7 +145,7 @@ namespace Celezt.DialogueSystem
         {
             if (KeyPositions.TryGetValue(key, out uint index))
             {
-                value = list[(int)index].Value;
+                value = _list[(int)index].Value;
 
                 return true;
             }
@@ -161,14 +157,14 @@ namespace Celezt.DialogueSystem
         #endregion
 
         #region ICollection
-        public int Count => list.Count;
+        public int Count => _list.Count;
         public bool IsReadOnly => false;
 
         public void Add(KeyValuePair<TKey, TValue> kvp) => Add(kvp.Key, kvp.Value);
 
         public void Clear()
         {
-            list.Clear();
+            _list.Clear();
             KeyPositions.Clear();
         }
 
@@ -176,7 +172,7 @@ namespace Celezt.DialogueSystem
 
         public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            int numKeys = list.Count;
+            int numKeys = _list.Count;
 
             if (array.Length - arrayIndex < numKeys)
             {
@@ -185,7 +181,7 @@ namespace Celezt.DialogueSystem
 
             for (int i = 0; i < numKeys; ++i, ++arrayIndex)
             {
-                SerializableKeyValuePair entry = list[i];
+                SerializableKeyValuePair entry = _list[i];
 
                 array[arrayIndex] = new KeyValuePair<TKey, TValue>(entry.Key, entry.Value);
             }
@@ -195,15 +191,15 @@ namespace Celezt.DialogueSystem
         #endregion
 
         #region IReadOnlyDictionary
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => list.Select(x => x.Key);
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => _list.Select(x => x.Key);
 
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => list.Select(x => x.Value);
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => _list.Select(x => x.Value);
         #endregion
 
         #region IEnumerable
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
-            return list.Select(ToKeyValuePair).GetEnumerator();
+            return _list.Select(ToKeyValuePair).GetEnumerator();
 
             KeyValuePair<TKey, TValue> ToKeyValuePair(SerializableKeyValuePair skvp)
             {
