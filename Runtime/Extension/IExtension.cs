@@ -14,9 +14,14 @@ namespace Celezt.DialogueSystem
 
     public interface IExtension
     {
+        public int Version { get; set; }
         public UnityEngine.Object Target { get; set; }
         public UnityEngine.Object Reference { get; set; }
         public IReadOnlyDictionary<string, bool> PropertiesModified { get; }
+
+        public void UpdateProperties(bool forceUpdate = false);
+        public void SetModified(string propertyName, bool isModified);
+        public bool GetModified(string propertyName);
 
         public void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip);
         public void OnEnter(Playable playable, FrameData info, IPlayableBehaviour mixer, object playerData);

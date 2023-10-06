@@ -8,8 +8,6 @@ namespace Celezt.DialogueSystem.Editor
     [CustomPropertyDrawer(typeof(ActorExtension), true)]
     public class ActorExtensionDrawer : ExtensionDrawer
     {
-        private SerializedProperty _actorProperty;
-
         private string _runtimeActor;
 
         protected override void OnDrawProperties(Rect position, SerializedProperty property, GUIContent label, IExtension extension)
@@ -17,7 +15,7 @@ namespace Celezt.DialogueSystem.Editor
             var serializedObject = property.serializedObject;
             var actorExtension = extension as ActorExtension;
 
-            _actorProperty ??= property.FindPropertyRelative("_editorActor");
+            SerializedProperty actorProperty = property.FindPropertyRelative("_editorActor");
 
             EditorGUILayout.LabelField(EditorOrRuntime.IsEditor ? "Actor" : "Actor (Readonly)");
             EditorStyles.textField.wordWrap = true;
@@ -25,10 +23,11 @@ namespace Celezt.DialogueSystem.Editor
             if (EditorOrRuntime.IsEditor)
             {
                 EditorGUI.BeginChangeCheck();
-                _actorProperty.stringValue = EditorGUILayout.TextArea(_actorProperty.stringValue);
+                actorProperty.stringValue = EditorGUILayout.TextArea(actorProperty.stringValue);
                 if (EditorGUI.EndChangeCheck())
                 {
                     serializedObject.ApplyModifiedProperties();
+                    extension.SetModified(actorProperty.name, true);
                     actorExtension.RefreshText();
                 }
             }
@@ -40,7 +39,7 @@ namespace Celezt.DialogueSystem.Editor
                 using (EditorGUIExtra.Disable.Scope())
                     EditorGUILayout.TextArea(_runtimeActor);
             }
-            DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, _actorProperty);
+            DrawModification(GUILayoutUtility.GetLastRect(), actorProperty, extension);
         }
     }
 }

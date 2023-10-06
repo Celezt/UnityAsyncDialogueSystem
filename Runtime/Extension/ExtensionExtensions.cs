@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
@@ -17,8 +18,8 @@ namespace Celezt.DialogueSystem
         {
             foreach (string propertyName in instance.PropertiesModified.Keys)
                 instance.CopyTo(target, propertyName);
-        }
 
+        }
         public static void CopyTo(this IExtension instance, IExtension target, string propertyName)
         {
             Type instanceType = instance.GetType();

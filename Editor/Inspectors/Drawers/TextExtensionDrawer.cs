@@ -14,11 +14,6 @@ namespace Celezt.DialogueSystem.Editor
         private static readonly GUIContent _editorVisibilityCurveContent = new("", "Editor visibility curve (x: time, y: visible)");
         private static readonly GUIContent _runtimeVisibilityCurveContent = new("", "Runtime visibility curve (x: time, y: visible)");
 
-        private SerializedProperty _textProperty;
-        private SerializedProperty _startOffsetProperty;
-        private SerializedProperty _endOffsetProperty;
-        private SerializedProperty _editorVisibilityCurve;
-
         private string _runtimeText;
 
         protected override void OnDrawProperties(Rect position, SerializedProperty property, GUIContent label, IExtension extension)
@@ -27,10 +22,10 @@ namespace Celezt.DialogueSystem.Editor
             var target = serializedObject.targetObject;
             var textExtension = extension as TextExtension;
 
-            _textProperty ??= property.FindPropertyRelative("_editorText");
-            _startOffsetProperty ??= property.FindPropertyRelative("_startOffset");
-            _endOffsetProperty ??= property.FindPropertyRelative("_endOffset");
-            _editorVisibilityCurve ??= property.FindPropertyRelative("_editorVisibilityCurve");
+            SerializedProperty textProperty = property.FindPropertyRelative("_editorText");
+            SerializedProperty startOffsetProperty = property.FindPropertyRelative("_startOffset");
+            SerializedProperty endOffsetProperty = property.FindPropertyRelative("_endOffset");
+            SerializedProperty editorVisibilityCurve = property.FindPropertyRelative("_editorVisibilityCurve");
 
             EditorGUILayout.LabelField(EditorOrRuntime.IsEditor ? "Text" : "Text (Readonly)");
 
@@ -39,10 +34,11 @@ namespace Celezt.DialogueSystem.Editor
             if (EditorOrRuntime.IsEditor)
             {
                 EditorGUI.BeginChangeCheck();
-                _textProperty.stringValue = EditorGUILayout.TextArea(_textProperty.stringValue, GUILayout.MinHeight(150));
+                textProperty.stringValue = EditorGUILayout.TextArea(textProperty.stringValue, GUILayout.MinHeight(150));
                 if (EditorGUI.EndChangeCheck())
                 {
                     serializedObject.ApplyModifiedProperties();
+                    extension.SetModified(textProperty.name, true);
                     textExtension.RefreshText();
                 }
             }
@@ -54,7 +50,7 @@ namespace Celezt.DialogueSystem.Editor
                 using(EditorGUIExtra.Disable.Scope())
                     EditorGUILayout.TextArea(_runtimeText, GUILayout.MinHeight(150));
             }
-            DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, _textProperty);
+            DrawModification(GUILayoutUtility.GetLastRect(), textProperty, extension);
 
             EditorGUILayout.LabelField(EditorOrRuntime.IsEditor ? "Visibility Settings" : "Visibility Settings (Readonly)", EditorStyles.boldLabel);
             using (new EditorGUILayout.VerticalScope())
@@ -67,10 +63,14 @@ namespace Celezt.DialogueSystem.Editor
                 float labelWidth = EditorGUIUtility.labelWidth;
                 EditorGUIUtility.labelWidth = 10;
 
+                EditorGUI.BeginChangeCheck();
                 using (EditorGUIExtra.Disable.Scope(EditorOrRuntime.IsRuntime))
                     textExtension.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
+                if (EditorGUI.EndChangeCheck())
+                    extension.SetModified(startOffsetProperty.name, true);
+
                 Rect modificationRect = GUILayoutUtility.GetLastRect();
-                DrawHasModification(modificationRect, extension.Reference, _startOffsetProperty);
+                DrawModification(GUILayoutUtility.GetLastRect(), startOffsetProperty, extension);
 
                 if (EditorOrRuntime.IsEditor)
                 {
@@ -80,6 +80,7 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         Undo.RecordObject(target, "Curve Modified");
                         textExtension.RuntimeVisibilityCurve.keys = curve.keys;
+                        extension.SetModified(editorVisibilityCurve.name, true);
                         textExtension.UpdateTags();
                         EditorUtility.SetDirty(target);
                     }
@@ -89,12 +90,16 @@ namespace Celezt.DialogueSystem.Editor
                     EditorGUILayoutExtra.CurveField(textExtension.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
                     GUI.Box(GUILayoutUtility.GetLastRect(), _runtimeVisibilityCurveContent);
                 }
-                DrawHasModification(modificationRect, extension.Reference, _editorVisibilityCurve);
+                DrawModification(GUILayoutUtility.GetLastRect(), editorVisibilityCurve, extension);
                 GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
 
+                EditorGUI.BeginChangeCheck();
                 using (EditorGUIExtra.Disable.Scope(EditorOrRuntime.IsRuntime))
                     textExtension.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
-                DrawHasModification(modificationRect, extension.Reference, _endOffsetProperty);
+                if (EditorGUI.EndChangeCheck())
+                    extension.SetModified(endOffsetProperty.name, true);
+
+                DrawModification(GUILayoutUtility.GetLastRect(), endOffsetProperty, extension);
 
                 EditorGUIUtility.labelWidth = labelWidth;
             }

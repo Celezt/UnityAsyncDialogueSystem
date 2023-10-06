@@ -92,19 +92,5 @@ namespace Celezt.DialogueSystem.Editor
 
             serializedObject.ApplyModifiedProperties();
         }
-
-        public static bool DrawHasModification(Rect rect, SerializedProperty lhs, SerializedProperty rhs)
-        {
-            // If content in current property is not the same as reference property. 
-            if (!SerializedProperty.DataEquals(lhs, rhs))
-            {
-                rect.x = 0;
-                rect.width = 2;
-                EditorGUI.DrawRect(rect, new Color(0.06f, 0.50f, 0.75f));
-                return true;
-            }
-
-            return false;
-        }
     }
 }

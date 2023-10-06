@@ -202,5 +202,19 @@ namespace Celezt.DialogueSystem
             MemberTypes.Event => ((EventInfo)member).EventHandlerType,
             _ => throw new ArgumentException("MemberInfo must be if type 'FieldInfo', 'PropertyInfo' or 'EventInfo'", nameof(member)),
         };
+
+        public static IEnumerable<string> GetSerializablePropertyNames(Type type)
+            => type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+                .Where(x =>
+                {
+                    if (x.IsPublic)
+                        return true;
+                    if (x.GetCustomAttribute<SerializeField>() != null)
+                        return true;
+                    if (x.GetCustomAttribute<SerializeReference>() != null)
+                        return true;
+
+                    return false;
+                }).Select(x => x.Name);
     }
 }

@@ -36,21 +36,19 @@ namespace Celezt.DialogueSystem.Editor
             EditorApplication.contextualPropertyMenu -= OnPropertyContextMenu;
         }
 
-        protected void DrawHasModification(Rect rect, UnityEngine.Object? reference, SerializedProperty property, bool clickable = true)
+        protected void DrawModification(Rect rect, SerializedProperty property, IExtension extension, bool clickable = true)
         {
-            if (reference == null)
-                return;
-
-            using var referenceSerializedObject = new SerializedObject(reference);
-            var referenceSerializedProperty = referenceSerializedObject.FindProperty(property.propertyPath);
-
             rect.x = 0;
             rect.width = 20;
 
             if (clickable)
                 AddPropertyToContextMenu(rect, property);
 
-            ExtensionEditorUtility.DrawHasModification(rect, property, referenceSerializedProperty);
+            rect.width = 2;
+
+            // If content in current property is not the same as reference property. 
+            if (extension.GetModified(property.name))
+                EditorGUI.DrawRect(rect, new Color(0.06f, 0.50f, 0.75f));
         }
 
         protected void AddPropertyToContextMenu(Rect rect, SerializedProperty property)
@@ -86,10 +84,13 @@ namespace Celezt.DialogueSystem.Editor
                 if (currentProperty == null || currentProperty.depth > depth + 1)
                     continue;
 
+                EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(currentProperty, true);
+                if (EditorGUI.EndChangeCheck())
+                    extension.SetModified(currentProperty.name, true);
 
                 if (extension.Reference != null)
-                    DrawHasModification(GUILayoutUtility.GetLastRect(), extension.Reference, currentProperty);
+                    DrawModification(GUILayoutUtility.GetLastRect(), currentProperty, extension);
             }
 
             GUI.enabled = true;
