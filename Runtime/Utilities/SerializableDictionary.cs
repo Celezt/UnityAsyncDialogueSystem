@@ -9,7 +9,6 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    // https://github.com/Prastiwar/UnitySerializedDictionary
     [Serializable]
     public class SerializableDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
     {
@@ -20,10 +19,9 @@ namespace Celezt.DialogueSystem
         private int _freeList;
         private int _freeCount;
         private int _version;
-        private IEqualityComparer<TKey>? _comparer;
+        private IEqualityComparer<TKey> _comparer;
         private KeyCollection? _keys;
         private ValueCollection? _values;
-        private object? _syncRoot;
 
         [SerializeField]
         private TKey[]? m_keys;
@@ -33,10 +31,119 @@ namespace Celezt.DialogueSystem
         [Serializable]
         private struct Entry
         {
-            public int HashCode;    // Lower 31 bits of hash code, -1 if unused
-            public int Next;        // Index of next entry, -1 if last
+            public int HashCode;
+            /// <summary>
+            /// 0-based index of next entry in chain: -1 means end of chain
+            /// also encodes whether this entry _itself_ is part of the free list by changing sign and subtracting 3,
+            /// so -2 means end of free list, -3 means index 0 but on free list, -4 means index 1 but on free list, etc.
+            /// </summary>
+            public int Next;
             public TKey Key;           // Key of entry
             public TValue Value;         // Value of entry
+        }
+
+        public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, IDictionaryEnumerator
+        {
+            private SerializableDictionary<TKey, TValue> _dictionary;
+            private int _version;
+            private int _index;
+            private KeyValuePair<TKey, TValue> _current;
+            private int _getEnumeratorRetType;  // What should Enumerator.Current return?
+
+            internal const int DictEntry = 1;
+            internal const int KeyValuePair = 2;
+
+            internal Enumerator(SerializableDictionary<TKey, TValue> dictionary, int getEnumeratorRetType)
+            {
+                _dictionary = dictionary;
+                _version = dictionary._version;
+                _index = 0;
+                _getEnumeratorRetType = getEnumeratorRetType;
+                _current = default;
+            }
+
+            public bool MoveNext()
+            {
+                if (_version != _dictionary._version)
+                    throw new InvalidOperationException();
+
+                // Use unsigned comparison since we set index to dictionary._count+1 when the enumeration ends.
+                // dictionary._count+1 could be negative if dictionary._count is Int32.MaxValue
+                while ((uint)_index < (uint)_dictionary._count)
+                {
+                    ref Entry entry = ref _dictionary._entries![_index++];
+
+                    if (entry.Next >= -1)
+                    {
+                        _current = new KeyValuePair<TKey, TValue>(entry.Key, entry.Value);
+                        return true;
+                    }
+                }
+
+                _index = _dictionary._count + 1;
+                _current = default;
+                return false;
+            }
+
+            public KeyValuePair<TKey, TValue> Current => _current;
+
+            public void Dispose() { }
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (_index == 0 || (_index == _dictionary._count + 1))
+                        throw new InvalidOperationException();
+
+                    if (_getEnumeratorRetType == DictEntry)
+                        return new DictionaryEntry(_current.Key, _current.Value);
+
+                    return new KeyValuePair<TKey, TValue>(_current.Key, _current.Value);
+                }
+            }
+
+            void IEnumerator.Reset()
+            {
+                if (_version != _dictionary._version)
+                    throw new InvalidOperationException();
+
+                _index = 0;
+                _current = default;
+            }
+
+            DictionaryEntry IDictionaryEnumerator.Entry
+            {
+                get
+                {
+                    if (_index == 0 || (_index == _dictionary._count + 1))
+                        throw new InvalidOperationException();
+
+                    return new DictionaryEntry(_current.Key, _current.Value);
+                }
+            }
+
+            object IDictionaryEnumerator.Key
+            {
+                get
+                {
+                    if (_index == 0 || (_index == _dictionary._count + 1))
+                        throw new InvalidOperationException();
+
+                    return _current.Key!;
+                }
+            }
+
+            object IDictionaryEnumerator.Value
+            {
+                get
+                {
+                    if (_index == 0 || (_index == _dictionary._count + 1))
+                        throw new InvalidOperationException();
+
+                    return _current.Value!;
+                }
+            }
         }
 
         public SerializableDictionary() : this(0, null) { }
@@ -68,7 +175,7 @@ namespace Celezt.DialogueSystem
                 Add(pair.Key, pair.Value);
         }
 
-        public IEqualityComparer<TKey> Comparer => _comparer ?? EqualityComparer<TKey>.Default;
+        public IEqualityComparer<TKey> Comparer => _comparer;
 
         public int Count => _count - _freeCount;
 
@@ -91,8 +198,10 @@ namespace Celezt.DialogueSystem
                 if (i < 0) 
                     throw new KeyNotFoundException();
 
-                    return _entries[i].Value;
+                if (_buckets == null) 
+                    Initialize(0);
 
+                return _entries![i].Value;
             }
             set
             {
@@ -122,7 +231,7 @@ namespace Celezt.DialogueSystem
                 Clear();
                 for (int i = 0; i < length; i++)
                 {
-                    this[m_keys[i]] = valueLength > i ? m_values[i] : default(TValue);
+                    this[m_keys[i]] = valueLength > i ? m_values[i] : default(TValue)!;
                 }
 
                 m_keys = null;
@@ -130,30 +239,19 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public void Add(TKey key, TValue value)
-        {
-            Insert(key, value, true);
-        }
+        public void Add(TKey key, TValue value) 
+            => Insert(key, value, true);
 
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> keyValuePair)
-        {
-            Add(keyValuePair.Key, keyValuePair.Value);
-        }
-
-        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> keyValuePair)
-        {
-            int i = FindEntry(keyValuePair.Key);
-            if (i >= 0 && EqualityComparer<TValue>.Default.Equals(_entries[i].Value, keyValuePair.Value))
-            {
-                return true;
-            }
-            return false;
-        }
+            => Add(keyValuePair.Key, keyValuePair.Value);
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> keyValuePair)
         {
+            if (_buckets == null)
+                return false;
+
             int i = FindEntry(keyValuePair.Key);
-            if (i >= 0 && EqualityComparer<TValue>.Default.Equals(_entries[i].Value, keyValuePair.Value))
+            if (i >= 0 && EqualityComparer<TValue>.Default.Equals(_entries![i].Value, keyValuePair.Value))
             {
                 Remove(keyValuePair.Key);
                 return true;
@@ -165,7 +263,12 @@ namespace Celezt.DialogueSystem
         {
             if (_count > 0)
             {
-                for (int i = 0; i < _buckets.Length; i++) _buckets[i] = -1;
+                if (_buckets != null)
+                {
+                    for (int i = 0; i < _buckets.Length; i++)
+                        _buckets[i] = -1;
+                }
+
                 Array.Clear(_entries, 0, _count);
                 _freeList = -1;
                 _count = 0;
@@ -174,10 +277,16 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public bool ContainsKey(TKey key)
+        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> keyValuePair)
         {
-            return FindEntry(key) >= 0;
+            int i = FindEntry(keyValuePair.Key);
+            if (i >= 0 && EqualityComparer<TValue>.Default.Equals(_entries![i].Value, keyValuePair.Value))
+                return true;
+
+            return false;
         }
+
+        public bool ContainsKey(TKey key) => FindEntry(key) >= 0;
 
         public bool ContainsValue(TValue value)
         {
@@ -185,7 +294,8 @@ namespace Celezt.DialogueSystem
             {
                 for (int i = 0; i < _count; i++)
                 {
-                    if (_entries[i].HashCode >= 0 && _entries[i].Value == null) return true;
+                    if (_entries![i].HashCode >= 0 && _entries[i].Value == null) 
+                        return true;
                 }
             }
             else
@@ -193,31 +303,30 @@ namespace Celezt.DialogueSystem
                 EqualityComparer<TValue> c = EqualityComparer<TValue>.Default;
                 for (int i = 0; i < _count; i++)
                 {
-                    if (_entries[i].HashCode >= 0 && c.Equals(_entries[i].Value, value)) return true;
+                    if (_entries![i].HashCode >= 0 && c.Equals(_entries[i].Value, value)) 
+                        return true;
                 }
             }
+
             return false;
         }
 
         private void CopyTo(KeyValuePair<TKey, TValue>[] array, int index)
         {
+            if (_buckets == null) 
+                Initialize(0);
+
             if (array == null)
-            {
                 throw new ArgumentNullException("array");
-            }
 
             if (index < 0 || index > array.Length)
-            {
                 throw new ArgumentOutOfRangeException("index");
-            }
 
             if (array.Length - index < Count)
-            {
                 throw new ArgumentException();
-            }
 
-            int count = this._count;
-            Entry[] entries = this._entries;
+            int count = _count;
+            Entry[] entries = _entries!;
             for (int i = 0; i < count; i++)
             {
                 if (entries[i].HashCode >= 0)
@@ -227,29 +336,22 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(this, Enumerator.KeyValuePair);
-        }
-
+        public Enumerator GetEnumerator() 
+            => new Enumerator(this, Enumerator.KeyValuePair);
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
-        {
-            return new Enumerator(this, Enumerator.KeyValuePair);
-        }
+            => new Enumerator(this, Enumerator.KeyValuePair);
 
-        private int FindEntry(TKey key)
+        private int FindEntry(TKey? key)
         {
             if (key == null)
-            {
                 throw new ArgumentNullException("key");
-            }
 
             if (_buckets != null)
             {
                 int hashCode = _comparer.GetHashCode(key) & 0x7FFFFFFF;
                 for (int i = _buckets[hashCode % _buckets.Length]; i >= 0; i = _entries[i].Next)
                 {
-                    if (_entries[i].HashCode == hashCode && _comparer.Equals(_entries[i].Key, key)) return i;
+                    if (_entries![i].HashCode == hashCode && _comparer.Equals(_entries[i].Key, key)) return i;
                 }
             }
             return -1;
@@ -267,15 +369,14 @@ namespace Celezt.DialogueSystem
 
         private void Insert(TKey key, TValue value, bool add)
         {
-
             if (key == null)
-            {
                 throw new ArgumentNullException("key");
-            }
 
-            if (_buckets == null) Initialize(0);
+            if (_buckets == null) 
+                Initialize(0);
+
             int hashCode = _comparer.GetHashCode(key) & 0x7FFFFFFF;
-            int targetBucket = hashCode % _buckets.Length;
+            int targetBucket = hashCode % _buckets!.Length;
 
 #if FEATURE_RANDOMIZED_STRING_HASHING
             int collisionCount = 0;
@@ -283,7 +384,7 @@ namespace Celezt.DialogueSystem
 
             for (int i = _buckets[targetBucket]; i >= 0; i = _entries[i].Next)
             {
-                if (_entries[i].HashCode == hashCode && _comparer.Equals(_entries[i].Key, key))
+                if (_entries![i].HashCode == hashCode && _comparer.Equals(_entries[i].Key, key))
                 {
                     if (add)
                     {
@@ -298,12 +399,12 @@ namespace Celezt.DialogueSystem
             if (_freeCount > 0)
             {
                 index = _freeList;
-                _freeList = _entries[index].Next;
+                _freeList = _entries![index].Next;
                 _freeCount--;
             }
             else
             {
-                if (_count == _entries.Length)
+                if (_count == _entries!.Length)
                 {
                     Resize();
                     targetBucket = hashCode % _buckets.Length;
@@ -327,7 +428,6 @@ namespace Celezt.DialogueSystem
 
         private void Resize(int newSize, bool forceNewHashCodes)
         {
-            //Contract.Assert(newSize >= _entries.Length);
             int[] newBuckets = new int[newSize];
             for (int i = 0; i < newBuckets.Length; i++) newBuckets[i] = -1;
             Entry[] newEntries = new Entry[newSize];
@@ -358,9 +458,7 @@ namespace Celezt.DialogueSystem
         public bool Remove(TKey key)
         {
             if (key == null)
-            {
                 throw new ArgumentNullException("key");
-            }
 
             if (_buckets != null)
             {
@@ -369,7 +467,7 @@ namespace Celezt.DialogueSystem
                 int last = -1;
                 for (int i = _buckets[bucket]; i >= 0; last = i, i = _entries[i].Next)
                 {
-                    if (_entries[i].HashCode == hashCode && _comparer.Equals(_entries[i].Key, key))
+                    if (_entries![i].HashCode == hashCode && _comparer.Equals(_entries[i].Key, key))
                     {
                         if (last < 0)
                         {
@@ -381,8 +479,8 @@ namespace Celezt.DialogueSystem
                         }
                         _entries[i].HashCode = -1;
                         _entries[i].Next = _freeList;
-                        _entries[i].Key = default(TKey);
-                        _entries[i].Value = default(TValue);
+                        _entries[i].Key = default(TKey)!;
+                        _entries[i].Value = default(TValue)!;
                         _freeList = i;
                         _freeCount++;
                         _version++;
@@ -398,85 +496,65 @@ namespace Celezt.DialogueSystem
             int i = FindEntry(key);
             if (i >= 0)
             {
-                value = _entries[i].Value;
+                value = _entries![i].Value;
                 return true;
             }
-            value = default(TValue);
+            value = default(TValue)!;
             return false;
         }
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int index)
-        {
-            CopyTo(array, index);
-        }
+            => CopyTo(array, index);
 
         void ICollection.CopyTo(Array array, int index)
         {
             if (array == null)
-            {
                 throw new ArgumentNullException("array");
-            }
 
             if (array.Rank != 1)
-            {
                 throw new ArgumentException();
-            }
 
             if (array.GetLowerBound(0) != 0)
-            {
                 throw new ArgumentException();
-            }
 
             if (index < 0 || index > array.Length)
-            {
                 throw new ArgumentOutOfRangeException("index");
-            }
 
             if (array.Length - index < Count)
-            {
                 throw new ArgumentException();
-            }
 
-            KeyValuePair<TKey, TValue>[] pairs = array as KeyValuePair<TKey, TValue>[];
+            if (_entries == null)
+                Initialize(0);
+
+            KeyValuePair<TKey, TValue>[]? pairs = array as KeyValuePair<TKey, TValue>[];
             if (pairs != null)
-            {
                 CopyTo(pairs, index);
-            }
-            else if (array is DictionaryEntry[])
+
+            else if (array is DictionaryEntry[] dictEntryArray)
             {
-                DictionaryEntry[] dictEntryArray = array as DictionaryEntry[];
-                Entry[] entries = this._entries;
+                Entry[] entries = _entries!;
                 for (int i = 0; i < _count; i++)
                 {
                     if (entries[i].HashCode >= 0)
-                    {
                         dictEntryArray[index++] = new DictionaryEntry(entries[i].Key, entries[i].Value);
-                    }
                 }
             }
             else
             {
-                object[] objects = array as object[];
+                object[]? objects = array as object[];
                 if (objects == null)
-                {
                     throw new ArgumentException();
-                }
 
                 try
                 {
                     int count = this._count;
-                    Entry[] entries = this._entries;
+                    Entry[] entries = _entries!;
                     for (int i = 0; i < count; i++)
                     {
                         if (entries[i].HashCode >= 0)
-                        {
                             objects[index++] = new KeyValuePair<TKey, TValue>(entries[i].Key, entries[i].Value);
-                        }
                     }
                 }
                 catch (ArrayTypeMismatchException)
@@ -486,58 +564,37 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new Enumerator(this, Enumerator.KeyValuePair);
-        }
+        IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this, Enumerator.KeyValuePair);
 
-        bool ICollection.IsSynchronized
-        {
-            get { return false; }
-        }
+        bool ICollection.IsSynchronized => false;
 
-        object ICollection.SyncRoot
+        object ICollection.SyncRoot => this;
+
+        bool IDictionary.IsFixedSize => false;
+
+        bool IDictionary.IsReadOnly => false;
+
+        object? IDictionary.this[object key]
         {
             get
             {
-                if (_syncRoot == null)
-                {
-                    System.Threading.Interlocked.CompareExchange<object>(ref _syncRoot, new object(), null);
-                }
-                return _syncRoot;
-            }
-        }
+                if (_buckets == null)
+                    Initialize(0);
 
-        bool IDictionary.IsFixedSize
-        {
-            get { return false; }
-        }
-
-        bool IDictionary.IsReadOnly
-        {
-            get { return false; }
-        }
-
-        object IDictionary.this[object key]
-        {
-            get
-            {
                 if (IsCompatibleKey(key))
                 {
                     int i = FindEntry((TKey)key);
+
                     if (i >= 0)
-                    {
-                        return _entries[i].Value;
-                    }
+                        return _entries![i].Value;
                 }
+
                 return null;
             }
             set
             {
                 if (key == null)
-                {
                     throw new ArgumentNullException("key");
-                }
 
                 if (value == null && !(default(TValue) == null))
                     throw new ArgumentNullException("value");
@@ -547,7 +604,7 @@ namespace Celezt.DialogueSystem
                     TKey tempKey = (TKey)key;
                     try
                     {
-                        this[tempKey] = (TValue)value;
+                        this[tempKey] = (TValue)value!;
                     }
                     catch (InvalidCastException)
                     {
@@ -586,7 +643,7 @@ namespace Celezt.DialogueSystem
 
                 try
                 {
-                    Add(tempKey, (TValue)value);
+                    Add(tempKey, (TValue)value!);
                 }
                 catch (InvalidCastException)
                 {
@@ -622,170 +679,37 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>,
-            IDictionaryEnumerator
-        {
-            private SerializableDictionary<TKey, TValue> dictionary;
-            private int version;
-            private int index;
-            private KeyValuePair<TKey, TValue> current;
-            private int getEnumeratorRetType;  // What should Enumerator.Current return?
-
-            internal const int DictEntry = 1;
-            internal const int KeyValuePair = 2;
-
-            internal Enumerator(SerializableDictionary<TKey, TValue> dictionary, int getEnumeratorRetType)
-            {
-                this.dictionary = dictionary;
-                version = dictionary._version;
-                index = 0;
-                this.getEnumeratorRetType = getEnumeratorRetType;
-                current = new KeyValuePair<TKey, TValue>();
-            }
-
-            public bool MoveNext()
-            {
-                if (version != dictionary._version)
-                {
-                    throw new InvalidOperationException();
-                }
-
-                // Use unsigned comparison since we set index to dictionary._count+1 when the enumeration ends.
-                // dictionary._count+1 could be negative if dictionary._count is Int32.MaxValue
-                while ((uint)index < (uint)dictionary._count)
-                {
-                    if (dictionary._entries[index].HashCode >= 0)
-                    {
-                        current = new KeyValuePair<TKey, TValue>(dictionary._entries[index].Key, dictionary._entries[index].Value);
-                        index++;
-                        return true;
-                    }
-                    index++;
-                }
-
-                index = dictionary._count + 1;
-                current = new KeyValuePair<TKey, TValue>();
-                return false;
-            }
-
-            public KeyValuePair<TKey, TValue> Current
-            {
-                get { return current; }
-            }
-
-            public void Dispose()
-            {
-            }
-
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (index == 0 || (index == dictionary._count + 1))
-                    {
-                        throw new InvalidOperationException();
-                    }
-
-                    if (getEnumeratorRetType == DictEntry)
-                    {
-                        return new System.Collections.DictionaryEntry(current.Key, current.Value);
-                    }
-                    else
-                    {
-                        return new KeyValuePair<TKey, TValue>(current.Key, current.Value);
-                    }
-                }
-            }
-
-            void IEnumerator.Reset()
-            {
-                if (version != dictionary._version)
-                {
-                    throw new InvalidOperationException();
-                }
-
-                index = 0;
-                current = new KeyValuePair<TKey, TValue>();
-            }
-
-            DictionaryEntry IDictionaryEnumerator.Entry
-            {
-                get
-                {
-                    if (index == 0 || (index == dictionary._count + 1))
-                    {
-                        throw new InvalidOperationException();
-                    }
-
-                    return new DictionaryEntry(current.Key, current.Value);
-                }
-            }
-
-            object IDictionaryEnumerator.Key
-            {
-                get
-                {
-                    if (index == 0 || (index == dictionary._count + 1))
-                    {
-                        throw new InvalidOperationException();
-                    }
-
-                    return current.Key;
-                }
-            }
-
-            object IDictionaryEnumerator.Value
-            {
-                get
-                {
-                    if (index == 0 || (index == dictionary._count + 1))
-                    {
-                        throw new InvalidOperationException();
-                    }
-
-                    return current.Value;
-                }
-            }
-        }
-
         [DebuggerDisplay("Count = {Count}")]
         public sealed class KeyCollection : ICollection<TKey>, ICollection
         {
-            private SerializableDictionary<TKey, TValue> dictionary;
+            private SerializableDictionary<TKey, TValue> _dictionary;
 
             public KeyCollection(SerializableDictionary<TKey, TValue> dictionary)
             {
                 if (dictionary == null)
-                {
                     throw new ArgumentNullException("dictionary");
-                }
-                this.dictionary = dictionary;
+
+                _dictionary = dictionary;
             }
 
             public Enumerator GetEnumerator()
             {
-                return new Enumerator(dictionary);
+                return new Enumerator(_dictionary);
             }
 
             public void CopyTo(TKey[] array, int index)
             {
                 if (array == null)
-                {
                     throw new ArgumentNullException("array");
-                }
 
                 if (index < 0 || index > array.Length)
-                {
                     throw new ArgumentOutOfRangeException("index");
-                }
 
-                if (array.Length - index < dictionary.Count)
-                {
+                if (array.Length - index < _dictionary.Count)
                     throw new ArgumentException();
-                }
 
-                int count = dictionary._count;
-                Entry[] entries = dictionary._entries;
+                int count = _dictionary._count;
+                Entry[] entries = _dictionary._entries!;
                 for (int i = 0; i < count; i++)
                 {
                     if (entries[i].HashCode >= 0) array[index++] = entries[i].Key;
@@ -794,7 +718,7 @@ namespace Celezt.DialogueSystem
 
             public int Count
             {
-                get { return dictionary.Count; }
+                get { return _dictionary.Count; }
             }
 
             bool ICollection<TKey>.IsReadOnly
@@ -814,7 +738,7 @@ namespace Celezt.DialogueSystem
 
             bool ICollection<TKey>.Contains(TKey item)
             {
-                return dictionary.ContainsKey(item);
+                return _dictionary.ContainsKey(item);
             }
 
             bool ICollection<TKey>.Remove(TKey item)
@@ -824,61 +748,49 @@ namespace Celezt.DialogueSystem
 
             IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
             {
-                return new Enumerator(dictionary);
+                return new Enumerator(_dictionary);
             }
 
             IEnumerator IEnumerable.GetEnumerator()
             {
-                return new Enumerator(dictionary);
+                return new Enumerator(_dictionary);
             }
 
             void ICollection.CopyTo(Array array, int index)
             {
                 if (array == null)
-                {
                     throw new ArgumentNullException("array");
-                }
 
                 if (array.Rank != 1)
-                {
                     throw new ArgumentException();
-                }
 
                 if (array.GetLowerBound(0) != 0)
-                {
                     throw new ArgumentException();
-                }
 
                 if (index < 0 || index > array.Length)
-                {
                     throw new ArgumentOutOfRangeException("index");
-                }
 
-                if (array.Length - index < dictionary.Count)
-                {
+                if (array.Length - index < _dictionary.Count)
                     throw new ArgumentException();
-                }
 
-                TKey[] keys = array as TKey[];
+                TKey[]? keys = array as TKey[];
                 if (keys != null)
                 {
                     CopyTo(keys, index);
                 }
                 else
                 {
-                    object[] objects = array as object[];
+                    object[]? objects = array as object[];
                     if (objects == null)
-                    {
                         throw new ArgumentException();
-                    }
 
-                    int count = dictionary._count;
-                    Entry[] entries = dictionary._entries;
+                    int count = _dictionary._count;
+                    Entry[] entries = _dictionary._entries!;
                     try
                     {
                         for (int i = 0; i < count; i++)
                         {
-                            if (entries[i].HashCode >= 0) objects[index++] = entries[i].Key;
+                            if (entries[i].HashCode >= 0) objects[index++] = entries[i].Key!;
                         }
                     }
                     catch (ArrayTypeMismatchException)
@@ -895,22 +807,22 @@ namespace Celezt.DialogueSystem
 
             object ICollection.SyncRoot
             {
-                get { return ((ICollection)dictionary).SyncRoot; }
+                get { return ((ICollection)_dictionary).SyncRoot; }
             }
 
             public struct Enumerator : IEnumerator<TKey>, IEnumerator
             {
-                private SerializableDictionary<TKey, TValue> dictionary;
-                private int index;
-                private int version;
-                private TKey currentKey;
+                private SerializableDictionary<TKey, TValue> _dictionary;
+                private int _index;
+                private int _version;
+                private TKey? _currentKey;
 
                 internal Enumerator(SerializableDictionary<TKey, TValue> dictionary)
                 {
-                    this.dictionary = dictionary;
-                    version = dictionary._version;
-                    index = 0;
-                    currentKey = default(TKey);
+                    this._dictionary = dictionary;
+                    _version = dictionary._version;
+                    _index = 0;
+                    _currentKey = default(TKey);
                 }
 
                 public void Dispose()
@@ -919,24 +831,22 @@ namespace Celezt.DialogueSystem
 
                 public bool MoveNext()
                 {
-                    if (version != dictionary._version)
-                    {
+                    if (_version != _dictionary._version)
                         throw new InvalidOperationException();
-                    }
 
-                    while ((uint)index < (uint)dictionary._count)
+                    while ((uint)_index < (uint)_dictionary._count)
                     {
-                        if (dictionary._entries[index].HashCode >= 0)
+                        if (_dictionary._entries![_index].HashCode >= 0)
                         {
-                            currentKey = dictionary._entries[index].Key;
-                            index++;
+                            _currentKey = _dictionary._entries[_index].Key;
+                            _index++;
                             return true;
                         }
-                        index++;
+                        _index++;
                     }
 
-                    index = dictionary._count + 1;
-                    currentKey = default(TKey);
+                    _index = _dictionary._count + 1;
+                    _currentKey = default(TKey);
                     return false;
                 }
 
@@ -944,32 +854,30 @@ namespace Celezt.DialogueSystem
                 {
                     get
                     {
-                        return currentKey;
+                        return _currentKey!;
                     }
                 }
 
-                object IEnumerator.Current
+                object? IEnumerator.Current
                 {
                     get
                     {
-                        if (index == 0 || (index == dictionary._count + 1))
-                        {
+                        if (_index == 0 || (_index == _dictionary._count + 1))
                             throw new InvalidOperationException();
-                        }
 
-                        return currentKey;
+                        return _currentKey;
                     }
                 }
 
                 void IEnumerator.Reset()
                 {
-                    if (version != dictionary._version)
+                    if (_version != _dictionary._version)
                     {
                         throw new InvalidOperationException();
                     }
 
-                    index = 0;
-                    currentKey = default(TKey);
+                    _index = 0;
+                    _currentKey = default(TKey);
                 }
             }
         }
@@ -982,9 +890,8 @@ namespace Celezt.DialogueSystem
             public ValueCollection(SerializableDictionary<TKey, TValue> dictionary)
             {
                 if (dictionary == null)
-                {
                     throw new ArgumentNullException("dictionary");
-                }
+
                 this.dictionary = dictionary;
             }
 
@@ -996,22 +903,16 @@ namespace Celezt.DialogueSystem
             public void CopyTo(TValue[] array, int index)
             {
                 if (array == null)
-                {
                     throw new ArgumentNullException("array");
-                }
 
                 if (index < 0 || index > array.Length)
-                {
                     throw new ArgumentOutOfRangeException("index");
-                }
 
                 if (array.Length - index < dictionary.Count)
-                {
                     throw new ArgumentException();
-                }
 
                 int count = dictionary._count;
-                Entry[] entries = dictionary._entries;
+                Entry[] entries = dictionary._entries!;
                 for (int i = 0; i < count; i++)
                 {
                     if (entries[i].HashCode >= 0) array[index++] = entries[i].Value;
@@ -1061,48 +962,38 @@ namespace Celezt.DialogueSystem
             void ICollection.CopyTo(Array array, int index)
             {
                 if (array == null)
-                {
                     throw new ArgumentNullException("array");
-                }
 
                 if (array.Rank != 1)
-                {
                     throw new ArgumentException();
-                }
 
                 if (array.GetLowerBound(0) != 0)
-                {
                     throw new ArgumentException();
-                }
 
                 if (index < 0 || index > array.Length)
-                {
                     throw new ArgumentOutOfRangeException("index");
-                }
 
                 if (array.Length - index < dictionary.Count)
                     throw new ArgumentException();
 
-                TValue[] values = array as TValue[];
+                TValue[]? values = array as TValue[];
                 if (values != null)
                 {
                     CopyTo(values, index);
                 }
                 else
                 {
-                    object[] objects = array as object[];
+                    object[]? objects = array as object[];
                     if (objects == null)
-                    {
                         throw new ArgumentException();
-                    }
 
                     int count = dictionary._count;
-                    Entry[] entries = dictionary._entries;
+                    Entry[] entries = dictionary._entries!;
                     try
                     {
                         for (int i = 0; i < count; i++)
                         {
-                            if (entries[i].HashCode >= 0) objects[index++] = entries[i].Value;
+                            if (entries[i].HashCode >= 0) objects[index++] = entries[i].Value!;
                         }
                     }
                     catch (ArrayTypeMismatchException)
@@ -1127,7 +1018,7 @@ namespace Celezt.DialogueSystem
                 private SerializableDictionary<TKey, TValue> dictionary;
                 private int index;
                 private int version;
-                private TValue currentValue;
+                private TValue? currentValue;
 
                 internal Enumerator(SerializableDictionary<TKey, TValue> dictionary)
                 {
@@ -1150,7 +1041,7 @@ namespace Celezt.DialogueSystem
 
                     while ((uint)index < (uint)dictionary._count)
                     {
-                        if (dictionary._entries[index].HashCode >= 0)
+                        if (dictionary._entries![index].HashCode >= 0)
                         {
                             currentValue = dictionary._entries[index].Value;
                             index++;
@@ -1167,11 +1058,11 @@ namespace Celezt.DialogueSystem
                 {
                     get
                     {
-                        return currentValue;
+                        return currentValue!;
                     }
                 }
 
-                object IEnumerator.Current
+                object? IEnumerator.Current
                 {
                     get
                     {
