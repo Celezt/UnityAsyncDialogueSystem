@@ -11,6 +11,8 @@ using UnityEngine.Timeline;
 using UnityEditor;
 #endif
 
+#nullable enable
+
 namespace Celezt.DialogueSystem
 {
     [Serializable]
@@ -24,7 +26,7 @@ namespace Celezt.DialogueSystem
             set => _version = value;
         }
 
-        public T Asset => _target as T;
+        public T Asset => (_target as T)!;
 
         public IReadOnlyDictionary<string, bool> PropertiesModified
         {
@@ -42,7 +44,7 @@ namespace Celezt.DialogueSystem
             set => _target = value;
         }
 
-        UnityEngine.Object IExtension.Reference
+        UnityEngine.Object? IExtension.Reference
         {
             get => _reference;
             set
@@ -60,17 +62,33 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        [SerializeField, HideInInspector]
-        private UnityEngine.Object _reference;
+        public IExtension? ExtensionReference
+        {
+            get
+            {
+                if (_extensionReference == null)
+                {
+                    if (_reference is IExtensionCollection collection)
+                        _extensionReference = collection.GetExtension(GetType());
+                }
+
+                return _extensionReference;
+            }
+        }
 
         [SerializeField, HideInInspector]
-        private UnityEngine.Object _target;
+        private UnityEngine.Object? _reference;
+
+        [SerializeField, HideInInspector]
+        private UnityEngine.Object _target = null!;
 
         [SerializeField, HideInInspector]
         private int _version;
 
         [SerializeField, HideInInspector]
-        private SerializableDictionary<string, bool> _propertiesModified;
+        private SerializableDictionary<string, bool> _propertiesModified = null!;
+
+        private IExtension? _extensionReference;
 
         protected virtual void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip) { }
         protected virtual void OnEnter(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }

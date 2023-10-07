@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -221,11 +222,12 @@ namespace Celezt.DialogueSystem.Editor
                         {
 
                         });
-                    }
-                    menu.AddItem(new GUIContent("Modified Extension/Revert"), false, () =>
-                    {
 
-                    });
+                        menu.AddItem(new GUIContent("Modified Extension/Revert"), false, () =>
+                        {
+
+                        });
+                    }
                     menu.AddSeparator(null);
                     menu.AddItem(new GUIContent("Remove Extension"), false, () =>
                     {
@@ -253,6 +255,7 @@ namespace Celezt.DialogueSystem.Editor
 
         public void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
             => OnPropertyContextMenu(menu, property, false);
+
         public bool OnPropertyContextMenu(GenericMenu menu, SerializedProperty property, bool displayPropertyName)
         {
             var serializedObject = property.serializedObject;
@@ -272,29 +275,26 @@ namespace Celezt.DialogueSystem.Editor
 
                 if (!containSubProperties)  // Skip if it is a sub property.
                 {
-                    if (_reference is IExtensionCollection otherCollection)
+                    IExtension? extensionReference = _extension?.ExtensionReference;
+                    if (extensionReference != null)
                     {
-                        using var otherSerializedObject = new SerializedObject(_reference);
-                        var otherProperty = otherSerializedObject.FindProperty(property.propertyPath);
-                        IExtension otherExtension = otherCollection.Extensions[int.Parse(path.AsSpan(23, endIndex - 23))];
-
-                        if (SerializedProperty.DataEquals(property, otherProperty))
+                        if (_extension!.GetModified(property.name) == false) // If it has not been modified.
                             return false;
 
                         FieldInfo info = _extension!.GetType()
                             .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
-                        menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{_reference.name}'"), false, () =>
+                        menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{_reference!.name}'"), false, () =>
                         {
                             Undo.RecordObject(_reference, "Applied to Reference");
-                            info.SetValue(otherExtension, info.GetValue(_extension));
+                            info.SetValue(extensionReference, info.GetValue(_extension));
                             EditorUtility.SetDirty(_reference);
                             serializedObject.Update();
                         });
                         menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
                         {
                             Undo.RecordObject(_target, "Reverted Value");
-                            info.SetValue(_extension, info.GetValue(otherExtension));
+                            info.SetValue(_extension, info.GetValue(extensionReference));
                             EditorUtility.SetDirty(_target);
                             serializedObject.Update();
                         });

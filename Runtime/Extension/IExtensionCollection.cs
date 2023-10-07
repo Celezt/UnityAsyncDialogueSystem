@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 #nullable enable
@@ -18,7 +19,7 @@ namespace Celezt.DialogueSystem
         public void MoveUpExtension(Type type);
         public void MoveDownExtension(Type type);
 
-        public bool TryGetExtension<T>(out T? extension) where T : class
+        public bool TryGetExtension<T>([NotNullWhen(true)] out T? extension) where T : class
         {
             extension = null;
 
@@ -27,7 +28,7 @@ namespace Celezt.DialogueSystem
 
             return extension != null;
         }
-        public bool TryGetExtension(Type type, out IExtension? extension)
+        public bool TryGetExtension(Type type, [NotNullWhen(true)] out IExtension? extension)
         {
             extension = Extensions.FirstOrDefault(x => x.GetType().IsAssignableFrom(type));
 

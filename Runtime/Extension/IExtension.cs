@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
+#nullable enable
+
 namespace Celezt.DialogueSystem
 {
     public interface IExtension<T> : IExtension where T : UnityEngine.Object
@@ -16,8 +18,10 @@ namespace Celezt.DialogueSystem
     {
         public int Version { get; set; }
         public UnityEngine.Object Target { get; set; }
-        public UnityEngine.Object Reference { get; set; }
+        public UnityEngine.Object? Reference { get; set; }
         public IReadOnlyDictionary<string, bool> PropertiesModified { get; }
+
+        public IExtension? ExtensionReference { get; }
 
         public void UpdateProperties(bool forceUpdate = false);
         public void SetModified(string propertyName, bool isModified);

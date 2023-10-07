@@ -230,9 +230,7 @@ namespace Celezt.DialogueSystem
 
                 Clear();
                 for (int i = 0; i < length; i++)
-                {
                     this[m_keys[i]] = valueLength > i ? m_values[i] : default(TValue)!;
-                }
 
                 m_keys = null;
                 m_values = null;
