@@ -19,16 +19,8 @@ namespace Celezt.DialogueSystem
 
         public static bool Any<T>(this ReadOnlySpan<T> span, Func<T, bool> condition) where T : struct
         {
-            if (span.IsEmpty) 
-                return false;
-
-            int index = 0;
-
-            if (span[index] is '-') // Is negative value.
-                index++;
-
-            for (; index < span.Length; index++)
-                if (condition(span[index]))
+            for (int i = 0; i < span.Length; i++)
+                if (condition(span[i]))
                     return true;
 
             return false;

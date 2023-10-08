@@ -19,11 +19,15 @@ namespace Celezt.DialogueSystem
         public int Version { get; set; }
         public UnityEngine.Object Target { get; set; }
         public UnityEngine.Object? Reference { get; set; }
+        public UnityEngine.Object? RootReference { get; }
         public IReadOnlyDictionary<string, bool> PropertiesModified { get; }
 
         public IExtension? ExtensionReference { get; }
+        public IExtension? RootExtensionReference { get; }
 
-        public void UpdateProperties(bool forceUpdate = false);
+        public bool IsRoot { get; }
+
+        public void UpdateProperties();
         public void SetModified(string propertyName, bool isModified);
         public bool GetModified(string propertyName);
 

@@ -20,7 +20,6 @@ namespace Celezt.DialogueSystem.Editor
         private static Dictionary<long, bool> _isOpens = new();
 
         private UnityEngine.Object? _target;
-        private UnityEngine.Object? _reference;
         private IExtension? _extension;
 
         private GenericMenu? _propertyContextMenu;
@@ -202,7 +201,6 @@ namespace Celezt.DialogueSystem.Editor
             _contextMenuProperties.Clear();
 
             _isOpens[rid] = isOpen;
-            _reference = _extension.Reference;
 
             void ShowHeaderContextMenu(Rect rect)
             {
@@ -216,9 +214,9 @@ namespace Celezt.DialogueSystem.Editor
                         property.managedReferenceValue = newExtension;
 
                     });
-                    if (_reference != null)
+                    if (_extension.Reference != null)
                     {
-                        menu.AddItem(new GUIContent($"Modified Extension/Apply to Object '{_reference.name}'"), false, () =>
+                        menu.AddItem(new GUIContent($"Modified Extension/Apply to Object '{_extension.Reference.name}'"), false, () =>
                         {
 
                         });
@@ -264,41 +262,46 @@ namespace Celezt.DialogueSystem.Editor
             if (_target == null || _target != serializedObject.targetObject)
                 return false;
 
-            string propertyDisplayName = displayPropertyName ? property.displayName + ": " : string.Empty;
+            string? propertyDisplayName = displayPropertyName ? property.displayName + ": " : null;
 
             // Only add menu item if it is a property of the extension.
             string path = property.propertyPath;
-            if (path.StartsWith("_extensions.Array.data["))
+            if (!path.StartsWith("_extensions.Array.data["))
+                return false;
+
+            bool containSubProperties = path.AsSpan(path.IndexOf(']', 23) + 2).Any(x => x == '.');
+
+            if (!containSubProperties)  // Skip if it is a sub property.
             {
-                int endIndex = path.IndexOf(']', 23);
-                bool containSubProperties = path.Skip(endIndex + 2).Any(x => x == '.');
-
-                if (!containSubProperties)  // Skip if it is a sub property.
+                IExtension? extensionReference = _extension?.ExtensionReference;
+                if (extensionReference != null)
                 {
-                    IExtension? extensionReference = _extension?.ExtensionReference;
-                    if (extensionReference != null)
+                    UnityEngine.Object reference = _extension!.Reference!;
+
+                    if (_extension!.GetModified(property.name) == false) // Skip if it has not been modified.
+                        return false;
+
+                    menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{reference.name}'"), false, () =>
                     {
-                        if (_extension!.GetModified(property.name) == false) // If it has not been modified.
-                            return false;
-
-                        FieldInfo info = _extension!.GetType()
-                            .GetField(property.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
-                        menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{_reference!.name}'"), false, () =>
+                        Undo.RecordObject(reference, "Applied to Reference");
+                        _extension.CopyTo(extensionReference, property.name);
+                        serializedObject.Update();
+                    });
+                    if (!extensionReference.IsRoot) // If reference is not the root.
+                    {
+                        menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Root Reference '{_extension.RootReference!.name}'"), false, () =>
                         {
-                            Undo.RecordObject(_reference, "Applied to Reference");
-                            info.SetValue(extensionReference, info.GetValue(_extension));
-                            EditorUtility.SetDirty(_reference);
-                            serializedObject.Update();
-                        });
-                        menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
-                        {
-                            Undo.RecordObject(_target, "Reverted Value");
-                            info.SetValue(_extension, info.GetValue(extensionReference));
-                            EditorUtility.SetDirty(_target);
+                            Undo.RecordObject(reference, "Applied to Root Reference");
+                            _extension.CopyTo(_extension.RootExtensionReference, property.name);
                             serializedObject.Update();
                         });
                     }
+                    menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
+                    {
+                        Undo.RecordObject(_target, "Reverted Value");
+                        extensionReference.CopyTo(_extension, property.name);
+                        serializedObject.Update();
+                    });
                 }
             }
 

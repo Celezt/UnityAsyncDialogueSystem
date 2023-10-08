@@ -49,32 +49,50 @@ namespace Celezt.DialogueSystem
             get => _reference;
             set
             {
-                if (_reference != value)
+                var oldReference = _reference;
+                _reference = value;
+
+                if (oldReference != _reference)
                 {
                     if (_reference is IExtensionCollection collection && collection.TryGetExtension(GetType(), out var extension)){
                         _version = extension.Version;
-                        UpdateProperties(true);
+                        ForceUpdateProperties();
                     }
                 }
-
-                _reference = value;
-
             }
         }
 
-        public IExtension? ExtensionReference
+        public UnityEngine.Object? RootReference
         {
             get
             {
-                if (_extensionReference == null)
+                Type type = GetType();
+
+                UnityEngine.Object? GetReference(UnityEngine.Object? reference)
                 {
-                    if (_reference is IExtensionCollection collection)
-                        _extensionReference = collection.GetExtension(GetType());
+                    if (reference is IExtensionCollection collection)
+                    {
+                        if (collection.TryGetExtension(type, out IExtension? extension))
+                        {
+                            if (extension.Reference != null)
+                                return GetReference(extension.Reference);
+                        }
+                    }
+
+                    return reference;
                 }
 
-                return _extensionReference;
+                return GetReference(_reference);
             }
         }
+
+        public IExtension? ExtensionReference 
+            => _extensionReference ??= ((IExtensionCollection?)_reference)?.GetExtension(GetType());
+
+        public IExtension? RootExtensionReference
+            => ((IExtensionCollection?)RootReference)?.GetExtension(GetType());
+
+        public bool IsRoot => _reference == null;
 
         [SerializeField, HideInInspector]
         private UnityEngine.Object? _reference;
@@ -102,7 +120,23 @@ namespace Celezt.DialogueSystem
                 _propertyNames[type] = ReflectionUtility.GetSerializablePropertyNames(type).ToArray();
         }
 
-        public void UpdateProperties(bool forceUpdate = false)
+        public void ForceUpdateProperties()
+        {
+            if (_reference is not IExtensionCollection referenceCollection)
+                return;
+
+            if (!referenceCollection.TryGetExtension(GetType(), out var referenceExtension))
+                return;
+
+            foreach (string propertyName in PropertiesModified.Where(x => !x.Value).Select(x => x.Key))   // Get all unmodified properties.
+                referenceExtension.CopyTo(this, propertyName);
+
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(_target);
+#endif
+        }
+
+        public void UpdateProperties()
         {
             if (_reference is not IExtensionCollection referenceCollection)
                 return;
@@ -127,7 +161,7 @@ namespace Celezt.DialogueSystem
                 referenceExtension.CopyTo(this, propertyName);
 
 #if UNITY_EDITOR
-            EditorUtility.SetDirty(Asset);
+            EditorUtility.SetDirty(_target);
 #endif
         }
 
@@ -142,7 +176,7 @@ namespace Celezt.DialogueSystem
             _propertiesModified[propertyName] = isModified;
 
 #if UNITY_EDITOR
-            EditorUtility.SetDirty(Asset);
+            EditorUtility.SetDirty(_target);
 #endif
         }
 
