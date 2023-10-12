@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+#nullable enable
+
 namespace Celezt.DialogueSystem
 {
     public interface IReadonlyBox<T>
@@ -14,17 +16,29 @@ namespace Celezt.DialogueSystem
     {
         private static Dictionary<int, WeakReference> _boxes = new();
 
+        public static Box<T> Empty = new Box<T>();
+        public bool IsEmpty => _hash == 0;
+
         public T Value
         {
             get
             {
-                var weakRef = _boxes[_hash];
-                if (!weakRef.IsAlive)
-                    weakRef.Target = _value;
+                Initialize();
 
-                return (T)weakRef.Target;
+                return GetValue(_boxed!);
             }
-            set => _boxes[_hash].Target = value;
+            set
+            {
+                Initialize();
+
+                if (_boxed is ValueObject valueObject)
+                    valueObject.Value = value;
+                else
+                {
+                    _boxed = value;
+                    _boxes[_hash].Target = _boxed;
+                }
+            }
         }
 
         T IReadonlyBox<T>.Value => Value;
@@ -34,18 +48,34 @@ namespace Celezt.DialogueSystem
         [SerializeField]
         private int _hash;
 
+        private object? _boxed;
+
+        private class ValueObject
+        {
+            public T Value
+            {
+                get => _value;
+                set => _value = value;
+            }
+
+            private T _value;
+
+            public ValueObject(T value) => _value = value;
+        }
+
         public Box(T value)
         {
             _value = value;
             _hash = Guid.NewGuid().GetHashCode();
+            _boxed = null;
         }
 
         public static implicit operator T(Box<T> refValue) => refValue.Value;
-        public static bool operator ==(Box<T> lhs, Box<T> rhs) => lhs.Value?.Equals(rhs.Value) ?? false;
+        public static bool operator ==(Box<T> lhs, Box<T> rhs) => lhs.Value?.Equals(rhs.Value) ?? rhs.Value == null;
         public static bool operator !=(Box<T> lhs, Box<T> rhs) => !(lhs == rhs);
-        public static bool operator ==(Box<T> lhs, T rhs) => lhs.Value?.Equals(rhs) ?? false;
+        public static bool operator ==(Box<T> lhs, T rhs) => lhs.Value?.Equals(rhs) ?? rhs == null;
         public static bool operator !=(Box<T> lhs, T rhs) => !(lhs == rhs);
-        public static bool operator ==(T lhs, Box<T> rhs) => lhs.Equals(rhs.Value);
+        public static bool operator ==(T lhs, Box<T> rhs) => lhs?.Equals(rhs.Value) ?? rhs.Value == null;
         public static bool operator !=(T lhs, Box<T> rhs) => !(lhs == rhs);
 
         public bool Equals(Box<T> other) => other.Value?.Equals(Value) ?? false;
@@ -58,25 +88,66 @@ namespace Celezt.DialogueSystem
             else
                 return false;
         }
-        override public int GetHashCode() => _hash.GetHashCode();
-        public override string ToString() => Value?.ToString();
+        override public int GetHashCode()
+        {
+            if (_hash == 0)
+                _hash = Guid.NewGuid().GetHashCode();
+
+            return _hash.GetHashCode();
+        }
+
+        public override string ToString() => Value?.ToString() ?? string.Empty;
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
-            var weakRef = _boxes[_hash];
-            if (weakRef.IsAlive)
-                _value = (T)weakRef.Target;
+            if (_hash == 0)
+                _hash = Guid.NewGuid().GetHashCode();
+
+            if (_boxed != null)
+                _value = GetValue(_boxed);
         }
 
         void ISerializationCallbackReceiver.OnAfterDeserialize()
         {
-            if (_boxes.TryGetValue(_hash, out var weakRef))
+            Initialize();
+        }
+
+        private void Initialize()
+        {
+            if (_hash == 0)
+                _hash = Guid.NewGuid().GetHashCode();
+
+            if (_boxed == null)
             {
-                if (!weakRef.IsAlive)
-                   weakRef.Target = _value;                 
+                if (_boxes.TryGetValue(_hash, out var weakRef))
+                {
+                    if (weakRef.IsAlive)
+                        _boxed = weakRef.Target;
+                    else
+                    {
+                        _boxed = BoxValue(_value);
+                        weakRef.Target = _boxed;
+                    }
+                }
+                else
+                {
+                    _boxed = BoxValue(_value);
+                    _boxes.Add(_hash, new WeakReference(_boxed));
+                }
             }
+        }
+
+        /// <summary>
+        /// Places the value on the heap if it is a value type.
+        /// </summary>
+        private static object? BoxValue(T value) => typeof(T).IsValueType ? new ValueObject(value) : value;
+
+        private static T GetValue(object boxed)
+        {
+            if (boxed is ValueObject valueObject)
+                return valueObject.Value;
             else
-                _boxes.Add(_hash, new WeakReference(_value));
+                return (T)boxed;
         }
     }
 }
