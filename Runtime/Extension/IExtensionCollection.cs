@@ -19,7 +19,7 @@ namespace Celezt.DialogueSystem
         public void MoveUpExtension(Type type);
         public void MoveDownExtension(Type type);
 
-        public bool TryGetExtension<T>([NotNullWhen(true)] out T? extension) where T : class
+        public bool TryGetExtension<T>([NotNullWhen(true)] out T? extension) where T : class, IExtension, new()
         {
             extension = null;
 
@@ -37,6 +37,13 @@ namespace Celezt.DialogueSystem
         public IExtension? GetExtension(Type type)
         {
             if (TryGetExtension(type, out var extension))
+                return extension;
+
+            return null;
+        }
+        public T? GetExtension<T>() where T : class, IExtension, new()
+        {
+            if (TryGetExtension<T>(out var extension))
                 return extension;
 
             return null;

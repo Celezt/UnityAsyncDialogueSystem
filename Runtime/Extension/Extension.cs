@@ -63,12 +63,12 @@ namespace Celezt.DialogueSystem
                 var oldReference = _reference;
                 _reference = value;
 
+                Type type = GetType();
+
                 if (oldReference != _reference)
                 {
-                    if ((oldReference as IExtensionCollection)?.TryGetExtension(GetType(), out var oldExtension) ?? false)
-                    {
+                    if (ExtensionUtility.TryGetExtensionFrom(oldReference, type, out var oldExtension))
                         oldExtension.Linked--;
-                    }
 
                     if (_reference == null && _linked == 0)
                     {
@@ -76,7 +76,8 @@ namespace Celezt.DialogueSystem
                         _sharedVersion = Box<int>.Empty;
                     }
 
-                    if ((_reference as IExtensionCollection)?.TryGetExtension(GetType(), out var extension) ?? false){
+                    if (ExtensionUtility.TryGetExtensionFrom(_reference, type, out var extension))
+                    {
                         _sharedVersion = extension.SharedVersion;
                         _version = _sharedVersion.Value;
                         extension.Linked++;
@@ -95,13 +96,10 @@ namespace Celezt.DialogueSystem
 
                 UnityEngine.Object? GetReference(UnityEngine.Object? reference)
                 {
-                    if (reference is IExtensionCollection collection)
+                    if (ExtensionUtility.TryGetExtensionFrom(reference, type, out var extension))
                     {
-                        if (collection.TryGetExtension(type, out IExtension? extension))
-                        {
-                            if (extension.Reference != null)
-                                return GetReference(extension.Reference);
-                        }
+                        if (extension.Reference != null)
+                            return GetReference(extension.Reference);
                     }
 
                     return reference;
@@ -112,10 +110,10 @@ namespace Celezt.DialogueSystem
         }
 
         public IExtension? ExtensionReference
-            => (_reference as IExtensionCollection)?.GetExtension(GetType());
+            => ExtensionUtility.GetExtensionFrom(_reference, GetType());
 
         public IExtension? RootExtensionReference
-            => (RootReference as IExtensionCollection)?.GetExtension(GetType());
+           => ExtensionUtility.GetExtensionFrom(RootReference, GetType());
 
         public bool IsRoot => _reference == null;
 
@@ -141,6 +139,7 @@ namespace Celezt.DialogueSystem
         protected virtual void OnEnter(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
         protected virtual void OnProcess(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
         protected virtual void OnExit(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
+        protected virtual void OnDestroy() { }
 
         public Extension()
         {
@@ -236,6 +235,13 @@ namespace Celezt.DialogueSystem
         void IExtension.OnExit(Playable playable, FrameData info, IPlayableBehaviour mixer, object playerData)
         {
             OnExit(playable, info, (EMixerBehaviour)mixer, playerData);
+        }
+
+        void IExtension.OnDestroy()
+        {
+            if (_reference != null)
+
+            OnDestroy();
         }
 
         private void InitializePropertyModifiers()

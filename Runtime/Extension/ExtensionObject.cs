@@ -31,7 +31,7 @@ namespace Celezt.DialogueSystem
         public void MoveDownExtension(Type type)
             => ExtensionUtility.MoveDownExtension(type, _extensions);
 
-        public bool TryGetExtension<T>([NotNullWhen(true)] out T? extension) where T : class
+        public bool TryGetExtension<T>([NotNullWhen(true)] out T? extension) where T : class, IExtension, new()
         {
             extension = null;
 
@@ -53,11 +53,24 @@ namespace Celezt.DialogueSystem
 
             return null;
         }
+        public T? GetExtension<T>() where T : class, IExtension, new()
+        {
+            if (TryGetExtension<T>(out var extension))
+                return extension;
+
+            return null;
+        }
 
         public bool Contains(Type type)
             => Extensions.Any(x => type.IsAssignableFrom(x.GetType()));
 
         IEnumerator<IExtension> IEnumerable<IExtension>.GetEnumerator() => _extensions.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _extensions.GetEnumerator();
+
+        private void OnDestroy()
+        {
+            foreach (var extension in Extensions)
+                extension.OnDestroy();
+        }
     }
 }

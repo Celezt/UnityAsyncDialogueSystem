@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
 
@@ -96,5 +97,22 @@ namespace Celezt.DialogueSystem
 
             return false;
         }
+
+        public static bool TryGetExtensionFrom(UnityEngine.Object? target, Type extensionType, [NotNullWhen(true)] out IExtension? extension)
+        {
+            extension = null;
+
+            return (target as IExtensionCollection)?.TryGetExtension(extensionType, out extension) ?? false;
+        }
+        public static bool TryGetExtensionFrom<T>(UnityEngine.Object? target, [NotNullWhen(true)] out T? extension) where T : class, IExtension, new()
+        {
+            extension = null;
+
+            return (target as IExtensionCollection)?.TryGetExtension<T>(out extension) ?? false;
+        }
+        public static IExtension? GetExtensionFrom(UnityEngine.Object? target, Type extensionType)
+            => (target as IExtensionCollection)?.GetExtension(extensionType);
+        public static T? GetExtensionFrom<T>(UnityEngine.Object? target) where T : class, IExtension, new()
+            => (target as IExtensionCollection)?.GetExtension<T>();
     }
 }
