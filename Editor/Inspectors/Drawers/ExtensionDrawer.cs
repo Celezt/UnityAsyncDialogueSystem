@@ -17,14 +17,15 @@ namespace Celezt.DialogueSystem.Editor
     [CustomPropertyDrawer(typeof(IExtension), true)]
     public class ExtensionDrawer : PropertyDrawer
     {
-        private static Dictionary<long, bool> _isOpens = new();
+        private readonly static Dictionary<long, bool> _isOpens = new();
+
+        private readonly List<(Rect Rect, SerializedProperty Property)> _contextMenuProperties = new();
 
         private UnityEngine.Object? _target;
         private IExtension? _extension;
 
         private GenericMenu? _propertyContextMenu;
         private Rect _propertyContextMenuRect;
-        private List<(Rect Rect, SerializedProperty Property)> _contextMenuProperties = new();
 
         public ExtensionDrawer()
         {
@@ -38,17 +39,19 @@ namespace Celezt.DialogueSystem.Editor
 
         protected void DrawModification(Rect rect, SerializedProperty property, IExtension extension, bool clickable = true)
         {
-            rect.x = 0;
-            rect.width = 20;
+            // If the current property is modified.
+            if (extension.GetModified(property.name) && !extension.IsRoot)
+            {
+                rect.x = 0;
+                rect.width = 20;
 
-            if (clickable)
-                AddPropertyToContextMenu(rect, property);
+                if (clickable)
+                    AddPropertyToContextMenu(rect, property);
 
-            rect.width = 2;
+                rect.width = 2;
 
-            // If content in current property is not the same as reference property. 
-            if (extension.GetModified(property.name))
                 EditorGUI.DrawRect(rect, new Color(0.06f, 0.50f, 0.75f));
+            }
         }
 
         protected void AddPropertyToContextMenu(Rect rect, SerializedProperty property)
@@ -118,8 +121,8 @@ namespace Celezt.DialogueSystem.Editor
 
             var color = GUI.backgroundColor;
             GUI.backgroundColor = new Color(1.1f, 1.1f, 1.1f);
-            var content = new GUIContent(Extensions.Names[extensionType]);
-            Rect foldoutRect = GUILayoutUtility.GetRect(content, EditorStyles.foldoutHeader);
+            GUIContent foldoutNameContent = new GUIContent(Extensions.Names[extensionType]);
+            Rect foldoutRect = GUILayoutUtility.GetRect(foldoutNameContent, EditorStyles.foldoutHeader);
             foldoutRect.x += 14.0f;
             foldoutRect.width -= 14.0f;
             var style = EditorStyles.foldoutHeader;
@@ -146,13 +149,24 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         Undo.RecordObject(_target, "Changed Extension Reference");
                         _extension.Reference = newReference;
-                        EditorUtility.SetDirty(_target);
                     }
                 }
             }
 
-            bool isOpen = EditorGUI.BeginFoldoutHeaderGroup(foldoutRect, _isOpens[rid], content, style, ShowHeaderContextMenu);
+            bool isOpen = EditorGUI.BeginFoldoutHeaderGroup(foldoutRect, _isOpens[rid], foldoutNameContent, style, ShowHeaderContextMenu);
             EditorGUI.EndFoldoutHeaderGroup();
+
+            //
+            //  Display Linked Count
+            //
+            GUIContent linkedCountContent = new GUIContent($"L: {_extension.Linked}");
+
+            Rect linkedCountRect = new Rect(referenceRect.x - GUI.skin.label.CalcSize(linkedCountContent).x, 
+                foldoutRect.y, foldoutRect.width, foldoutRect.height);
+
+            // Only display if there is space between reference and name.
+            if (linkedCountRect.x - 2 > foldoutRect.x + GUI.skin.label.CalcSize(foldoutNameContent).x)
+                EditorGUI.LabelField(linkedCountRect, linkedCountContent);
 
             // Need to draw it twice, the first for interaction and the second as overlay. Thanks Unity!
             if (collection != null)
@@ -278,13 +292,11 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     UnityEngine.Object reference = _extension!.Reference!;
 
-                    if (_extension!.GetModified(property.name) == false) // Skip if it has not been modified.
-                        return false;
-
                     menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{reference.name}'"), false, () =>
                     {
                         Undo.RecordObject(reference, "Applied to Reference");
                         _extension.CopyTo(extensionReference, property.name);
+                        extensionReference.SetModified(property.name, true);
                         serializedObject.Update();
                     });
                     if (!extensionReference.IsRoot) // If reference is not the root.
@@ -293,6 +305,7 @@ namespace Celezt.DialogueSystem.Editor
                         {
                             Undo.RecordObject(reference, "Applied to Root Reference");
                             _extension.CopyTo(_extension.RootExtensionReference, property.name);
+                            _extension.SetModified(property.name, true);
                             serializedObject.Update();
                         });
                     }
@@ -300,6 +313,7 @@ namespace Celezt.DialogueSystem.Editor
                     {
                         Undo.RecordObject(_target, "Reverted Value");
                         extensionReference.CopyTo(_extension, property.name);
+                        _extension.SetModified(property.name, false);
                         serializedObject.Update();
                     });
                 }

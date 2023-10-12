@@ -15,10 +15,10 @@ namespace Celezt.DialogueSystem
         private AnimationCurve _blendCurve = AnimationCurve.EaseInOut(0, 1, 1, 1);
 
         [SerializeField, HideInInspector]
-        private Ref<bool> _isActive = new Ref<bool>();
-        private Ref<ButtonBinder> _buttonBinder = new Ref<ButtonBinder>();
-        private Ref<CanvasGroup> _canvasGroup = new Ref<CanvasGroup>();
-        private Ref<TextMeshProUGUI> _textMesh = new Ref<TextMeshProUGUI>();
+        private Box<bool> _isActive = new Box<bool>();
+        private Box<ButtonBinder> _buttonBinder = new Box<ButtonBinder>();
+        private Box<CanvasGroup> _canvasGroup = new Box<CanvasGroup>();
+        private Box<TextMeshProUGUI> _textMesh = new Box<TextMeshProUGUI>();
 
         public void Hide()
         {

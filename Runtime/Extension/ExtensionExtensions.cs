@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using UnityEditor;
 using UnityEngine;
 
 namespace Celezt.DialogueSystem
@@ -16,11 +17,19 @@ namespace Celezt.DialogueSystem
 
         public static void CopyTo(this IExtension instance, IExtension target)
         {
+            Undo.RecordObject(target.Target, $"Copied all properties from '{instance.Target}' to '{target.Target}'");
             foreach (string propertyName in instance.PropertiesModified.Keys)
-                instance.CopyTo(target, propertyName);
-
+                Internal_CopyTo(instance, target, propertyName);
+            target.Version++;
         }
         public static void CopyTo(this IExtension instance, IExtension target, string propertyName)
+        {
+            Undo.RecordObject(target.Target, $"Copied property: '{propertyName}' from '{instance.Target}' to '{target.Target}'");
+            Internal_CopyTo(instance, target, propertyName);
+            target.Version++;
+        }
+
+        internal static void Internal_CopyTo(IExtension instance, IExtension target, string propertyName)
         {
             Type instanceType = instance.GetType();
             Type targetType = target.GetType();
@@ -31,24 +40,36 @@ namespace Celezt.DialogueSystem
             if (!_cached.TryGetValue(instanceType, out var properties))
                 _cached[instanceType] = properties = new();
 
-            if (!properties.TryGetValue(propertyName, out var copyToAction))
+            if (!properties.TryGetValue(propertyName, out var action))
             {
                 var fieldInfo = instanceType.GetField(propertyName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                Type fieldType = fieldInfo.FieldType;
 
                 var instanceBoxedExpression = Expression.Convert(_instanceParameterExpression, instanceType);
                 var targetBoxedExpression = Expression.Convert(_targetParameterExpression, targetType);
 
                 var instanceFieldExpression = Expression.Field(instanceBoxedExpression, fieldInfo);
                 var targetFieldExpression = Expression.Field(targetBoxedExpression, fieldInfo);
-                var assignExpression = Expression.Assign(targetFieldExpression, instanceFieldExpression);
 
-                copyToAction = Expression.Lambda<Action<IExtension, IExtension>>(
-                    assignExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                if (fieldType.IsAssignableFrom(typeof(AnimationCurve))) // Uses 'CopyFrom' when assigning curves to prevent pointing to the same.
+                {
+                    var copyFromExpression = Expression.Call(targetFieldExpression, "CopyFrom", null, instanceFieldExpression);
 
-                properties[propertyName] = copyToAction;           
+                    action = Expression.Lambda<Action<IExtension, IExtension>>(
+                        copyFromExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                }
+                else
+                {
+                    var assignExpression = Expression.Assign(targetFieldExpression, instanceFieldExpression);
+
+                    action = Expression.Lambda<Action<IExtension, IExtension>>(
+                        assignExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                }
+
+                properties[propertyName] = action;           
             }
 
-            copyToAction(instance, target);
+            action(instance, target);
         }
     }
 }

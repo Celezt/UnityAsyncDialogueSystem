@@ -70,7 +70,7 @@ namespace Celezt.DialogueSystem.Editor
                     extension.SetModified(startOffsetProperty.name, true);
 
                 Rect modificationRect = GUILayoutUtility.GetLastRect();
-                DrawModification(GUILayoutUtility.GetLastRect(), startOffsetProperty, extension);
+                DrawModification(modificationRect, startOffsetProperty, extension);
 
                 if (EditorOrRuntime.IsEditor)
                 {
@@ -90,7 +90,7 @@ namespace Celezt.DialogueSystem.Editor
                     EditorGUILayoutExtra.CurveField(textExtension.RuntimeVisibilityCurve, new Color(0.4f, 0.6f, 0.7f), new Rect(0, 0, 1, 1));
                     GUI.Box(GUILayoutUtility.GetLastRect(), _runtimeVisibilityCurveContent);
                 }
-                DrawModification(GUILayoutUtility.GetLastRect(), editorVisibilityCurve, extension);
+                DrawModification(modificationRect, editorVisibilityCurve, extension);
                 GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
 
                 EditorGUI.BeginChangeCheck();
@@ -99,7 +99,7 @@ namespace Celezt.DialogueSystem.Editor
                 if (EditorGUI.EndChangeCheck())
                     extension.SetModified(endOffsetProperty.name, true);
 
-                DrawModification(GUILayoutUtility.GetLastRect(), endOffsetProperty, extension);
+                DrawModification(modificationRect, endOffsetProperty, extension);
 
                 EditorGUIUtility.labelWidth = labelWidth;
             }

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
-    [Serializable]
+    [Serializable, DebuggerStepThrough]
     public class SerializableDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
     {
         private int[]? _buckets;
