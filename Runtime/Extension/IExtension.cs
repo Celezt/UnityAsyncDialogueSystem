@@ -16,21 +16,6 @@ namespace Celezt.DialogueSystem
 
     public interface IExtension
     {
-        /// <summary>
-        /// Shared version for all the <see cref="IExtension"/>s in the reference tree. It increments when something has changed.
-        /// </summary>
-        public Box<int> SharedVersion { get; }
-        /// <summary>
-        /// Local <see cref="IExtension"/> version. If shared version is higher, it means this <see cref="IExtension"/> is outdated and needs to be updated.
-        /// </summary>
-        public int Version { get; set; }
-        /// <summary>
-        /// How many <see cref="IExtension"/>s that references this.
-        /// </summary>
-        public int Linked { get; set; }
-        /// <summary>
-        /// The object this <see cref="IExtension"/> is attached to.
-        /// </summary>
         public UnityEngine.Object Target { get; set; }
         /// <summary>
         /// Parent reference.

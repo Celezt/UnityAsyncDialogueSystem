@@ -72,5 +72,28 @@ namespace Celezt.DialogueSystem
             foreach (var extension in Extensions)
                 extension.OnDestroy();
         }
+
+#if UNITY_EDITOR
+        private class OnDestroyProcessor : UnityEditor.AssetModificationProcessor
+        {
+            private static Type _type = typeof(ExtensionObject);
+            private static string _fileEnding = ".asset";
+
+            public static UnityEditor.AssetDeleteResult OnWillDeleteAsset(string path, UnityEditor.RemoveAssetOptions _)
+            {
+                if (!path.EndsWith(_fileEnding))
+                    return UnityEditor.AssetDeleteResult.DidNotDelete;
+
+                var assetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(path);
+                if (assetType != null && (assetType == _type || assetType.IsSubclassOf(_type)))
+                {
+                    var asset = UnityEditor.AssetDatabase.LoadAssetAtPath<ExtensionObject>(path);
+                    asset.OnDestroy();
+                }
+
+                return UnityEditor.AssetDeleteResult.DidNotDelete;
+            }
+        }
+#endif
     }
 }

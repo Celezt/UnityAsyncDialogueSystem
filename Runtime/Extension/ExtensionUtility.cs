@@ -11,7 +11,7 @@ namespace Celezt.DialogueSystem
 {
     public static class ExtensionUtility
     {
-        public static void AddExtensions(UnityEngine.Object owner, IExtensionCollection? toAddCollection, IList<IExtension> extensions)
+        public static void AddExtensions(UnityEngine.Object target, IExtensionCollection? toAddCollection, IList<IExtension> extensions)
         {
             if (toAddCollection == null)
                 return;
@@ -19,7 +19,7 @@ namespace Celezt.DialogueSystem
             UnityEngine.Object? reference = toAddCollection as UnityEngine.Object;
             if (reference)
             {
-                if (reference == owner)
+                if (reference == target)
                 {
                     Debug.LogWarning("Cannot reference itself.");
                     return;
@@ -33,10 +33,10 @@ namespace Celezt.DialogueSystem
             }
 
             foreach (var toAdd in toAddCollection)
-                AddExtension(owner, toAdd, extensions, reference);
+                AddExtension(target, toAdd, extensions, reference);
         }
 
-        public static void AddExtension(UnityEngine.Object owner, IExtension? toAdd, IList<IExtension> extensions, UnityEngine.Object? reference = null)
+        public static void AddExtension(UnityEngine.Object target, IExtension? toAdd, IList<IExtension> extensions, UnityEngine.Object? reference = null)
         {
             if (toAdd == null)
                 return;
@@ -46,7 +46,7 @@ namespace Celezt.DialogueSystem
             {
                 toAdd.Reference = reference;
 
-                if (!HasSelfReference(owner, toAdd.Reference))
+                if (!HasSelfReference(target, toAdd.Reference))
                     extensions.Add(toAdd);
             }
             else
@@ -98,21 +98,21 @@ namespace Celezt.DialogueSystem
             return false;
         }
 
-        public static bool TryGetExtensionFrom(UnityEngine.Object? target, Type extensionType, [NotNullWhen(true)] out IExtension? extension)
+        public static bool TryGetExtension(UnityEngine.Object? target, Type extensionType, [NotNullWhen(true)] out IExtension? extension)
         {
             extension = null;
 
             return (target as IExtensionCollection)?.TryGetExtension(extensionType, out extension) ?? false;
         }
-        public static bool TryGetExtensionFrom<T>(UnityEngine.Object? target, [NotNullWhen(true)] out T? extension) where T : class, IExtension, new()
+        public static bool TryGetExtension<T>(UnityEngine.Object? target, [NotNullWhen(true)] out T? extension) where T : class, IExtension, new()
         {
             extension = null;
 
             return (target as IExtensionCollection)?.TryGetExtension<T>(out extension) ?? false;
         }
-        public static IExtension? GetExtensionFrom(UnityEngine.Object? target, Type extensionType)
+        public static IExtension? GetExtension(UnityEngine.Object? target, Type extensionType)
             => (target as IExtensionCollection)?.GetExtension(extensionType);
-        public static T? GetExtensionFrom<T>(UnityEngine.Object? target) where T : class, IExtension, new()
+        public static T? GetExtension<T>(UnityEngine.Object? target) where T : class, IExtension, new()
             => (target as IExtensionCollection)?.GetExtension<T>();
     }
 }

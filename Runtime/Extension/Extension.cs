@@ -12,30 +12,9 @@ using UnityEngine.Timeline;
 namespace Celezt.DialogueSystem
 {
     [Serializable]
-    public abstract class Extension<T> : ISerializationCallbackReceiver, IExtension<T> where T : UnityEngine.Object, IExtensionCollection
+    public abstract class Extension<T> : IExtension<T> where T : UnityEngine.Object, IExtensionCollection
     {
         private static readonly Dictionary<Type, string[]> _propertyNames = new();
-
-        public Box<int> SharedVersion => _sharedVersion;
-
-        public int Version
-        {
-            get => _version;
-            set => _version = value;
-        }
-
-        public int Linked
-        {
-            get => _linked;
-            set
-            {
-                _linked = value;
-
-#if UNITY_EDITOR
-                UnityEditor.EditorUtility.IsDirty(_target);
-#endif
-            }
-        }
 
         public T Asset => (_target as T)!;
 
@@ -60,6 +39,12 @@ namespace Celezt.DialogueSystem
             get => _reference;
             set
             {
+                if (value != null && value is not IExtensionCollection)
+                {
+                    Debug.LogWarning($"Reference must be derived from {nameof(IExtensionCollection)}");
+                    return;
+                }
+
                 var oldReference = _reference;
                 _reference = value;
 
@@ -67,23 +52,14 @@ namespace Celezt.DialogueSystem
 
                 if (oldReference != _reference)
                 {
-                    if (ExtensionUtility.TryGetExtensionFrom(oldReference, type, out var oldExtension))
-                        oldExtension.Linked--;
+                    _extensionReference = null;
 
-                    if (_reference == null && _linked == 0)
-                    {
-                        _version = 0;
-                        _sharedVersion = Box<int>.Empty;
-                    }
+                    if (ExtensionReference != null)
+                        UpdateProperties();
 
-                    if (ExtensionUtility.TryGetExtensionFrom(_reference, type, out var extension))
-                    {
-                        _sharedVersion = extension.SharedVersion;
-                        _version = _sharedVersion.Value;
-                        extension.Linked++;
-
-                        ForceUpdateProperties();
-                    }
+#if UNITY_EDITOR
+                    UnityEditor.EditorUtility.SetDirty(_target);
+#endif
                 }
             }
         }
@@ -96,7 +72,7 @@ namespace Celezt.DialogueSystem
 
                 UnityEngine.Object? GetReference(UnityEngine.Object? reference)
                 {
-                    if (ExtensionUtility.TryGetExtensionFrom(reference, type, out var extension))
+                    if (ExtensionUtility.TryGetExtension(reference, type, out var extension))
                     {
                         if (extension.Reference != null)
                             return GetReference(extension.Reference);
@@ -110,10 +86,10 @@ namespace Celezt.DialogueSystem
         }
 
         public IExtension? ExtensionReference
-            => ExtensionUtility.GetExtensionFrom(_reference, GetType());
+            => _extensionReference ??= ExtensionUtility.GetExtension(_reference, GetType());
 
         public IExtension? RootExtensionReference
-           => ExtensionUtility.GetExtensionFrom(RootReference, GetType());
+           => ExtensionUtility.GetExtension(RootReference, GetType());
 
         public bool IsRoot => _reference == null;
 
@@ -124,16 +100,9 @@ namespace Celezt.DialogueSystem
         private UnityEngine.Object _target = null!;
 
         [SerializeField, HideInInspector]
-        private int _linked;
-
-        [SerializeField, HideInInspector]
-        private int _version;
-
-        [SerializeField, HideInInspector]
-        private Box<int> _sharedVersion;
-
-        [SerializeField, HideInInspector]
         private SerializableDictionary<string, bool> _propertiesModified = null!;
+
+        private IExtension? _extensionReference;
 
         protected virtual void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip) { }
         protected virtual void OnEnter(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
@@ -148,45 +117,23 @@ namespace Celezt.DialogueSystem
                 _propertyNames[type] = ReflectionUtility.GetSerializablePropertyNames(type).ToArray();
         }
 
-        public void ForceUpdateProperties()
+        public void UpdateProperties()
         {
-            if (_reference is not IExtensionCollection referenceCollection)
-                return;
+            IEnumerable<string> unmodifiedPropertyNames = PropertiesModified.Where(x => x.Value == false).Select(x => x.Key); // Get all unmodified properties.
 
-            if (!referenceCollection.TryGetExtension(GetType(), out var referenceExtension))
-                return;
+            foreach (var currentExtension in this.GetDerivedExtensions())
+            {
+                IEnumerable<string> modifiedPropertyNames = unmodifiedPropertyNames.Where(x => currentExtension.GetModified(x));
 
-            foreach (string propertyName in PropertiesModified.Where(x => !x.Value).Select(x => x.Key))   // Get all unmodified properties.
-                referenceExtension.CopyTo(this, propertyName);
+                foreach (string propertyName in modifiedPropertyNames)   
+                    currentExtension.CopyTo(this, propertyName);
+
+                unmodifiedPropertyNames = unmodifiedPropertyNames.Except(modifiedPropertyNames);
+            }
 
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(_target);
 #endif
-        }
-
-        public void UpdateProperties()
-        {
-            if (_reference is not IExtensionCollection referenceCollection)
-                return;
-
-            if (!referenceCollection.TryGetExtension(GetType(), out var referenceExtension))
-                return;
-
-            int referenceVersion = referenceExtension.Version;
-
-            if (referenceVersion == Version)
-                return;
-
-            if (referenceVersion < Version)
-            {
-                referenceExtension.Version = Version;
-                referenceExtension.UpdateProperties();
-            }
-            else
-                Version = referenceVersion;
-
-            foreach (string propertyName in PropertiesModified.Where(x => x.Value == false).Select(x => x.Key))   // Get all unmodified properties.
-                referenceExtension.CopyTo(this, propertyName);
         }
 
         public void SetModified(string propertyName, bool isModified)
@@ -205,16 +152,6 @@ namespace Celezt.DialogueSystem
 
         public bool GetModified(string propertyName)
             => PropertiesModified[propertyName];
-
-        void ISerializationCallbackReceiver.OnBeforeSerialize()
-        {
-
-        }
-
-        void ISerializationCallbackReceiver.OnAfterDeserialize()
-        {
-
-        }
 
         void IExtension.OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
@@ -239,8 +176,6 @@ namespace Celezt.DialogueSystem
 
         void IExtension.OnDestroy()
         {
-            if (_reference != null)
-
             OnDestroy();
         }
 

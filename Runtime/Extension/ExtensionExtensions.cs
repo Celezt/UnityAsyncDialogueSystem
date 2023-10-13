@@ -7,6 +7,8 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
+#nullable enable
+
 namespace Celezt.DialogueSystem
 {
     public static class ExtensionExtensions
@@ -15,18 +17,34 @@ namespace Celezt.DialogueSystem
         private readonly static ParameterExpression _instanceParameterExpression = Expression.Parameter(typeof(IExtension), "instance");
         private readonly static ParameterExpression _targetParameterExpression = Expression.Parameter(typeof(IExtension), "target");
 
-        public static void CopyTo(this IExtension instance, IExtension target)
+        public static IEnumerable<IExtension> GetDerivedExtensions(this IExtension instance)
         {
+            IExtension? currentExtension = instance.ExtensionReference;
+
+            while (currentExtension != null)
+            {
+                yield return currentExtension;
+
+                currentExtension = currentExtension.ExtensionReference;
+            }
+        }
+
+        public static void CopyTo(this IExtension instance, IExtension? target)
+        {
+            if (target == null)
+                return;
+
             Undo.RecordObject(target.Target, $"Copied all properties from '{instance.Target}' to '{target.Target}'");
             foreach (string propertyName in instance.PropertiesModified.Keys)
                 Internal_CopyTo(instance, target, propertyName);
-            target.Version++;
         }
-        public static void CopyTo(this IExtension instance, IExtension target, string propertyName)
+        public static void CopyTo(this IExtension instance, IExtension? target, string propertyName)
         {
+            if (target == null)
+                return;
+
             Undo.RecordObject(target.Target, $"Copied property: '{propertyName}' from '{instance.Target}' to '{target.Target}'");
             Internal_CopyTo(instance, target, propertyName);
-            target.Version++;
         }
 
         internal static void Internal_CopyTo(IExtension instance, IExtension target, string propertyName)

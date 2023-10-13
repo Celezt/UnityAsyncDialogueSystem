@@ -156,18 +156,6 @@ namespace Celezt.DialogueSystem.Editor
             bool isOpen = EditorGUI.BeginFoldoutHeaderGroup(foldoutRect, _isOpens[rid], foldoutNameContent, style, ShowHeaderContextMenu);
             EditorGUI.EndFoldoutHeaderGroup();
 
-            //
-            //  Display Linked Count
-            //
-            GUIContent linkedCountContent = new GUIContent($"L: {_extension.Linked}");
-
-            Rect linkedCountRect = new Rect(referenceRect.x - GUI.skin.label.CalcSize(linkedCountContent).x, 
-                foldoutRect.y, foldoutRect.width, foldoutRect.height);
-
-            // Only display if there is space between reference and name.
-            if (linkedCountRect.x - 2 > foldoutRect.x + GUI.skin.label.CalcSize(foldoutNameContent).x)
-                EditorGUI.LabelField(linkedCountRect, linkedCountContent);
-
             // Need to draw it twice, the first for interaction and the second as overlay. Thanks Unity!
             if (collection != null)
                 EditorGUI.ObjectField(referenceRect, GUIContent.none, _extension.Reference, typeof(ExtensionObject), false);
