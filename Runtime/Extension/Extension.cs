@@ -12,9 +12,11 @@ using UnityEngine.Timeline;
 namespace Celezt.DialogueSystem
 {
     [Serializable]
-    public abstract class Extension<T> : IExtension<T> where T : UnityEngine.Object, IExtensionCollection
+    public abstract class Extension<T> : IExtension<T>, ISerializationCallbackReceiver where T : UnityEngine.Object, IExtensionCollection
     {
         private static readonly Dictionary<Type, string[]> _propertyNames = new();
+
+        public event Action<string> OnChangedCallback = delegate { };
 
         public T Asset => (_target as T)!;
 
@@ -52,10 +54,16 @@ namespace Celezt.DialogueSystem
 
                 if (oldReference != _reference)
                 {
+                    if (ExtensionReference != null) // Old reference extension.
+                        ExtensionReference.OnChangedCallback -= OnChange;
+
                     _extensionReference = null;
 
-                    if (ExtensionReference != null)
+                    if (ExtensionReference != null) // New reference extension.
+                    {
+                        ExtensionReference.OnChangedCallback += OnChange;
                         UpdateProperties();
+                    }
 
 #if UNITY_EDITOR
                     UnityEditor.EditorUtility.SetDirty(_target);
@@ -117,6 +125,36 @@ namespace Celezt.DialogueSystem
                 _propertyNames[type] = ReflectionUtility.GetSerializablePropertyNames(type).ToArray();
         }
 
+        void ISerializationCallbackReceiver.OnBeforeSerialize()
+        {
+
+        }
+
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
+        {
+            if (ExtensionReference != null)
+            {
+                ExtensionReference.OnChangedCallback -= OnChange;
+                ExtensionReference.OnChangedCallback += OnChange;
+            }
+        }
+
+        public void UpdateProperty(string propertyName)
+        {
+            if (GetModified(propertyName))  // Don't update if it property is modified.
+                return;
+
+            foreach (var currentExtension in this.GetDerivedExtensions())
+            {
+                if (currentExtension.GetModified(propertyName))
+                {
+                    currentExtension.CopyTo(this, propertyName);
+                    break;
+                }
+
+            }
+        }
+
         public void UpdateProperties()
         {
             IEnumerable<string> unmodifiedPropertyNames = PropertiesModified.Where(x => x.Value == false).Select(x => x.Key); // Get all unmodified properties.
@@ -129,6 +167,9 @@ namespace Celezt.DialogueSystem
                     currentExtension.CopyTo(this, propertyName);
 
                 unmodifiedPropertyNames = unmodifiedPropertyNames.Except(modifiedPropertyNames);
+
+                if (!unmodifiedPropertyNames.Any())
+                    break;
             }
 
 #if UNITY_EDITOR
@@ -139,6 +180,8 @@ namespace Celezt.DialogueSystem
         public void SetModified(string propertyName, bool isModified)
         {
             InitializePropertyModifiers();
+
+            OnChangedCallback(propertyName);
 
             if (_propertiesModified[propertyName] == isModified)
                 return;
@@ -188,6 +231,12 @@ namespace Celezt.DialogueSystem
                 foreach (var propertyName in _propertyNames[type])
                     _propertiesModified[propertyName] = false;
             }
+        }
+
+        private void OnChange(string propertyName)
+        {
+            UpdateProperty(propertyName);
+            OnChangedCallback(propertyName);
         }
     }
 }

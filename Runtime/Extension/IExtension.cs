@@ -16,13 +16,21 @@ namespace Celezt.DialogueSystem
 
     public interface IExtension
     {
+        /// <summary>
+        /// When a property has been changed. Returns property name.
+        /// </summary>
+        public event Action<string> OnChangedCallback;
+
+        /// <summary>
+        /// The <see cref="UnityEngine.Object"/> the extension is attached to.
+        /// </summary>
         public UnityEngine.Object Target { get; set; }
         /// <summary>
-        /// Parent reference.
+        /// Parent <see cref="UnityEngine.Object"/>.
         /// </summary>
         public UnityEngine.Object? Reference { get; set; }
         /// <summary>
-        /// Furthest reference in the reference tree.
+        /// Furthest <see cref="UnityEngine.Object"/> in the reference tree.
         /// </summary>
         public UnityEngine.Object? RootReference { get; }
         public IReadOnlyDictionary<string, bool> PropertiesModified { get; }
@@ -32,6 +40,7 @@ namespace Celezt.DialogueSystem
 
         public bool IsRoot { get; }
 
+        public void UpdateProperty(string propertyName);
         public void UpdateProperties();
         public void SetModified(string propertyName, bool isModified);
         public bool GetModified(string propertyName);

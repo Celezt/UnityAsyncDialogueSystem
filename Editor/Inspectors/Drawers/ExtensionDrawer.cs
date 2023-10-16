@@ -9,6 +9,7 @@ using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Timeline;
 using UnityEngine.UIElements;
+using static UnityEngine.GraphicsBuffer;
 
 #nullable enable
 
@@ -271,40 +272,40 @@ namespace Celezt.DialogueSystem.Editor
             if (!path.StartsWith("_extensions.Array.data["))
                 return false;
 
-            bool containSubProperties = path.AsSpan(path.IndexOf(']', 23) + 2).Any(x => x == '.');
+            if (path.AsSpan(path.IndexOf(']', 23) + 2).Any(x => x == '.'))  // Skip if it is a sub property.
+                return false;
 
-            if (!containSubProperties)  // Skip if it is a sub property.
+            IExtension? extensionReference = _extension?.ExtensionReference;
+            if (extensionReference != null)
             {
-                IExtension? extensionReference = _extension?.ExtensionReference;
-                if (extensionReference != null)
-                {
-                    UnityEngine.Object reference = _extension!.Reference!;
+                UnityEngine.Object reference = _extension!.Reference!;
 
-                    menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{reference.name}'"), false, () =>
+                menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{reference.name}'"), false, () =>
+                {
+                    Undo.RecordObject(reference, "Applied to Reference");
+                    _extension.CopyTo(extensionReference, property.name);
+                    extensionReference.SetModified(property.name, true);
+                    serializedObject.Update();
+                });
+                if (!extensionReference.IsRoot) // If reference is not the root.
+                {
+                    menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Root Reference '{_extension.RootReference!.name}'"), false, () =>
                     {
-                        Undo.RecordObject(reference, "Applied to Reference");
-                        _extension.CopyTo(extensionReference, property.name);
-                        extensionReference.SetModified(property.name, true);
-                        serializedObject.Update();
-                    });
-                    if (!extensionReference.IsRoot) // If reference is not the root.
-                    {
-                        menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Root Reference '{_extension.RootReference!.name}'"), false, () =>
-                        {
-                            Undo.RecordObject(reference, "Applied to Root Reference");
-                            _extension.CopyTo(_extension.RootExtensionReference, property.name);
-                            _extension.SetModified(property.name, true);
-                            serializedObject.Update();
-                        });
-                    }
-                    menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
-                    {
-                        Undo.RecordObject(_target, "Reverted Value");
-                        extensionReference.CopyTo(_extension, property.name);
-                        _extension.SetModified(property.name, false);
+                        Undo.RecordObject(reference, "Applied to Root Reference");
+                        _extension.CopyTo(_extension.RootExtensionReference, property.name);
+                        _extension.SetModified(property.name, true);
                         serializedObject.Update();
                     });
                 }
+                menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
+                {
+                    Undo.RecordObject(_target, "Reverted Value");
+                    extensionReference.CopyTo(_extension, property.name);
+                    _extension.SetModified(property.name, false);
+                    // To update possible visible clip changes. (Such as the clip name).
+                    (_target as DSPlayableAsset)?.Director.RebuildGraph();
+                    serializedObject.Update();
+                });
             }
 
             return true;

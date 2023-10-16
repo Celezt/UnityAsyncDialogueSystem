@@ -1,11 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
+    [DebuggerStepThrough]
     internal static class MemoryExtensions
     {
         public static bool Any(this ReadOnlySpan<bool> span, bool isTrue = true)
