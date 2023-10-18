@@ -1,5 +1,9 @@
 # Unity Async Dialogue System
 
+**Warning!!!**
+
+*It is currently under development, and most of it does not work. The code is being rewritten from its initial version with a focus on the timeline experience. The dialogue chart is not working and will eventually be fixed.*
+
 Unity Asynchronous Dialogue System is a dialogue system for unity that tries to solve non-sequence-based dialogue situations. It allows for multiple activations of dialogues in parallel. It also has support for traditional sequence-based conversations.
 
 It uses [Unity Timeline](https://docs.unity3d.com/Packages/com.unity.timeline@1.8/manual/index.html) and [Unity GraphView API](https://docs.unity3d.com/ScriptReference/Experimental.GraphView.GraphView.html) to display and create dialogues. GraphView is Unity's API for creating custom virtual graphs. Unity Asynchronous Dialogue System has a custom file type, '.dialoguegraph', which is under the hood a JSON file; this is assignable as a reference of type 'Dialogue', which contains a runtime graph.
