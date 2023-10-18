@@ -282,7 +282,6 @@ namespace Celezt.DialogueSystem.Editor
 
                 menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{reference.name}'"), false, () =>
                 {
-                    Undo.RecordObject(reference, "Applied to Reference");
                     _extension.CopyTo(extensionReference, property.name);
                     extensionReference.SetModified(property.name, true);
                     serializedObject.Update();
@@ -291,7 +290,6 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Root Reference '{_extension.RootReference!.name}'"), false, () =>
                     {
-                        Undo.RecordObject(reference, "Applied to Root Reference");
                         _extension.CopyTo(_extension.RootExtensionReference, property.name);
                         _extension.SetModified(property.name, true);
                         serializedObject.Update();
@@ -299,7 +297,6 @@ namespace Celezt.DialogueSystem.Editor
                 }
                 menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
                 {
-                    Undo.RecordObject(_target, "Reverted Value");
                     extensionReference.CopyTo(_extension, property.name);
                     _extension.SetModified(property.name, false);
                     // To update possible visible clip changes. (Such as the clip name).

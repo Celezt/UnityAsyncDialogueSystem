@@ -127,7 +127,13 @@ namespace Celezt.DialogueSystem
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
+            InitializePropertyModifiers();
 
+            foreach (string propertyName in _propertyNames[GetType()])
+            {
+                if (!_propertiesModified.ContainsKey(propertyName))
+                    _propertiesModified[propertyName] = false;
+            }
         }
 
         void ISerializationCallbackReceiver.OnAfterDeserialize()
@@ -224,13 +230,17 @@ namespace Celezt.DialogueSystem
 
         private void InitializePropertyModifiers()
         {
-            if (_propertiesModified == null)
-            {
-                _propertiesModified = new();
-                Type type = GetType();
-                foreach (var propertyName in _propertyNames[type])
-                    _propertiesModified[propertyName] = false;
-            }
+            _propertiesModified ??= new();
+
+            Type type = GetType();
+            if (_propertyNames[type].Length == 0)
+                return;
+
+            if (_propertyNames.Count > 0)
+                return;
+
+            foreach (var propertyName in _propertyNames[type])
+                _propertiesModified[propertyName] = false;
         }
 
         private void OnChange(string propertyName)
