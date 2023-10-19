@@ -112,6 +112,10 @@ namespace Celezt.DialogueSystem
 
         private IExtension? _extensionReference;
 
+#if UNITY_EDITOR
+        private bool _isInitialized;
+#endif
+
         protected virtual void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip) { }
         protected virtual void OnEnter(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
         protected virtual void OnProcess(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
@@ -127,13 +131,28 @@ namespace Celezt.DialogueSystem
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
+#if UNITY_EDITOR
             InitializePropertyModifiers();
 
-            foreach (string propertyName in _propertyNames[GetType()])
+            // If the extension already has been serialized to an asset but serialized properties has changed 
+            if (!_isInitialized)
             {
-                if (!_propertiesModified.ContainsKey(propertyName))
-                    _propertiesModified[propertyName] = false;
+                _isInitialized = true;
+                string[] propertyNames = _propertyNames[GetType()];
+
+                // Properties that does no longer exist.
+                var toRemove = _propertiesModified.Keys.Except(propertyNames);
+
+                foreach (string propertyName in toRemove)
+                    _propertiesModified.Remove(propertyName);
+
+                foreach (string propertyName in propertyNames)
+                {
+                    if (!_propertiesModified.ContainsKey(propertyName))
+                        _propertiesModified[propertyName] = false;
+                }
             }
+#endif
         }
 
         void ISerializationCallbackReceiver.OnAfterDeserialize()
@@ -192,11 +211,10 @@ namespace Celezt.DialogueSystem
             if (_propertiesModified[propertyName] == isModified)
                 return;
 
-            _propertiesModified[propertyName] = isModified;
-
 #if UNITY_EDITOR
-            UnityEditor.EditorUtility.SetDirty(_target);
+            UnityEditor.Undo.RecordObject(_target, $"Changed if property: '{propertyName}' is modified or not on: {_target}");
 #endif
+            _propertiesModified[propertyName] = isModified;
         }
 
         public bool GetModified(string propertyName)
@@ -230,16 +248,12 @@ namespace Celezt.DialogueSystem
 
         private void InitializePropertyModifiers()
         {
-            _propertiesModified ??= new();
-
-            Type type = GetType();
-            if (_propertyNames[type].Length == 0)
+            if (_propertiesModified is not null)
                 return;
 
-            if (_propertyNames.Count > 0)
-                return;
+            _propertiesModified = new();
 
-            foreach (var propertyName in _propertyNames[type])
+            foreach (string propertyName in _propertyNames[GetType()])
                 _propertiesModified[propertyName] = false;
         }
 
