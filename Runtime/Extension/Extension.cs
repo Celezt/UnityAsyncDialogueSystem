@@ -25,7 +25,6 @@ namespace Celezt.DialogueSystem
             get
             {
                 InitializePropertyModifiers();
-
                 return _propertiesModified;
             }
         }
@@ -55,13 +54,13 @@ namespace Celezt.DialogueSystem
                 if (oldReference != _reference)
                 {
                     if (ExtensionReference != null) // Old reference extension.
-                        ExtensionReference.OnChangedCallback -= OnChange;
+                        ExtensionReference.OnChangedCallback -= Internal_OnChange;
 
                     _extensionReference = null;
 
                     if (ExtensionReference != null) // New reference extension.
                     {
-                        ExtensionReference.OnChangedCallback += OnChange;
+                        ExtensionReference.OnChangedCallback += Internal_OnChange;
                         UpdateProperties();
                     }
 
@@ -120,6 +119,7 @@ namespace Celezt.DialogueSystem
         protected virtual void OnEnter(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
         protected virtual void OnProcess(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
         protected virtual void OnExit(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
+        protected virtual void OnChange(string propertyName) { }
         protected virtual void OnDestroy() { }
 
         public Extension()
@@ -131,36 +131,15 @@ namespace Celezt.DialogueSystem
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
-#if UNITY_EDITOR
             InitializePropertyModifiers();
-
-            // If the extension already has been serialized to an asset but serialized properties has changed 
-            if (!_isInitialized)
-            {
-                _isInitialized = true;
-                string[] propertyNames = _propertyNames[GetType()];
-
-                // Properties that does no longer exist.
-                var toRemove = _propertiesModified.Keys.Except(propertyNames);
-
-                foreach (string propertyName in toRemove)
-                    _propertiesModified.Remove(propertyName);
-
-                foreach (string propertyName in propertyNames)
-                {
-                    if (!_propertiesModified.ContainsKey(propertyName))
-                        _propertiesModified[propertyName] = false;
-                }
-            }
-#endif
         }
 
         void ISerializationCallbackReceiver.OnAfterDeserialize()
         {
             if (ExtensionReference != null)
             {
-                ExtensionReference.OnChangedCallback -= OnChange;
-                ExtensionReference.OnChangedCallback += OnChange;
+                ExtensionReference.OnChangedCallback -= Internal_OnChange;
+                ExtensionReference.OnChangedCallback += Internal_OnChange;
             }
         }
 
@@ -249,7 +228,29 @@ namespace Celezt.DialogueSystem
         private void InitializePropertyModifiers()
         {
             if (_propertiesModified is not null)
+            {
+#if UNITY_EDITOR
+                // If the extension already has been serialized to an asset but serialized properties has changed 
+                if (!_isInitialized)
+                {
+                    _isInitialized = true;
+                    string[] propertyNames = _propertyNames[GetType()];
+
+                    // Properties that does no longer exist.
+                    var toRemove = _propertiesModified.Keys.Except(propertyNames);
+
+                    foreach (string propertyName in toRemove)
+                        _propertiesModified.Remove(propertyName);
+
+                    foreach (string propertyName in propertyNames)
+                    {
+                        if (!_propertiesModified.ContainsKey(propertyName))
+                            _propertiesModified[propertyName] = false;
+                    }
+                }
+#endif
                 return;
+            }
 
             _propertiesModified = new();
 
@@ -257,9 +258,10 @@ namespace Celezt.DialogueSystem
                 _propertiesModified[propertyName] = false;
         }
 
-        private void OnChange(string propertyName)
+        private void Internal_OnChange(string propertyName)
         {
             UpdateProperty(propertyName);
+            OnChange(propertyName);
             OnChangedCallback(propertyName);
         }
     }

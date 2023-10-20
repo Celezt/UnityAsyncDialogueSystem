@@ -264,5 +264,13 @@ namespace Celezt.DialogueSystem
                 }
             }
         }
+
+        protected override void OnChange(string propertyName)
+        {
+            if (propertyName == nameof(_editorText))
+            {
+                RefreshText();
+            }
+        }
     }
 }
