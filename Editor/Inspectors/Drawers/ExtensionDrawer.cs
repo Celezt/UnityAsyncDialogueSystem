@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Celezt.Timeline;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -172,7 +173,9 @@ namespace Celezt.DialogueSystem.Editor
                 EditorGUILayout.Space(4);
                 EditorGUI.indentLevel++;
 
-                OnDrawProperties(position, property, label, _extension);
+                // Skip if playable asset but hasn't yet been initialized.
+                if (_target is EPlayableAsset asset && asset.Clip != null)
+                    OnDrawProperties(position, property, label, _extension);
 
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space(10);
