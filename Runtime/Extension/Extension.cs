@@ -18,7 +18,7 @@ namespace Celezt.DialogueSystem
 
         public event Action<string> OnChangedCallback = delegate { };
 
-        public T Asset => (_target as T)!;
+        public T? Asset => _target as T;
 
         public IReadOnlyDictionary<string, bool> PropertiesModified
         {
@@ -29,7 +29,7 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        UnityEngine.Object IExtension.Target
+        public UnityEngine.Object Target
         {
             get => _target;
             set => _target = value;
@@ -150,7 +150,7 @@ namespace Celezt.DialogueSystem
 
             foreach (var currentExtension in this.GetDerivedExtensions())
             {
-                if (currentExtension.GetModified(propertyName))
+                if (currentExtension.IsRoot || currentExtension.GetModified(propertyName))
                 {
                     currentExtension.CopyTo(this, propertyName);
                     break;
@@ -165,7 +165,7 @@ namespace Celezt.DialogueSystem
 
             foreach (var currentExtension in this.GetDerivedExtensions())
             {
-                IEnumerable<string> modifiedPropertyNames = unmodifiedPropertyNames.Where(x => currentExtension.GetModified(x));
+                IEnumerable<string> modifiedPropertyNames = unmodifiedPropertyNames.Where(x => currentExtension.IsRoot || currentExtension.GetModified(x));
 
                 foreach (string propertyName in modifiedPropertyNames)   
                     currentExtension.CopyTo(this, propertyName);
@@ -247,6 +247,12 @@ namespace Celezt.DialogueSystem
                         if (!_propertiesModified.ContainsKey(propertyName))
                             _propertiesModified[propertyName] = false;
                     }
+
+                    if (ExtensionReference != null)
+                    {
+                        ExtensionReference.OnChangedCallback -= Internal_OnChange;
+                        ExtensionReference.OnChangedCallback += Internal_OnChange;
+                    }
                 }
 #endif
                 return;
@@ -256,6 +262,12 @@ namespace Celezt.DialogueSystem
 
             foreach (string propertyName in _propertyNames[GetType()])
                 _propertiesModified[propertyName] = false;
+
+            if (ExtensionReference != null)
+            {
+                ExtensionReference.OnChangedCallback -= Internal_OnChange;
+                ExtensionReference.OnChangedCallback += Internal_OnChange;
+            }
         }
 
         private void Internal_OnChange(string propertyName)

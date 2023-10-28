@@ -66,20 +66,19 @@ namespace Celezt.DialogueSystem
             }
         }
 
-        public float TimeDurationWithoutOffset => Asset.TimeDuration - EndOffset - StartOffset;
+        public float TimeDurationWithoutOffset => Asset!.TimeDuration - EndOffset - StartOffset;
 
         public float StartOffset
         {
             get => _startOffset;
             set
             {
-                if (_startOffset == value)
-                    return;
-
-                _startOffset = Mathf.Clamp(value, 0, Asset.TimeDuration - _endOffset);
+                _startOffset = Asset != null ? 
+                    Mathf.Clamp(value, 0, Asset.TimeDuration - _endOffset) :
+                    Mathf.Max(value, 0);
 
 #if UNITY_EDITOR
-                EditorUtility.SetDirty(Asset);
+                EditorUtility.SetDirty(Target);
 #endif
             }
         }
@@ -89,21 +88,21 @@ namespace Celezt.DialogueSystem
             get => _endOffset;
             set
             {
-                if (_endOffset == value)
-                    return;
+                _endOffset = Asset != null ?
+                    Mathf.Clamp(value, 0, Asset.TimeDuration - _startOffset) :
+                    Mathf.Max(value, 0);
 
-                _endOffset = Mathf.Clamp(value, 0, Asset.TimeDuration - _startOffset);
 
 #if UNITY_EDITOR
-                EditorUtility.SetDirty(Asset);
+                EditorUtility.SetDirty(Target);
 #endif
             }
         }
 
-        double ITime.Time => Asset.Director.time;
-        double ITime.StartTime => Asset.StartTime;
-        double ITime.EndTime => Asset.EndTime;
-        double ITime.FrameRate => ((TimelineAsset)Asset.Director.playableAsset).editorSettings.frameRate;
+        double ITime.Time => Asset!.Director.time;
+        double ITime.StartTime => Asset!.StartTime;
+        double ITime.EndTime => Asset!.EndTime;
+        double ITime.FrameRate => ((TimelineAsset)Asset!.Director.playableAsset).editorSettings.frameRate;
 
         [SerializeField, TextArea(10, int.MaxValue)]
         private string _editorText = string.Empty;
@@ -267,9 +266,18 @@ namespace Celezt.DialogueSystem
 
         protected override void OnChange(string propertyName)
         {
-            if (propertyName == nameof(_editorText))
+            switch (propertyName)
             {
-                RefreshText();
+                case nameof(_editorText):
+                case nameof(_editorVisibilityCurve):
+                    RefreshText();
+                    break;
+                case nameof(_startOffset):
+                    StartOffset = _startOffset;
+                    break;
+                case nameof(_endOffset):
+                    EndOffset = _endOffset;
+                    break;
             }
         }
     }

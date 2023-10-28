@@ -22,6 +22,10 @@ namespace Celezt.DialogueSystem.Editor
             var target = serializedObject.targetObject;
             var textExtension = extension as TextExtension;
 
+            // If playable asset but hasn't yet been initialized.
+            if (target is DSPlayableAsset asset && asset.Clip == null)
+                return;
+
             SerializedProperty textProperty = property.FindPropertyRelative("_editorText");
             SerializedProperty startOffsetProperty = property.FindPropertyRelative("_startOffset");
             SerializedProperty endOffsetProperty = property.FindPropertyRelative("_endOffset");
