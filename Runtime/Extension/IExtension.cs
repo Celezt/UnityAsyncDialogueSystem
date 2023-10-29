@@ -42,6 +42,7 @@ namespace Celezt.DialogueSystem
 
         public void UpdateProperty(string propertyName);
         public void UpdateProperties();
+        public void SetModified(bool isModified);
         public void SetModified(string propertyName, bool isModified);
         public bool GetModified(string propertyName);
 

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using UnityEditor;
 using UnityEngine;
 
 #nullable enable
@@ -34,21 +33,14 @@ namespace Celezt.DialogueSystem
             if (target == null)
                 return;
 
-            Undo.RecordObject(target.Target, $"Copied all properties from '{instance.Target}' to '{target.Target}'");
             foreach (string propertyName in instance.PropertiesModified.Keys)
-                Internal_CopyTo(instance, target, propertyName);
+                CopyTo(instance, target, propertyName);
         }
         public static void CopyTo(this IExtension instance, IExtension? target, string propertyName)
         {
             if (target == null)
                 return;
 
-            Undo.RecordObject(target.Target, $"Copied property: '{propertyName}' from '{instance.Target}' to '{target.Target}'");
-            Internal_CopyTo(instance, target, propertyName);
-        }
-
-        internal static void Internal_CopyTo(IExtension instance, IExtension target, string propertyName)
-        {
             Type instanceType = instance.GetType();
             Type targetType = target.GetType();
 
@@ -84,9 +76,12 @@ namespace Celezt.DialogueSystem
                         assignExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
                 }
 
-                properties[propertyName] = action;           
+                properties[propertyName] = action;
             }
 
+#if UNITY_EDITOR
+            UnityEditor.Undo.RecordObject(target.Target, $"Copied property: '{propertyName}' from '{instance.Target}' to '{target.Target}'");
+#endif
             action(instance, target);
         }
     }

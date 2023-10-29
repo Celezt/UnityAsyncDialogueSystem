@@ -174,7 +174,7 @@ namespace Celezt.DialogueSystem.Editor
                 EditorGUI.indentLevel++;
 
                 // Skip if playable asset but hasn't yet been initialized.
-                if (_target is EPlayableAsset asset && asset.Clip != null)
+                if (_target is not EPlayableAsset || ((EPlayableAsset)_target).Clip != null)
                     OnDrawProperties(position, property, label, _extension);
 
                 EditorGUI.indentLevel--;
@@ -215,21 +215,37 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     menu.AddItem(new GUIContent("Reset"), false, () =>
                     {
-                        var newExtension = (IExtension)Activator.CreateInstance(extensionType);
-                        newExtension.Reference = _extension.Reference;
-                        property.managedReferenceValue = newExtension;
 
                     });
-                    if (_extension.Reference != null)
+                    // If any property is modified and has a reference.
+                    if (!_extension.IsRoot && _extension.PropertiesModified.Any(x => x.Value == true))
                     {
-                        menu.AddItem(new GUIContent($"Modified Extension/Apply to Object '{_extension.Reference.name}'"), false, () =>
+                        menu.AddItem(new GUIContent($"Modified Extension/Apply to Reference '{_extension.Reference!.name}'"), false, () =>
                         {
-
+                            _extension.CopyTo(_extension.ExtensionReference);
+                            _extension.SetModified(false);
+                            _extension.ExtensionReference!.SetModified(true);
+                            serializedObject.Update();
                         });
+                        if (!_extension.ExtensionReference!.IsRoot) // If reference is not the root.
+                        {
+                            menu.AddItem(new GUIContent($"Modified Extension/Apply to Root Reference '{_extension.RootReference!.name}'"), false, () =>
+                            {
+                                var rootExtensionReference = _extension.RootExtensionReference;
+                                _extension.CopyTo(rootExtensionReference);
+                                _extension.SetModified(false);
+                                rootExtensionReference!.SetModified(true);
+                                serializedObject.Update();
+                            });
+                        }
 
                         menu.AddItem(new GUIContent("Modified Extension/Revert"), false, () =>
                         {
-
+                            _extension.ExtensionReference.CopyTo(_extension);
+                            _extension.SetModified(false);
+                            // To update possible visible clip changes. (Such as the clip name).
+                            (_target as EPlayableAsset)?.Director.RebuildGraph();
+                            serializedObject.Update();
                         });
                     }
                     menu.AddSeparator(null);
@@ -286,6 +302,7 @@ namespace Celezt.DialogueSystem.Editor
                 menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Reference '{reference.name}'"), false, () =>
                 {
                     _extension.CopyTo(extensionReference, property.name);
+                    _extension.SetModified(property.name, false);
                     extensionReference.SetModified(property.name, true);
                     serializedObject.Update();
                 });
@@ -293,8 +310,10 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     menu.AddItem(new GUIContent(propertyDisplayName + $"Apply to Root Reference '{_extension.RootReference!.name}'"), false, () =>
                     {
-                        _extension.CopyTo(_extension.RootExtensionReference, property.name);
-                        _extension.SetModified(property.name, true);
+                        var rootExtensionReference = _extension.RootExtensionReference;
+                        _extension.CopyTo(rootExtensionReference, property.name);
+                        _extension.SetModified(property.name, false);
+                        rootExtensionReference!.SetModified(property.name, true);
                         serializedObject.Update();
                     });
                 }
@@ -303,7 +322,7 @@ namespace Celezt.DialogueSystem.Editor
                     extensionReference.CopyTo(_extension, property.name);
                     _extension.SetModified(property.name, false);
                     // To update possible visible clip changes. (Such as the clip name).
-                    (_target as DSPlayableAsset)?.Director.RebuildGraph();
+                    (_target as EPlayableAsset)?.Director.RebuildGraph();
                     serializedObject.Update();
                 });
             }

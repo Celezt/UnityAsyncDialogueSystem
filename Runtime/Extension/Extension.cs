@@ -181,6 +181,11 @@ namespace Celezt.DialogueSystem
 #endif
         }
 
+        public void SetModified(bool isModified)
+        {
+            foreach (string property in PropertiesModified.Keys)
+                SetModified(property, isModified);
+        }
         public void SetModified(string propertyName, bool isModified)
         {
             InitializePropertyModifiers();
