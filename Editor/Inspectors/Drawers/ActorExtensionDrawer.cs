@@ -23,9 +23,10 @@ namespace Celezt.DialogueSystem.Editor
             if (EditorOrRuntime.IsEditor)
             {
                 EditorGUI.BeginChangeCheck();
-                actorProperty.stringValue = EditorGUILayout.TextArea(actorProperty.stringValue);
+                string text = EditorGUILayout.TextArea(actorProperty.stringValue);
                 if (EditorGUI.EndChangeCheck())
                 {
+                    actorProperty.stringValue = text;
                     serializedObject.ApplyModifiedProperties();
                     extension.SetModified(actorProperty.name, true);
                     actorExtension.RefreshText();

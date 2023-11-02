@@ -3,8 +3,6 @@ using Celezt.Timeline;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
-using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -76,10 +74,6 @@ namespace Celezt.DialogueSystem
                 _startOffset = Asset != null ? 
                     Mathf.Clamp(value, 0, Asset.TimeDuration - _endOffset) :
                     Mathf.Max(value, 0);
-
-#if UNITY_EDITOR
-                EditorUtility.SetDirty(Target);
-#endif
             }
         }
 
@@ -91,11 +85,6 @@ namespace Celezt.DialogueSystem
                 _endOffset = Asset != null ?
                     Mathf.Clamp(value, 0, Asset.TimeDuration - _startOffset) :
                     Mathf.Max(value, 0);
-
-
-#if UNITY_EDITOR
-                EditorUtility.SetDirty(Target);
-#endif
             }
         }
 
@@ -136,7 +125,7 @@ namespace Celezt.DialogueSystem
             _runtimeText?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
             Tags.InvokeAll(_tagSequence);
 #if UNITY_EDITOR
-            EditorUtility.IsDirty(Asset);
+            UnityEditor.EditorUtility.IsDirty(Asset);
             _hasUpdated = true;
 #endif
         }

@@ -207,10 +207,6 @@ namespace Celezt.DialogueSystem.Editor
                 var menu = new GenericMenu();
                 if (collection != null)
                 {
-                    menu.AddItem(new GUIContent("Reset"), false, () =>
-                    {
-
-                    });
                     // If any property is modified and has a reference.
                     if (!_extension.IsRoot && _extension.PropertiesModified.Any(x => x.Value == true))
                     {
@@ -241,8 +237,8 @@ namespace Celezt.DialogueSystem.Editor
                             (_target as EPlayableAsset)?.Director.RebuildGraph();
                             serializedObject.Update();
                         });
+                        menu.AddSeparator(null);
                     }
-                    menu.AddSeparator(null);
                     menu.AddItem(new GUIContent("Remove Extension"), false, () =>
                     {
                         Undo.RecordObject(_target, $"Removed Extension '{Extensions.Names[extensionType]}'");
