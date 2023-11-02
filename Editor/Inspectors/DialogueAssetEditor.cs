@@ -2,10 +2,8 @@ using Celezt.Timeline.Editor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -14,30 +12,18 @@ namespace Celezt.DialogueSystem.Editor
     {
         private static readonly string[] _toolbar = new string[] { "Editor", "Runtime" };
 
-        private int _toolbarIndex;
-
         public override void BuildInspector()
         {
             EditorGUI.indentLevel--;
 
-            _toolbarIndex = GUILayout.Toolbar(_toolbarIndex, _toolbar);
+            EditorOrRuntime.IsEditor = GUILayout.Toolbar(EditorOrRuntime.IsEditor ? 0 : 1, _toolbar) == 0 ? true : false;
 
             EditorGUILayout.Space(20);
-
-            if (_toolbarIndex == 0)
-                EditorOrRuntime.IsEditor = true;
-            else if (_toolbarIndex == 1)
-                EditorOrRuntime.IsRuntime = true;
 
             ExtensionEditorUtility.DrawExtensions(serializedObject, typeof(DialogueAsset));
 
             serializedObject.ApplyModifiedProperties();
             serializedObject.UpdateIfRequiredOrScript();
-        }
-
-        private void OnDestroy()
-        {
-            EditorOrRuntime.IsEditor = true;
         }
     }
 }

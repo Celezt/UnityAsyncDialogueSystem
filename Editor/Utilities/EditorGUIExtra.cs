@@ -10,45 +10,6 @@ namespace Celezt.DialogueSystem.Editor
 {
     public static class EditorGUIExtra
     {
-        public struct Modification : IDisposable
-        {
-            private Func<Rect> _onGetRect;
-            private SerializedProperty _property;
-            private IExtension _extension;
-            private Action _onHasChange;
-
-            public Modification(Func<Rect> onGetRect, SerializedProperty property, IExtension extension, Action onHasChange)
-            {
-                _onGetRect = onGetRect;
-                _property = property;
-                _extension = extension;
-                _onHasChange = onHasChange;
-            }
-
-            public void Dispose()
-            {
-                // If content in current property is not the same as reference property. 
-                if (_extension.GetModified(_property.name))
-                {
-                    Rect rect = _onGetRect();
-                    rect.x = 0;
-                    rect.width = 2;
-
-                    EditorGUI.DrawRect(rect, new Color(0.06f, 0.50f, 0.75f));
-                }
-
-                if (EditorGUI.EndChangeCheck())
-                    _onHasChange?.Invoke();
-            }
-
-            public static Modification Scope(Func<Rect> onGetRect, SerializedProperty property, IExtension extension, Action onHasChange = null)
-            {
-                EditorGUI.BeginChangeCheck();
-
-                return new Modification(onGetRect, property, extension, onHasChange);
-            }
-        }
-
         public struct Disable : IDisposable
         {
             public Disable(bool disable)
