@@ -51,5 +51,6 @@ namespace Celezt.DialogueSystem
         public void OnProcess(Playable playable, FrameData info, IPlayableBehaviour mixer, object playerData);
         public void OnExit(Playable playable, FrameData info, IPlayableBehaviour mixer, object playerData);
         public void OnDestroy();
+        public void Awake();
     }
 }

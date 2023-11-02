@@ -18,6 +18,6 @@ namespace Celezt.DialogueSystem.Editor
             set => _isEditor = value;
         }
 
-        private static bool _isEditor;
+        private static bool _isEditor = true;
     }
 }

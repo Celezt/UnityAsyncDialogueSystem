@@ -12,8 +12,19 @@ using UnityEngine.Timeline;
 namespace Celezt.DialogueSystem
 {
     [Serializable]
-    public abstract class Extension<T> : IExtension<T>, ISerializationCallbackReceiver where T : UnityEngine.Object, IExtensionCollection
+    public abstract class Extension<T> : IExtension<T> where T : UnityEngine.Object, IExtensionCollection
     {
+        /// <summary>
+        /// Contains all the current directors that reference changed extension. When calling
+        /// 'SetModifier', it rebuilds the graph after all changes have been done. The reason is to give the same
+        /// effect as changing a serialized property on the clip itself, which rebuilds the graph on change.
+        /// </summary>
+        private static readonly HashSet<PlayableDirector> _toRebuild = new();
+        /// <summary>
+        /// Contains all serialized property names for each extension type that derives from <see cref="Extension{T}"/>.
+        /// It is used to fill '_propertiesModified' with all properties that can be modified. Any property that is no longer
+        /// in use will be removed by comparing to this dictionary if it has already been serialized.
+        /// </summary>
         private static readonly Dictionary<Type, string[]> _propertyNames = new();
 
         public event Action<string> OnChangedCallback = delegate { };
@@ -129,20 +140,6 @@ namespace Celezt.DialogueSystem
                 _propertyNames[type] = ReflectionUtility.GetSerializablePropertyNames(type).ToArray();
         }
 
-        void ISerializationCallbackReceiver.OnBeforeSerialize()
-        {
-            InitializePropertyModifiers();
-        }
-
-        void ISerializationCallbackReceiver.OnAfterDeserialize()
-        {
-            if (ExtensionReference != null)
-            {
-                ExtensionReference.OnChangedCallback -= Internal_OnChange;
-                ExtensionReference.OnChangedCallback += Internal_OnChange;
-            }
-        }
-
         public void UpdateProperty(string propertyName)
         {
             if (GetModified(propertyName))  // Don't update if it property is modified.
@@ -184,25 +181,34 @@ namespace Celezt.DialogueSystem
         public void SetModified(bool isModified)
         {
             foreach (string property in PropertiesModified.Keys)
-                SetModified(property, isModified);
+                Internal_SetModifier(property, isModified);
+
+            foreach (PlayableDirector director in _toRebuild)
+                director.RebuildGraph();
+
+            _toRebuild.Clear();
         }
         public void SetModified(string propertyName, bool isModified)
         {
-            InitializePropertyModifiers();
+            Internal_SetModifier(propertyName, isModified);
+            
+            foreach (PlayableDirector director in _toRebuild)
+                director.RebuildGraph();
 
-            OnChangedCallback(propertyName);
-
-            if (_propertiesModified[propertyName] == isModified)
-                return;
-
-#if UNITY_EDITOR
-            UnityEditor.Undo.RecordObject(_target, $"Changed if property: '{propertyName}' is modified or not on: {_target}");
-#endif
-            _propertiesModified[propertyName] = isModified;
+            _toRebuild.Clear();
         }
 
         public bool GetModified(string propertyName)
             => PropertiesModified[propertyName];
+
+        public void Awake()
+        {
+            if (ExtensionReference != null)
+            {
+                ExtensionReference.OnChangedCallback -= Internal_OnChange;
+                ExtensionReference.OnChangedCallback += Internal_OnChange;
+            }
+        }
 
         void IExtension.OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
@@ -253,11 +259,7 @@ namespace Celezt.DialogueSystem
                             _propertiesModified[propertyName] = false;
                     }
 
-                    if (ExtensionReference != null)
-                    {
-                        ExtensionReference.OnChangedCallback -= Internal_OnChange;
-                        ExtensionReference.OnChangedCallback += Internal_OnChange;
-                    }
+                    Awake();
                 }
 #endif
                 return;
@@ -268,15 +270,29 @@ namespace Celezt.DialogueSystem
             foreach (string propertyName in _propertyNames[GetType()])
                 _propertiesModified[propertyName] = false;
 
-            if (ExtensionReference != null)
-            {
-                ExtensionReference.OnChangedCallback -= Internal_OnChange;
-                ExtensionReference.OnChangedCallback += Internal_OnChange;
-            }
+            Awake();
         }
 
-        private void Internal_OnChange(string propertyName)
+        internal void Internal_SetModifier(string propertyName, bool isModified)
         {
+            InitializePropertyModifiers();
+
+            OnChangedCallback(propertyName);
+
+            if (_propertiesModified[propertyName] == isModified)
+                return;
+
+#if UNITY_EDITOR
+            UnityEditor.Undo.RecordObject(_target, $"Changed if property: '{propertyName}' is modified or not on: {_target}");
+#endif
+            _propertiesModified[propertyName] = isModified;
+        }
+
+        internal void Internal_OnChange(string propertyName)
+        {
+            if (_target is EPlayableAsset asset)
+                _toRebuild.Add(asset.Director);
+
             UpdateProperty(propertyName);
             OnChange(propertyName);
             OnChangedCallback(propertyName);

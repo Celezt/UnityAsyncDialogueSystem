@@ -67,6 +67,12 @@ namespace Celezt.DialogueSystem
         IEnumerator<IExtension> IEnumerable<IExtension>.GetEnumerator() => _extensions.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _extensions.GetEnumerator();
 
+        private void OnEnable()
+        {
+            foreach (var extension in Extensions)
+                extension.Awake();
+        }
+
         private void OnDestroy()
         {
             foreach (var extension in Extensions)
