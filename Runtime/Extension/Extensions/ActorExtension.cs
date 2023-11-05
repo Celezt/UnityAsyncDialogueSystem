@@ -6,10 +6,6 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 #nullable enable
 
 namespace Celezt.DialogueSystem
@@ -75,7 +71,6 @@ namespace Celezt.DialogueSystem
             _runtimeActor?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
             Tags.InvokeAll(_tagSequence);
 #if UNITY_EDITOR
-            EditorUtility.IsDirty(Target);
             _hasUpdated = true;
 #endif
         }

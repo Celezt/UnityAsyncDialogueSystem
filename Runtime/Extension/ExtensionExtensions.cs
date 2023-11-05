@@ -80,7 +80,7 @@ namespace Celezt.DialogueSystem
             }
 
 #if UNITY_EDITOR
-            UnityEditor.Undo.RecordObject(target.Target, $"Copied property: '{propertyName}' from '{instance.Target}' to '{target.Target}'");
+            UnityEditor.Undo.RecordObject(target.Target, $"Copy property: '{propertyName}' from '{instance.Target}' to '{target.Target}'");
 #endif
             action(instance, target);
         }

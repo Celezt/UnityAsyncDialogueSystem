@@ -57,6 +57,9 @@ namespace Celezt.DialogueSystem
                     return;
                 }
 
+#if UNITY_EDITOR
+                UnityEditor.EditorUtility.IsDirty(_target);
+#endif
                 var oldReference = _reference;
                 _reference = value;
 
@@ -74,10 +77,6 @@ namespace Celezt.DialogueSystem
                         ExtensionReference.OnChangedCallback += Internal_OnChange;
                         UpdateProperties();
                     }
-
-#if UNITY_EDITOR
-                    UnityEditor.EditorUtility.SetDirty(_target);
-#endif
                 }
             }
         }
@@ -152,7 +151,6 @@ namespace Celezt.DialogueSystem
                     currentExtension.CopyTo(this, propertyName);
                     break;
                 }
-
             }
         }
 
@@ -172,10 +170,6 @@ namespace Celezt.DialogueSystem
                 if (!unmodifiedPropertyNames.Any())
                     break;
             }
-
-#if UNITY_EDITOR
-            UnityEditor.EditorUtility.SetDirty(_target);
-#endif
         }
 
         public void SetModified(bool isModified)
@@ -283,7 +277,7 @@ namespace Celezt.DialogueSystem
                 return;
 
 #if UNITY_EDITOR
-            UnityEditor.Undo.RecordObject(_target, $"Changed if property: '{propertyName}' is modified or not on: {_target}");
+            UnityEditor.Undo.RecordObject(_target, $"Change if property: '{propertyName}' is modified or not on: {_target}");
 #endif
             _propertiesModified[propertyName] = isModified;
         }

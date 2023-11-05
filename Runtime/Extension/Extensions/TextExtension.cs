@@ -125,7 +125,6 @@ namespace Celezt.DialogueSystem
             _runtimeText?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
             Tags.InvokeAll(_tagSequence);
 #if UNITY_EDITOR
-            UnityEditor.EditorUtility.IsDirty(Asset);
             _hasUpdated = true;
 #endif
         }
