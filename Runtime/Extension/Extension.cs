@@ -57,9 +57,6 @@ namespace Celezt.DialogueSystem
                     return;
                 }
 
-#if UNITY_EDITOR
-                UnityEditor.EditorUtility.IsDirty(_target);
-#endif
                 var oldReference = _reference;
                 _reference = value;
 
@@ -197,6 +194,7 @@ namespace Celezt.DialogueSystem
 
         public void Awake()
         {
+            UpdateProperties();
             if (ExtensionReference != null)
             {
                 ExtensionReference.OnChangedCallback -= Internal_OnChange;
@@ -278,6 +276,7 @@ namespace Celezt.DialogueSystem
 
 #if UNITY_EDITOR
             UnityEditor.Undo.RecordObject(_target, $"Change if property: '{propertyName}' is modified or not on: {_target}");
+            UnityEditor.EditorUtility.SetDirty(_target);
 #endif
             _propertiesModified[propertyName] = isModified;
         }

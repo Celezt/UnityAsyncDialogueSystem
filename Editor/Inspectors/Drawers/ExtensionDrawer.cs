@@ -143,8 +143,9 @@ namespace Celezt.DialogueSystem.Editor
                 {
                     if (!ExtensionUtility.HasSelfReference(_target, newReference))
                     {
-                        Undo.RecordObject(_target, "Changed Extension Reference");
+                        Undo.RecordObject(_target, "Change Extension Reference");
                         _extension.Reference = newReference;
+                        EditorUtility.SetDirty(_target);
                     }
                 }
             }
@@ -294,7 +295,7 @@ namespace Celezt.DialogueSystem.Editor
                     _extension.CopyTo(extensionReference, property.name);
                     _extension.SetModified(property.name, false);
                     extensionReference.SetModified(property.name, true);
-                    serializedObject.Update();
+                    EditorUtility.SetDirty(_target);
                 });
                 if (!extensionReference.IsRoot) // If reference is not the root.
                 {
@@ -304,7 +305,7 @@ namespace Celezt.DialogueSystem.Editor
                         _extension.CopyTo(rootExtensionReference, property.name);
                         _extension.SetModified(property.name, false);
                         rootExtensionReference!.SetModified(property.name, true);
-                        serializedObject.Update();
+                        EditorUtility.SetDirty(_target);
                     });
                 }
                 menu.AddItem(new GUIContent(propertyDisplayName + "Revert"), false, () =>
@@ -313,7 +314,7 @@ namespace Celezt.DialogueSystem.Editor
                     _extension.SetModified(property.name, false);
                     // To update possible visible clip changes. (Such as the clip name).
                     (_target as EPlayableAsset)?.Director.RebuildGraph();
-                    serializedObject.Update();
+                    EditorUtility.SetDirty(_target);
                 });
             }
 

@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Timeline;
+using static UnityEngine.GraphicsBuffer;
 
 namespace Celezt.DialogueSystem.Editor
 {
@@ -64,12 +65,8 @@ namespace Celezt.DialogueSystem.Editor
                 float labelWidth = EditorGUIUtility.labelWidth;
                 EditorGUIUtility.labelWidth = 10;
 
-                EditorGUI.BeginChangeCheck();
-                using (EditorGUIExtra.Disable.Scope(EditorOrRuntime.IsRuntime))
-                    textExtension.StartOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.StartOffset, GUILayout.Width(50));
-                if (EditorGUI.EndChangeCheck())
-                    extension.SetModified(startOffsetProperty.name, true);
-
+                ExtensionEditorUtility.FloatField(_editorVisibilityOffsetContent, 
+                    extension, startOffsetProperty, value => textExtension.StartOffset = value, GUILayout.Width(50));
                 Rect modificationRect = GUILayoutUtility.GetLastRect();
                 DrawModification(modificationRect, startOffsetProperty, extension);
 
@@ -94,12 +91,8 @@ namespace Celezt.DialogueSystem.Editor
                 DrawModification(modificationRect, editorVisibilityCurve, extension);
                 GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
 
-                EditorGUI.BeginChangeCheck();
-                using (EditorGUIExtra.Disable.Scope(EditorOrRuntime.IsRuntime))
-                    textExtension.EndOffset = EditorGUILayout.FloatField(_editorVisibilityOffsetContent, textExtension.EndOffset, GUILayout.Width(50));
-                if (EditorGUI.EndChangeCheck())
-                    extension.SetModified(endOffsetProperty.name, true);
-
+                ExtensionEditorUtility.FloatField(_editorVisibilityOffsetContent,
+                    extension, endOffsetProperty, value => textExtension.EndOffset = value, GUILayout.Width(50));
                 DrawModification(modificationRect, endOffsetProperty, extension);
 
                 EditorGUIUtility.labelWidth = labelWidth;

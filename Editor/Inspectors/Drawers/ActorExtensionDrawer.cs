@@ -13,6 +13,7 @@ namespace Celezt.DialogueSystem.Editor
         protected override void OnDrawProperties(Rect position, SerializedProperty property, GUIContent label, IExtension extension)
         {
             var serializedObject = property.serializedObject;
+            var target = serializedObject.targetObject;
             var actorExtension = extension as ActorExtension;
 
             SerializedProperty actorProperty = property.FindPropertyRelative("_editorActor");
@@ -29,7 +30,8 @@ namespace Celezt.DialogueSystem.Editor
                     actorProperty.stringValue = text;
                     serializedObject.ApplyModifiedProperties();
                     extension.SetModified(actorProperty.name, true);
-                    actorExtension.RefreshText();
+                    actorExtension.UpdateTags();
+                    EditorUtility.SetDirty(target);
                 }
             }
             else

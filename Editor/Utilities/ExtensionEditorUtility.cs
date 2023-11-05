@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.VersionControl;
 using UnityEditor;
 using UnityEngine;
 
@@ -91,6 +90,23 @@ namespace Celezt.DialogueSystem.Editor
             }
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        public static void FloatField(GUIContent label, IExtension extension, SerializedProperty property, Action<float> setAction, params GUILayoutOption[] options)
+        {
+            var target = extension.Target;
+            float value = default;
+
+            EditorGUI.BeginChangeCheck();
+            using (EditorGUIExtra.Disable.Scope(EditorOrRuntime.IsRuntime))
+                value = EditorGUILayout.FloatField(label, property.floatValue, options);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(target, $"Set start offset on: {target}");
+                setAction(value);
+                extension.SetModified(property.name, true);
+                EditorUtility.SetDirty(target);
+            }
         }
     }
 }
