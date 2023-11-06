@@ -42,6 +42,7 @@ namespace Celezt.DialogueSystem.Editor
                     serializedObject.ApplyModifiedProperties();
                     extension.SetModified(textProperty.name, true);
                     textExtension.RefreshText();
+                    EditorUtility.SetDirty(target);
                 }
             }
             else

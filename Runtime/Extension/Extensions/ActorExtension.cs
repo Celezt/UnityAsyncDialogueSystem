@@ -14,13 +14,13 @@ namespace Celezt.DialogueSystem
     public class ActorExtension : Extension<DialogueAsset>, ITagText
     {
         [SerializeField]
-        private string _editorActor = string.Empty;
+        private string _editorText = string.Empty;
 
 #if UNITY_EDITOR
         private bool _hasUpdated;
 #endif
         private int _length;
-        private MutString? _runtimeActor;
+        private MutString? _runtimeText;
         private List<ITag>? _tagSequence;
 
         public IReadOnlyList<ITag> TagSequence
@@ -38,10 +38,10 @@ namespace Celezt.DialogueSystem
 
         public string EditorText
         {
-            get => _editorActor;
+            get => _editorText;
             set
             {
-                _editorActor = value;
+                _editorText = value;
                 RefreshText();
             }
         }
@@ -50,25 +50,25 @@ namespace Celezt.DialogueSystem
         {
             get
             {
-                if (_runtimeActor is null)
+                if (_runtimeText is null)
                 {
-                    _runtimeActor = new MutString(_editorActor.Length);
+                    _runtimeText = new MutString(_editorText.Length);
                     RefreshText();
                 }
 
-                return _runtimeActor;
+                return _runtimeText;
             }
         }
 
         public void RefreshText()
         {
-            Span<char> span = stackalloc char[_editorActor.Length];
-            _editorActor.AsSpan().CopyTo(span);
+            Span<char> span = stackalloc char[_editorText.Length];
+            _editorText.AsSpan().CopyTo(span);
 
             _tagSequence = Tags.GetTagSequence(span, this);
             _length = Tags.GetTextLength(span);
 
-            _runtimeActor?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
+            _runtimeText?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
             Tags.InvokeAll(_tagSequence);
 #if UNITY_EDITOR
             _hasUpdated = true;
@@ -77,9 +77,9 @@ namespace Celezt.DialogueSystem
 
         public void UpdateTags()
         {
-            Span<char> span = stackalloc char[_editorActor.Length];
-            _editorActor.AsSpan().CopyTo(span);
-            _runtimeActor?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
+            Span<char> span = stackalloc char[_editorText.Length];
+            _editorText.AsSpan().CopyTo(span);
+            _runtimeText?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
 
             _tagSequence ??= Tags.GetTagSequence(EditorText, this);
 

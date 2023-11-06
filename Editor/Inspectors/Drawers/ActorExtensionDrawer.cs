@@ -16,7 +16,7 @@ namespace Celezt.DialogueSystem.Editor
             var target = serializedObject.targetObject;
             var actorExtension = extension as ActorExtension;
 
-            SerializedProperty actorProperty = property.FindPropertyRelative("_editorActor");
+            SerializedProperty textProperty = property.FindPropertyRelative("_editorText");
 
             EditorGUILayout.LabelField(EditorOrRuntime.IsEditor ? "Actor" : "Actor (Readonly)");
             EditorStyles.textField.wordWrap = true;
@@ -24,13 +24,13 @@ namespace Celezt.DialogueSystem.Editor
             if (EditorOrRuntime.IsEditor)
             {
                 EditorGUI.BeginChangeCheck();
-                string text = EditorGUILayout.TextArea(actorProperty.stringValue);
+                string text = EditorGUILayout.TextArea(textProperty.stringValue);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    actorProperty.stringValue = text;
+                    textProperty.stringValue = text;
                     serializedObject.ApplyModifiedProperties();
-                    extension.SetModified(actorProperty.name, true);
-                    actorExtension.UpdateTags();
+                    extension.SetModified(textProperty.name, true);
+                    actorExtension.RefreshText();
                     EditorUtility.SetDirty(target);
                 }
             }
@@ -42,7 +42,7 @@ namespace Celezt.DialogueSystem.Editor
                 using (EditorGUIExtra.Disable.Scope())
                     EditorGUILayout.TextArea(_runtimeActor);
             }
-            DrawModification(GUILayoutUtility.GetLastRect(), actorProperty, extension);
+            DrawModification(GUILayoutUtility.GetLastRect(), textProperty, extension);
         }
     }
 }

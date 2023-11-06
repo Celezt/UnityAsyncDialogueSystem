@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Pool;
 using UnityEngine.Timeline;
 
 #nullable enable
@@ -262,7 +263,8 @@ namespace Celezt.DialogueSystem
                     string[] propertyNames = _propertyNames[GetType()];
 
                     // Properties that does no longer exist.
-                    var toRemove = _propertiesModified.Keys.Except(propertyNames);
+                    using var obj = ListPool<string>.Get(out var toRemove);
+                    toRemove.AddRange(_propertiesModified.Keys.Except(propertyNames));
 
                     foreach (string propertyName in toRemove)
                         _propertiesModified.Remove(propertyName);
@@ -274,6 +276,9 @@ namespace Celezt.DialogueSystem
                     }
 
                     Awake();
+
+                    if (toRemove.Any())
+                        UnityEditor.EditorUtility.SetDirty(_target); 
                 }
 #endif
                 return;
@@ -285,6 +290,9 @@ namespace Celezt.DialogueSystem
                 _propertiesModified[propertyName] = false;
 
             Awake();
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(_target);
+#endif
         }
 
         internal void Internal_SetModifier(string propertyName, bool isModified)
