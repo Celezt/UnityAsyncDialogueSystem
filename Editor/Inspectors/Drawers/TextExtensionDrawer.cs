@@ -65,8 +65,7 @@ namespace Celezt.DialogueSystem.Editor
                 float labelWidth = EditorGUIUtility.labelWidth;
                 EditorGUIUtility.labelWidth = 10;
 
-                ExtensionEditorUtility.FloatField(_editorVisibilityOffsetContent, 
-                    extension, startOffsetProperty, value => textExtension.StartOffset = value, GUILayout.Width(50));
+                ExtensionEditorUtility.FloatField(_editorVisibilityOffsetContent, extension, startOffsetProperty, GUILayout.Width(50));
                 Rect modificationRect = GUILayoutUtility.GetLastRect();
                 DrawModification(modificationRect, startOffsetProperty, extension);
 
@@ -91,8 +90,7 @@ namespace Celezt.DialogueSystem.Editor
                 DrawModification(modificationRect, editorVisibilityCurve, extension);
                 GUI.Box(GUILayoutUtility.GetLastRect(), _editorVisibilityCurveContent);
 
-                ExtensionEditorUtility.FloatField(_editorVisibilityOffsetContent,
-                    extension, endOffsetProperty, value => textExtension.EndOffset = value, GUILayout.Width(50));
+                ExtensionEditorUtility.FloatField(_editorVisibilityOffsetContent, extension, endOffsetProperty, GUILayout.Width(50));
                 DrawModification(modificationRect, endOffsetProperty, extension);
 
                 EditorGUIUtility.labelWidth = labelWidth;

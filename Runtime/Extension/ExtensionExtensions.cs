@@ -52,28 +52,60 @@ namespace Celezt.DialogueSystem
 
             if (!properties.TryGetValue(propertyName, out var action))
             {
-                var fieldInfo = instanceType.GetField(propertyName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-                Type fieldType = fieldInfo.FieldType;
+                // If there is any property with the same name (in pascal case).
+                var propertyInfo = instanceType.GetProperty(propertyName.ToPascalCase(), BindingFlags.Instance | BindingFlags.Public);
 
-                var instanceBoxedExpression = Expression.Convert(_instanceParameterExpression, instanceType);
-                var targetBoxedExpression = Expression.Convert(_targetParameterExpression, targetType);
-
-                var instanceFieldExpression = Expression.Field(instanceBoxedExpression, fieldInfo);
-                var targetFieldExpression = Expression.Field(targetBoxedExpression, fieldInfo);
-
-                if (fieldType.IsAssignableFrom(typeof(AnimationCurve))) // Uses 'CopyFrom' when assigning curves to prevent pointing to the same.
+                if (propertyInfo != null)
                 {
-                    var copyFromExpression = Expression.Call(targetFieldExpression, "CopyFrom", null, instanceFieldExpression);
+                    Type propertyType = propertyInfo.PropertyType;
 
-                    action = Expression.Lambda<Action<IExtension, IExtension>>(
-                        copyFromExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                    var instanceBoxedExpression = Expression.Convert(_instanceParameterExpression, instanceType);
+                    var targetBoxedExpression = Expression.Convert(_targetParameterExpression, targetType);
+
+                    var instancePropertyExpression = Expression.Property(instanceBoxedExpression, propertyInfo);
+                    var targetPropertyExpression =  Expression.Property(targetBoxedExpression, propertyInfo);
+                    var targetFieldExpression =     propertyInfo.CanWrite ? null : Expression.Property(targetBoxedExpression, propertyInfo);
+
+                    if (propertyType.IsAssignableFrom(typeof(AnimationCurve))) // Uses 'CopyFrom' when assigning curves to prevent pointing to the same.
+                    {
+                        var copyFromExpression = Expression.Call(targetPropertyExpression, "CopyFrom", null, instancePropertyExpression);
+
+                        action = Expression.Lambda<Action<IExtension, IExtension>>(
+                            copyFromExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                    }
+                    else
+                    {
+                        var assignExpression = Expression.Assign(targetFieldExpression ?? targetPropertyExpression, instancePropertyExpression);
+
+                        action = Expression.Lambda<Action<IExtension, IExtension>>(
+                            assignExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                    }
                 }
                 else
                 {
-                    var assignExpression = Expression.Assign(targetFieldExpression, instanceFieldExpression);
+                    var fieldInfo = instanceType.GetField(propertyName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    Type fieldType = fieldInfo.FieldType;
 
-                    action = Expression.Lambda<Action<IExtension, IExtension>>(
-                        assignExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                    var instanceBoxedExpression = Expression.Convert(_instanceParameterExpression, instanceType);
+                    var targetBoxedExpression = Expression.Convert(_targetParameterExpression, targetType);
+
+                    var instanceFieldExpression = Expression.Field(instanceBoxedExpression, fieldInfo);
+                    var targetFieldExpression = Expression.Field(targetBoxedExpression, fieldInfo);
+
+                    if (fieldType.IsAssignableFrom(typeof(AnimationCurve))) // Uses 'CopyFrom' when assigning curves to prevent pointing to the same.
+                    {
+                        var copyFromExpression = Expression.Call(targetFieldExpression, "CopyFrom", null, instanceFieldExpression);
+
+                        action = Expression.Lambda<Action<IExtension, IExtension>>(
+                            copyFromExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                    }
+                    else
+                    {
+                        var assignExpression = Expression.Assign(targetFieldExpression, instanceFieldExpression);
+
+                        action = Expression.Lambda<Action<IExtension, IExtension>>(
+                            assignExpression, _instanceParameterExpression, _targetParameterExpression).Compile();
+                    }
                 }
 
                 properties[propertyName] = action;

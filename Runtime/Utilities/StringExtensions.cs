@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Unity.Profiling.Editor;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
+    [DebuggerStepThrough]
     internal static class StringExtensions
     {
         public static string ToSnakeCase(this string text, bool trimUnderscore = true) 

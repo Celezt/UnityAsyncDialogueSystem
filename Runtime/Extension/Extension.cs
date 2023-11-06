@@ -29,7 +29,21 @@ namespace Celezt.DialogueSystem
 
         public event Action<string> OnChangedCallback = delegate { };
 
-        public T? Asset => _target as T;
+        public T? Asset
+        {
+            get
+            {
+                T? asset = _target as T;
+
+                if (asset == null)
+                    return null;
+
+                if (asset is EPlayableAsset { Clip: null }) // Return null if asset hasn't been initialised yet.
+                    return null;
+
+                return asset;
+            }
+        }
 
         public IReadOnlyDictionary<string, bool> PropertiesModified
         {
@@ -122,6 +136,8 @@ namespace Celezt.DialogueSystem
         private bool _isInitialized;
 #endif
 
+        private bool _hasOnCreateFirstTime;
+
         protected virtual void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip) { }
         protected virtual void OnEnter(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
         protected virtual void OnProcess(Playable playable, FrameData info, EMixerBehaviour mixer, object playerData) { }
@@ -194,17 +210,23 @@ namespace Celezt.DialogueSystem
 
         public void Awake()
         {
-            UpdateProperties();
             if (ExtensionReference != null)
             {
                 ExtensionReference.OnChangedCallback -= Internal_OnChange;
                 ExtensionReference.OnChangedCallback += Internal_OnChange;
             }
+
+            UpdateProperties();
         }
 
         void IExtension.OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
-            UpdateProperties();
+            if (!_hasOnCreateFirstTime)
+            {
+                UpdateProperties();
+                _hasOnCreateFirstTime = true;
+            }
+
             OnCreate(graph, go, clip);
         }
 

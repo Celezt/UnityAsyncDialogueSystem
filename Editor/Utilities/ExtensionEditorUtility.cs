@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -92,20 +93,35 @@ namespace Celezt.DialogueSystem.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        public static void FloatField(GUIContent label, IExtension extension, SerializedProperty property, Action<float> setAction, params GUILayoutOption[] options)
+        public static void FloatField(GUIContent label, IExtension extension, SerializedProperty property, params GUILayoutOption[] options)
         {
             var target = extension.Target;
             float value = default;
 
+            // If there is any property with the same name (in pascal case).
+            var propertyInfo = extension.GetType().GetProperty(property.name.ToPascalCase(), BindingFlags.Instance | BindingFlags.Public);
+
             EditorGUI.BeginChangeCheck();
+
             using (EditorGUIExtra.Disable.Scope(EditorOrRuntime.IsRuntime))
-                value = EditorGUILayout.FloatField(label, property.floatValue, options);
+                value = EditorGUILayout.FloatField(label, 
+                    propertyInfo == null ? property.floatValue : (float)propertyInfo.GetValue(extension), options);
+
             if (EditorGUI.EndChangeCheck())
             {
-                Undo.RecordObject(target, $"Set start offset on: {target}");
-                setAction(value);
+                if (propertyInfo == null || !propertyInfo.CanWrite) // Don't use property if there is no setter.
+                {
+                    property.floatValue = value;
+                    property.serializedObject.Update();
+                }
+                else
+                {
+                    Undo.RecordObject(target, $"Set start offset on: {target}");
+                    propertyInfo.SetValue(extension, value);
+                    EditorUtility.SetDirty(target);
+                }
+
                 extension.SetModified(property.name, true);
-                EditorUtility.SetDirty(target);
             }
         }
     }

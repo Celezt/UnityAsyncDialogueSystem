@@ -251,22 +251,5 @@ namespace Celezt.DialogueSystem
                 }
             }
         }
-
-        protected override void OnChange(string propertyName)
-        {
-            switch (propertyName)
-            {
-                case nameof(_editorText):
-                case nameof(_editorVisibilityCurve):
-                    RefreshText();
-                    break;
-                case nameof(_startOffset):
-                    StartOffset = _startOffset;
-                    break;
-                case nameof(_endOffset):
-                    EndOffset = _endOffset;
-                    break;
-            }
-        }
     }
 }
