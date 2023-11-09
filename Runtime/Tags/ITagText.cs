@@ -1,10 +1,7 @@
 using Celezt.Text;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.VersionControl;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 using System;
 
 namespace Celezt.DialogueSystem

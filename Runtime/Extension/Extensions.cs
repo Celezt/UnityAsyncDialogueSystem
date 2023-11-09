@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 
 #nullable enable
@@ -10,7 +9,7 @@ using UnityEngine;
 namespace Celezt.DialogueSystem
 {
 #if UNITY_EDITOR
-    [InitializeOnLoad]
+    [UnityEditor.InitializeOnLoad]
 #endif
     public static class Extensions
     {
@@ -79,7 +78,7 @@ namespace Celezt.DialogueSystem
                 if (type.GetInterface(nameof(IExtension)) == null)
                     throw new ExtensionsException($"Object with '{nameof(CreateExtensionAttribute)}' are required to be derived from '{nameof(IExtension)}'");
 
-                string name = ObjectNames.NicifyVariableName(type.Name.TrimDecoration("Extension"));
+                string name = type.Name.TrimDecoration("Extension").ToTitleCase();
                 _names[type] = name;
                 _types[name] = type;
 

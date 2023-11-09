@@ -38,16 +38,6 @@ namespace Celezt.DialogueSystem
 
         public readonly struct Callback
         {
-            /// <summary>
-            /// How much time has passed in unit interval [0-1].
-            /// </summary>
-            public float Interval => Asset is ITime asset ?
-                asset.Interval : Mathf.Clamp01((float)((Time - StartTime) / (End - StartTime)));
-
-            public double Time => Director.time;
-            public double StartTime => Asset.StartTime;
-            public double End => Asset.EndTime;
-
             public readonly int TrackIndex;
             public readonly DialogueSystemBinder Binder;
             public readonly PlayableDirector Director;

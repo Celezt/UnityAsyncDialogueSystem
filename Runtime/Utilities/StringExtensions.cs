@@ -3,9 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Text.RegularExpressions;
-using Unity.Profiling.Editor;
-using UnityEngine;
 
 namespace Celezt.DialogueSystem
 {
@@ -164,17 +161,117 @@ namespace Celezt.DialogueSystem
             return length;
         }
 
-        public static string ToPascalCase(this string text, bool trimUnderscore = true)
-         => ToPascalCase(text, stackalloc char[text.Length], trimUnderscore).ToString();
-        public static Span<char> ToPascalCase(this Span<char> span, bool trimUnderscore = true)
+        public static string ToTitleCase(this string text)
+         => ToTitleCaseSpan(text, stackalloc char[text.Length]).ToString();
+        public static Span<char> ToTitleCaseSpan(this Span<char> span)
         {
             Span<char> temp = stackalloc char[span.Length];
             span.CopyTo(temp);
-            return span.Slice(0, ToPascalCase(temp, span, trimUnderscore));
+            return span.Slice(0, ToTitleCaseSpan(temp, span));
         }
-        public static Span<char> ToPascalCase(this string text, Span<char> span, bool trimUnderscore = true)
-            => span.Slice(0, ToPascalCase(text.AsSpan(), span, trimUnderscore));
-        public static int ToPascalCase(this ReadOnlySpan<char> text, Span<char> span, bool trimUnderscore = true)
+        public static Span<char> ToTitleCaseSpan(this string text, Span<char> span)
+            => span.Slice(0, ToTitleCaseSpan(text.AsSpan(), span));
+        public static int ToTitleCaseSpan(this ReadOnlySpan<char> text, Span<char> span)
+        {
+            if (text.IsEmpty || text.IsWhiteSpace())
+                return 0;
+
+            int length = 0;
+            int currentIndex = 0;
+            bool toLower = false;
+
+            for (; currentIndex < text.Length; currentIndex++)
+            {
+                char currentChar = text[currentIndex];
+                if (currentChar is not '_' and not ' ')
+                {
+                    char nextChar = text[currentIndex + 1];
+                    if (currentIndex + 1 < text.Length && char.IsUpper(currentChar) && char.IsUpper(nextChar)) // If current is upper, only the first will be upper.
+                    {
+                        span[length++] = currentChar;
+                        span[length++] = char.ToLower(nextChar);
+                        currentIndex += 2;
+                        toLower = true;
+                        break;
+                    }
+
+                    span[length++] = char.ToUpper(currentChar);
+                    currentIndex++;
+                    break;
+                }
+            }
+
+            for (; currentIndex < text.Length; currentIndex++)
+            {
+                char currentChar = text[currentIndex];
+                if (currentChar is '_' or ' ')
+                {
+                    toLower = false;
+
+                    if (currentIndex + 1 >= text.Length)
+                        break;
+
+                    char nextChar = text[currentIndex + 1];
+
+                    if (nextChar is not '_')
+                    {
+                        span[length++] = char.ToUpper(nextChar);
+                        currentIndex++;
+                    }
+
+                    continue;
+                }
+
+                if (currentIndex + 1 < text.Length)
+                {
+                    char nextChar = text[currentIndex + 1];
+
+                    if (toLower)
+                    {
+                        if (char.IsUpper(currentChar) && char.IsLower(nextChar))    // Keep them the same if the next is lower but the current is upper.
+                        {
+                            toLower = false;
+                            span[length++] = currentChar;
+                            span[length++] = nextChar;
+                            currentIndex++;
+
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        if (char.IsUpper(currentChar) && char.IsUpper(nextChar))    // If current is upper, next one is lower.
+                        {
+                            toLower = true;
+                            span[length++] = currentChar;
+                            span[length++] = char.ToLower(nextChar);
+                            currentIndex++;
+
+                            continue;
+                        }
+                    }
+                }
+
+                if (toLower)
+                    span[length++] = char.ToLower(currentChar);
+                else
+                    span[length++] = currentChar;
+            }
+
+            return length;
+        }
+
+        public static string ToPascalCase(this string text, bool trimUnderscore = true)
+         => ToPascalCaseSpan(text, stackalloc char[text.Length], trimUnderscore).ToString();
+        public static Span<char> ToPascalCaseSpan(this Span<char> span, bool trimUnderscore = true)
+        {
+            Span<char> temp = stackalloc char[span.Length];
+            span.CopyTo(temp);
+            return span.Slice(0, ToPascalCaseSpan(temp, span, trimUnderscore));
+        }
+        public static Span<char> ToPascalCaseSpan(this string text, Span<char> span, bool trimUnderscore = true)
+            => span.Slice(0, ToPascalCaseSpan(text.AsSpan(), span, trimUnderscore));
+        public static int ToPascalCaseSpan(this ReadOnlySpan<char> text, Span<char> span, bool trimUnderscore = true)
         {
             if (text.IsEmpty || text.IsWhiteSpace())
                 return 0;

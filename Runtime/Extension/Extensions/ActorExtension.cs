@@ -80,6 +80,9 @@ namespace Celezt.DialogueSystem
 
         public void UpdateTags()
         {
+            if (Asset == null)
+                return;
+
             Span<char> span = stackalloc char[_editorText.Length];
             _editorText.AsSpan().CopyTo(span);
             _runtimeText?.Set(Tags.TrimTextTags(span, Tags.TagVariation.Custom));
@@ -91,9 +94,6 @@ namespace Celezt.DialogueSystem
 
         protected override void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
-            if (Asset == null)
-                return;
-
 #if UNITY_EDITOR
             if (_hasUpdated)
                 _hasUpdated = false;
