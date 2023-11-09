@@ -62,6 +62,9 @@ namespace Celezt.DialogueSystem
 
         public void RefreshText()
         {
+            if (Asset == null)
+                return;
+
             Span<char> span = stackalloc char[_editorText.Length];
             _editorText.AsSpan().CopyTo(span);
 
@@ -88,6 +91,9 @@ namespace Celezt.DialogueSystem
 
         protected override void OnCreate(PlayableGraph graph, GameObject go, TimelineClip clip)
         {
+            if (Asset == null)
+                return;
+
 #if UNITY_EDITOR
             if (_hasUpdated)
                 _hasUpdated = false;

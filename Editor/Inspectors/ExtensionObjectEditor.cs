@@ -15,8 +15,6 @@ namespace Celezt.DialogueSystem.Editor
 
         public override void OnInspectorGUI()
         {
-            EditorOrRuntime.IsEditor = GUILayout.Toolbar(EditorOrRuntime.IsEditor ? 0 : 1, _toolbar) == 0 ? true : false;
-
             EditorGUILayout.Space(20);
 
             ExtensionEditorUtility.DrawExtensions(serializedObject, typeof(DialogueAsset));

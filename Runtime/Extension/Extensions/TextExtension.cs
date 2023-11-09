@@ -114,6 +114,9 @@ namespace Celezt.DialogueSystem
 
         public void RefreshText()
         {
+            if (Asset == null)
+                return;
+
             RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
 
             Span<char> span = stackalloc char[_editorText.Length];
@@ -131,6 +134,9 @@ namespace Celezt.DialogueSystem
 
         public void UpdateTags()
         {
+            if (Asset == null)
+                return;
+
             RuntimeVisibilityCurve.keys = EditorVisibilityCurve.keys;
 
             Span<char> span = stackalloc char[_editorText.Length];

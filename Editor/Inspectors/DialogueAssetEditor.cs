@@ -20,5 +20,10 @@ namespace Celezt.DialogueSystem.Editor
 
             ExtensionEditorUtility.DrawExtensions(serializedObject, typeof(DialogueAsset));
         }
+
+        private void OnDestroy()
+        {
+            EditorOrRuntime.IsEditor = true;
+        }
     }
 }
