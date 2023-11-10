@@ -31,7 +31,7 @@ namespace Celezt.DialogueSystem
             for (int currentIndex = 0; currentIndex < text.Length; currentIndex++)
             {
                 char currentChar = text[currentIndex];
-                if (currentChar == '_')
+                if (currentChar is '_')
                 {
                     if (trimUnderscore && isTrimmable)  // skip all _ until another letter is found.
                         continue;
@@ -107,7 +107,7 @@ namespace Celezt.DialogueSystem
             for (int currentIndex = 0; currentIndex < text.Length; currentIndex++)
             {
                 char currentChar = text[currentIndex];
-                if (currentChar == '-')
+                if (currentChar is '-')
                 {
                     if (trimDash && isTrimmable)  // skip all - until another letter is found.
                         continue;
@@ -162,7 +162,7 @@ namespace Celezt.DialogueSystem
         }
 
         public static string ToTitleCase(this string text)
-         => ToTitleCaseSpan(text, stackalloc char[text.Length]).ToString();
+         => ToTitleCaseSpan(text, stackalloc char[text.Length * 2]).ToString();
         public static Span<char> ToTitleCaseSpan(this Span<char> span)
         {
             Span<char> temp = stackalloc char[span.Length];
@@ -178,7 +178,6 @@ namespace Celezt.DialogueSystem
 
             int length = 0;
             int currentIndex = 0;
-            bool toLower = false;
 
             for (; currentIndex < text.Length; currentIndex++)
             {
@@ -191,7 +190,6 @@ namespace Celezt.DialogueSystem
                         span[length++] = currentChar;
                         span[length++] = char.ToLower(nextChar);
                         currentIndex += 2;
-                        toLower = true;
                         break;
                     }
 
@@ -204,16 +202,16 @@ namespace Celezt.DialogueSystem
             for (; currentIndex < text.Length; currentIndex++)
             {
                 char currentChar = text[currentIndex];
-                if (currentChar is '_' or ' ')
+                if (currentChar is '_' or ' ' or '-')
                 {
-                    toLower = false;
+                    span[length++] = ' ';
 
                     if (currentIndex + 1 >= text.Length)
                         break;
 
                     char nextChar = text[currentIndex + 1];
 
-                    if (nextChar is not '_')
+                    if (nextChar is not '_' and not ' ' and not '-')
                     {
                         span[length++] = char.ToUpper(nextChar);
                         currentIndex++;
@@ -226,36 +224,27 @@ namespace Celezt.DialogueSystem
                 {
                     char nextChar = text[currentIndex + 1];
 
-                    if (toLower)
+                    if (char.IsLower(currentChar) && char.IsUpper(nextChar))    // If current is lower and next upper, make the next a new word. 
                     {
-                        if (char.IsUpper(currentChar) && char.IsLower(nextChar))    // Keep them the same if the next is lower but the current is upper.
-                        {
-                            toLower = false;
-                            span[length++] = currentChar;
-                            span[length++] = nextChar;
-                            currentIndex++;
+                        span[length++] = currentChar;
+                        span[length++] = ' ';
+                        span[length++] = nextChar;
+                        currentIndex++;
 
-                            continue;
-                        }
+                        continue;
                     }
-                    else
+                    else if (char.IsUpper(currentChar) && char.IsUpper(nextChar))    // If current is upper and next upper, make the next a new word.
                     {
-                        if (char.IsUpper(currentChar) && char.IsUpper(nextChar))    // If current is upper, next one is lower.
-                        {
-                            toLower = true;
-                            span[length++] = currentChar;
-                            span[length++] = char.ToLower(nextChar);
-                            currentIndex++;
+                        span[length++] = currentChar;
+                        span[length++] = ' ';
+                        span[length++] = nextChar;
+                        currentIndex++;
 
-                            continue;
-                        }
+                        continue;
                     }
                 }
 
-                if (toLower)
-                    span[length++] = char.ToLower(currentChar);
-                else
-                    span[length++] = currentChar;
+                span[length++] = currentChar;
             }
 
             return length;
