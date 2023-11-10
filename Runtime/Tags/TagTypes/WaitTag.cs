@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Celezt.DialogueSystem
 {
@@ -33,7 +31,7 @@ namespace Celezt.DialogueSystem
 
             double startTime = binder.StartTime + binder.StartOffset;
             float timeDuration = binder.TimeDurationWithoutOffset;
-            float shrinkedTimeDuration = timeDuration - waitDuration;
+            float shrankTimeDuration = timeDuration - waitDuration;
             float offsetTime = 0;
             int offsetIndex = 0;
             int offsetCount = 0;
@@ -63,7 +61,7 @@ namespace Celezt.DialogueSystem
                 for (; count < keys.Length && keys[count].time <= timeInterval; count++)
                 {
                     Keyframe key = keys[count];
-                    Scale(ref key, shrinkedTimeDuration / timeDuration);
+                    Scale(ref key, shrankTimeDuration / timeDuration);
                     key.time += offsetTime / timeDuration;
                     newKeys[count + offsetIndex] = key;
                 }
@@ -75,7 +73,7 @@ namespace Celezt.DialogueSystem
 
                 // First
                 Keyframe firstKey = new Keyframe(timeInterval, visibility, tangent, 0);
-                Scale(ref firstKey, shrinkedTimeDuration / timeDuration);
+                Scale(ref firstKey, shrankTimeDuration / timeDuration);
                 firstKey.time += offsetTime / timeDuration;
 
                 offsetIndices[offsetCount++] = count + offsetIndex;
@@ -85,7 +83,7 @@ namespace Celezt.DialogueSystem
 
                 // Second
                 Keyframe secondKey = new Keyframe(timeInterval, visibility, 0, tangent);
-                Scale(ref secondKey, shrinkedTimeDuration / timeDuration);
+                Scale(ref secondKey, shrankTimeDuration / timeDuration);
                 secondKey.time += offsetTime / timeDuration;
 
                 offsetIndices[offsetCount++] = count + offsetIndex;
@@ -98,22 +96,12 @@ namespace Celezt.DialogueSystem
             for (; count < keys.Length; count++)
             {
                 Keyframe key = keys[count];
-                Scale(ref key, shrinkedTimeDuration / timeDuration);
+                Scale(ref key, shrankTimeDuration / timeDuration);
                 key.time += offsetTime / timeDuration;
                 newKeys[count + offsetIndex] = key;
             }
 
             binder.RuntimeVisibilityCurve.keys = newKeys;
-
-            for (int i = 0; i < offsetIndices.Length; i++)
-            {
-                if (i % 2 == 0)
-                    AnimationUtility.SetKeyRightTangentMode(binder.RuntimeVisibilityCurve, 
-                        offsetIndices[i], AnimationUtility.TangentMode.Linear);
-                else
-                    AnimationUtility.SetKeyLeftTangentMode(binder.RuntimeVisibilityCurve,
-                        offsetIndices[i], AnimationUtility.TangentMode.Linear);
-            }
         }
 
         private static void Scale(ref Keyframe key, float scaleX)
