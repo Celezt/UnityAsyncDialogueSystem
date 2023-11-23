@@ -39,8 +39,14 @@ namespace Celezt.DialogueSystem
                 if (asset == null)
                     return null;
 
-                if (asset is EPlayableAsset { Clip: null }) // Return null if asset hasn't been initialised yet.
-                    return null;
+                if (asset is EPlayableAsset playable) // Return null if asset hasn't been initialised yet.
+                {
+                    if (playable.Clip == null)
+                        return null;
+
+                    if (playable.Director == null)
+                        return null;
+                }
 
                 return asset;
             }
